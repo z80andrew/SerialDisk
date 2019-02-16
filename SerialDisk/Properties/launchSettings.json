@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SerialDisk": {
+      "commandName": "Project",
+      "commandLineArgs": "--port=com1 d:\\temp\\atari"
+    }
+  }
+}
