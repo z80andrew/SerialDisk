@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO.Ports;
 using AtariST.SerialDisk.Storage;
 using AtariST.SerialDisk.Models;
@@ -15,7 +15,7 @@ namespace AtariST.SerialDisk.Comm
 
         public ReceiverState State { get; set; }
 
-        public bool ReceiverContinue = true;
+        private bool ReceiverContinue = true;
 
         private int ReceivedDataCounter = 0;
 
@@ -43,11 +43,11 @@ namespace AtariST.SerialDisk.Comm
             ReceiveEndMagic
         };
 
-        public Serial(Settings applicationSettings, Disk sourceDisk)
+        public Serial(Settings applicationSettings, Disk localDisk)
         {
             verbosity = applicationSettings.Verbosity;
 
-            disk = sourceDisk;
+            disk = localDisk;
 
             State = ReceiverState.ReceiveStartMagic;
 
@@ -71,7 +71,7 @@ namespace AtariST.SerialDisk.Comm
             ReceiverContinue = false;
         }
 
-        public void SerialDataReceiver(string localDirectoryName, int readTimeout, int verbosity) //Settings applicationSettings)
+        public void SerialDataReceiver(string localDirectoryName, int readTimeout, int verbosity)
         {
             DateTime TransferEndDateTime = DateTime.Now;
             DateTime TransferStartDateTime = DateTime.Now;
