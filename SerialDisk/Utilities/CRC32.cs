@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace AtariST.SerialDisk.Utilities
 {
@@ -33,8 +30,7 @@ namespace AtariST.SerialDisk.Utilities
 
         public static UInt32 CalculateCrc32(byte[] Buffer)
         {
-            if (Crc32Table == null)
-                CreateCrc32Table();
+            if (Crc32Table == null) CreateCrc32Table();
 
             UInt32 Crc32Value = 0;
 

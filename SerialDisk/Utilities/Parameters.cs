@@ -2,20 +2,21 @@
 using AtariST.SerialDisk.Shared;
 using System;
 using System.IO.Ports;
+using static AtariST.SerialDisk.Shared.Constants;
 
 namespace AtariST.SerialDisk.Utilities
 {
     public static class Parameters
     {
-        private const string localDirectoryParam = "--local-directory";
-        private const string diskSizeParam = "--disk-size";
-        private const string portParam = "--port";
-        private const string baudRateParam = "--baud-rate";
-        private const string stopBitsParam = "--stop-bits";
-        private const string dataBitsParam = "--data-bits";
-        private const string parityParam = "--parity";
-        private const string flowControlParam = "--handshake";
-        private const string verbosityParam = "--verbosity";
+        public const string localDirectoryParam = "--local-directory";
+        public const string diskSizeParam = "--disk-size";
+        public const string portParam = "--port";
+        public const string baudRateParam = "--baud-rate";
+        public const string stopBitsParam = "--stop-bits";
+        public const string dataBitsParam = "--data-bits";
+        public const string parityParam = "--parity";
+        public const string flowControlParam = "--handshake";
+        public const string verbosityParam = "--verbosity";
 
         public static Settings ParseParameters(string[] arguments)
         {
@@ -42,7 +43,7 @@ namespace AtariST.SerialDisk.Utilities
                     break;
 
                 case verbosityParam:
-                    applicationSettings.Verbosity = ParseIntParam(argumentName, argumentValue);
+                    applicationSettings.LoggingLevel = (LoggingLevel)Enum.Parse(typeof(LoggingLevel), argumentValue, true);
                     break;
 
                 case diskSizeParam:
@@ -86,7 +87,7 @@ namespace AtariST.SerialDisk.Utilities
 
                         default:
                             ArgumentException argEx = new ArgumentException($"{argumentName} value is invalid.");
-                            Error.Log(argEx, argEx.Message);
+                            Logger.LogError(argEx, argEx.Message);
                             throw argEx;
                     }
                     break;
@@ -111,7 +112,7 @@ namespace AtariST.SerialDisk.Utilities
                             break;
                         default:
                             ArgumentException argEx = new ArgumentException($"{argumentName} value is invalid.");
-                            Error.Log(argEx, argEx.Message);
+                            Logger.LogError(argEx, argEx.Message);
                             throw argEx;
                     }
                     break;
@@ -136,7 +137,7 @@ namespace AtariST.SerialDisk.Utilities
                             break;
                         default:
                             ArgumentException argEx = new ArgumentException($"{argumentName} value is invalid.");
-                            Error.Log(argEx, argEx.Message);
+                            Logger.LogError(argEx, argEx.Message);
                             throw argEx;
                     }
                     break;
@@ -152,7 +153,7 @@ namespace AtariST.SerialDisk.Utilities
 
             catch (FormatException formatEx)
             {
-                Error.Log(formatEx, $"{argumentName} must be a number.");
+                Logger.LogError(formatEx, $"{argumentName} must be a number.");
                 throw formatEx;
             }
         }

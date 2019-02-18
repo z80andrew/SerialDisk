@@ -1,4 +1,6 @@
-﻿using System.IO.Ports;
+﻿using AtariST.SerialDisk.Shared;
+using System.IO.Ports;
+using static AtariST.SerialDisk.Shared.Constants;
 
 namespace AtariST.SerialDisk.Models
 {
@@ -6,7 +8,7 @@ namespace AtariST.SerialDisk.Models
     {
         public SerialPortSettings SerialSettings { get; set; }
 
-        public int Verbosity { get; set; } = 0;
+        public LoggingLevel LoggingLevel { get; set; } = Constants.LoggingLevel.Error;
         public string LocalDirectoryName { get; set; } = ".";
         public int DiskSizeMB { get; set; } = 32;
     }

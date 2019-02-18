@@ -444,7 +444,7 @@ namespace AtariST.SerialDisk.Storage
 
                         catch (IndexOutOfRangeException boundsEx)
                         {
-                            Error.Log(boundsEx, $"Local directory is too large for the given virtual disk size ({DiskSize / 1024 / 1024} MB).");
+                            Logger.LogError(boundsEx, $"Local directory is too large for the given virtual disk size ({DiskSize / 1024 / 1024} MB).");
                             throw boundsEx;
                         }
                     }
@@ -592,7 +592,7 @@ namespace AtariST.SerialDisk.Storage
 
                 catch(IndexOutOfRangeException boundsEx)
                 {
-                    Error.Log(boundsEx, $"Local directory is too large for the given virtual disk size ({DiskSize / 1024 / 1024} MB)");
+                    Logger.LogError(boundsEx, $"Local directory is too large for the given virtual disk size ({DiskSize / 1024 / 1024} MB)");
                     throw boundsEx;
                 }
             }
