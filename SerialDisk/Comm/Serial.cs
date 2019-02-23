@@ -8,18 +8,17 @@ using static AtariST.SerialDisk.Shared.Constants;
 
 namespace AtariST.SerialDisk.Comm
 {
-    public class Serial
+    public class Serial : IDisposable
     {
-        public SerialPort serialPort;
+        private SerialPort serialPort;
 
+        private Logger logger;
         private Disk disk;
 
         public ReceiverState State { get; set; }
 
         private string localDirectoryName = ".";
         private int readTimeout = 100;
-
-        private bool ReceiverContinue = true;
 
         private int ReceivedDataCounter = 0;
 
@@ -28,27 +27,26 @@ namespace AtariST.SerialDisk.Comm
         private byte[] ReceiverDataBuffer;
         private int ReceiverDataIndex = 0;
 
-        private LoggingLevel verbosity;
-
         byte[] buffer = new byte[4096];
         public Action kickoffRead = null;
 
-        public Serial(Settings applicationSettings, Disk localDisk)
+        private DateTime TransferEndDateTime = DateTime.Now;
+        private DateTime TransferStartDateTime = DateTime.Now;
+        private long TransferSize = 0;
+
+        public Serial(Settings applicationSettings, Disk localDisk, Logger log)
         {
-            verbosity = applicationSettings.LoggingLevel;
             localDirectoryName = applicationSettings.LocalDirectoryName;
 
             disk = localDisk;
+            logger = log;
 
             State = ReceiverState.ReceiveStartMagic;
 
             serialPort = new SerialPort(applicationSettings.SerialSettings.PortName);
-            serialPort.Handshake = applicationSettings.SerialSettings.Handshake;
-            serialPort.BaudRate = applicationSettings.SerialSettings.BaudRate;
-            serialPort.DataBits = applicationSettings.SerialSettings.DataBits;
-            serialPort.StopBits = applicationSettings.SerialSettings.StopBits;
-            serialPort.Parity = applicationSettings.SerialSettings.Parity;
-            serialPort.ReadTimeout = applicationSettings.SerialSettings.Timeout;
+
+            ConfigureSerialPort(applicationSettings.SerialSettings);
+
             serialPort.ReceivedBytesThreshold = 1;
 
             serialPort.WriteTimeout = -1;
@@ -57,11 +55,23 @@ namespace AtariST.SerialDisk.Comm
 
             serialPort.Open();
 
+            logger.Log($"Serial port {applicationSettings.SerialSettings.PortName} opened successfully.", LoggingLevel.Verbose);
+
             serialPort.DiscardOutBuffer();
             serialPort.DiscardInBuffer();
 
             serialPort.DataReceived += SerialPort_DataReceived;
             serialPort.ReceivedBytesThreshold = 1;
+        }
+
+        private void ConfigureSerialPort(SerialPortSettings serialSettings)
+        {
+            serialPort.Handshake = serialSettings.Handshake;
+            serialPort.BaudRate = serialSettings.BaudRate;
+            serialPort.DataBits = serialSettings.DataBits;
+            serialPort.StopBits = serialSettings.StopBits;
+            serialPort.Parity = serialSettings.Parity;
+            serialPort.ReadTimeout = serialSettings.Timeout;
         }
 
         private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -76,12 +86,6 @@ namespace AtariST.SerialDisk.Comm
 
         private void ProcessReceivedByte(byte Data)
         {
-            DateTime TransferEndDateTime = DateTime.Now;
-            DateTime TransferStartDateTime = DateTime.Now;
-            long TransferSize = 0;
-
-            //Console.WriteLine($"Received byte {Data.ToString("X")}");
-
             try
             {
                 switch (State)
@@ -113,24 +117,24 @@ namespace AtariST.SerialDisk.Comm
                                 switch (Data)
                                 {
                                     case 0:
-                                        if (verbosity < LoggingLevel.Info) Logger.Log("Received read command");
+                                        logger.Log("Received read command.", LoggingLevel.Verbose);
                                         State = ReceiverState.ReceiveReadSectorIndex;
                                         ReceivedSectorIndex = 0;
                                         break;
 
                                     case 1:
-                                        if (verbosity < LoggingLevel.Info) Logger.Log("Received write command");
+                                        logger.Log("Received write command.", LoggingLevel.Verbose);
                                         State = ReceiverState.ReceiveWriteSectorIndex;
                                         ReceivedSectorIndex = 0;
                                         break;
 
                                     case 2:
-                                        if (verbosity < LoggingLevel.Info) Logger.Log("Received media change command");
+                                        logger.Log("Received media change command.", LoggingLevel.Verbose);
                                         State = ReceiverState.SendMediaChangeStatus;
                                         break;
 
                                     case 3:
-                                        if (verbosity < LoggingLevel.Info) Logger.Log("Received send bios parameter block command");
+                                        logger.Log("Received send BIOS parameter block command.", LoggingLevel.Verbose);
                                         State = ReceiverState.SendBiosParameterBlock;
                                         break;
                                 }
@@ -151,6 +155,7 @@ namespace AtariST.SerialDisk.Comm
                                 break;
 
                             case 3:
+                                logger.Log($"Received read sector index command.", LoggingLevel.Verbose);
                                 ReceivedSectorIndex = (ReceivedSectorIndex << 8) + Data;
                                 State = ReceiverState.ReceiveReadSectorCount;
                                 ReceivedSectorCount = 0;
@@ -170,6 +175,7 @@ namespace AtariST.SerialDisk.Comm
                                 break;
 
                             case 3:
+                                logger.Log($"Received read sector count command.", LoggingLevel.Verbose);
                                 ReceivedSectorCount = (ReceivedSectorCount << 8) + Data;
                                 State = ReceiverState.SendReadData;
                                 ReceivedDataCounter = -1;
@@ -188,6 +194,7 @@ namespace AtariST.SerialDisk.Comm
                                 break;
 
                             case 3:
+                                logger.Log($"Received write sector index command.", LoggingLevel.Verbose);
                                 ReceivedSectorIndex = (ReceivedSectorIndex << 8) + Data;
                                 State = ReceiverState.ReceiveWriteSectorCount;
                                 ReceivedSectorCount = 0;
@@ -207,6 +214,7 @@ namespace AtariST.SerialDisk.Comm
                                 break;
 
                             case 3:
+                                logger.Log($"Received write sector count command.", LoggingLevel.Verbose);
                                 ReceivedSectorCount = (ReceivedSectorCount << 8) + Data;
                                 State = ReceiverState.ReceiveWriteData;
                                 ReceivedDataCounter = -1;
@@ -218,13 +226,12 @@ namespace AtariST.SerialDisk.Comm
                     case ReceiverState.ReceiveWriteData:
                         if (ReceivedDataCounter == 0)
                         {
-                            if (verbosity < LoggingLevel.Warn)
-                            {
-                                if (ReceivedSectorCount == 1)
-                                    Logger.Log("Writing sector " + ReceivedSectorIndex + " (" + disk.BytesPerSector + " Bytes)... ");
-                                else
-                                    Logger.Log("Writing sectors " + ReceivedSectorIndex + " - " + (ReceivedSectorIndex + ReceivedSectorCount - 1) + " (" + (ReceivedSectorCount * disk.BytesPerSector) + " Bytes)... ");
-                            }
+
+                            if (ReceivedSectorCount == 1)
+                                logger.Log("Writing sector " + ReceivedSectorIndex + " (" + disk.BytesPerSector + " Bytes)... ", LoggingLevel.Info);
+                            else
+                                logger.Log("Writing sectors " + ReceivedSectorIndex + " - " + (ReceivedSectorIndex + ReceivedSectorCount - 1) + " (" + (ReceivedSectorCount * disk.BytesPerSector) + " Bytes)... ", LoggingLevel.Info);
+
 
                             ReceiverDataBuffer = new byte[ReceivedSectorCount * disk.BytesPerSector];
                             ReceiverDataIndex = 0;
@@ -236,8 +243,7 @@ namespace AtariST.SerialDisk.Comm
 
                         if (ReceiverDataIndex == ReceivedSectorCount * disk.BytesPerSector)
                         {
-                            if (verbosity < LoggingLevel.Warn)
-                                Logger.Log("Transfer done (" + (ReceiverDataBuffer.LongLength * 10000000 / (DateTime.Now.Ticks - TransferStartDateTime.Ticks)) + " Bytes/s).");
+                            logger.Log("Transfer done (" + (ReceiverDataBuffer.LongLength * 10000000 / (DateTime.Now.Ticks - TransferStartDateTime.Ticks)) + " Bytes/s).", LoggingLevel.Info);
 
                             disk.WriteSectors(ReceiverDataBuffer.Length, (int)ReceivedSectorIndex, localDirectoryName, ReceiverDataBuffer);
 
@@ -253,8 +259,7 @@ namespace AtariST.SerialDisk.Comm
                         switch (ReceivedDataCounter)
                         {
                             case 0:
-                                if (verbosity < LoggingLevel.Warn)
-                                    Logger.Log("Transfer done (" + (TransferSize * 10000000 / (DateTime.Now.Ticks - TransferStartDateTime.Ticks)) + " Bytes/s).");
+                                logger.Log("Transfer done (" + (TransferSize * 10000000 / (DateTime.Now.Ticks - TransferStartDateTime.Ticks)) + " Bytes/s).", LoggingLevel.Info);
 
                                 if (Data != 0x02)
                                     ReceivedDataCounter = -1;
@@ -288,8 +293,7 @@ namespace AtariST.SerialDisk.Comm
                     case ReceiverState.SendMediaChangeStatus:
                         if (disk.MediaChanged)
                         {
-                            if (verbosity < LoggingLevel.Info)
-                                Logger.Log("Media has been changed. Importing directory \"" + localDirectoryName + "\"... ");
+                            logger.Log("Media has been changed. Importing directory \"" + localDirectoryName + "\"... ", LoggingLevel.Info);
 
                             disk.FatImportDirectoryContents(localDirectoryName, 0);
                         }
@@ -306,6 +310,8 @@ namespace AtariST.SerialDisk.Comm
                         break;
 
                     case ReceiverState.SendBiosParameterBlock:
+                        logger.Log($"Sending BIOS parameter block.", LoggingLevel.Verbose);
+
                         byte[] BiosParameterBlock = new byte[18];
 
                         BiosParameterBlock[0] = (byte)((disk.BytesPerSector >> 8) & 0xff);
@@ -342,26 +348,24 @@ namespace AtariST.SerialDisk.Comm
                         break;
 
                     case ReceiverState.SendReadData:
-                        if (verbosity < LoggingLevel.Warn)
-                        {
-                            if (ReceivedSectorCount == 1)
-                                Logger.Log("Reading sector " + ReceivedSectorIndex + " (" + disk.BytesPerSector + " Bytes)... ");
-                            else
-                                Logger.Log("Reading sectors " + ReceivedSectorIndex + " - " + (ReceivedSectorIndex + ReceivedSectorCount - 1) + " (" + (ReceivedSectorCount * disk.BytesPerSector) + " Bytes)... ");
-                        }
+                        logger.Log("Sending data...", LoggingLevel.Verbose);
+
+                        if (ReceivedSectorCount == 1)
+                            logger.Log("Reading sector " + ReceivedSectorIndex + " (" + disk.BytesPerSector + " Bytes)... ", LoggingLevel.Info);
+                        else
+                            logger.Log("Reading sectors " + ReceivedSectorIndex + " - " + (ReceivedSectorIndex + ReceivedSectorCount - 1) + " (" + (ReceivedSectorCount * disk.BytesPerSector) + " Bytes)... ", LoggingLevel.Info);
+
 
                         byte[] SendDataBuffer = disk.ReadSectors((int)ReceivedSectorIndex, (int)ReceivedSectorCount);
 
                         TransferStartDateTime = DateTime.Now;
                         TransferSize = SendDataBuffer.LongLength;
 
-                        Logger.Log("Sending data...");
-
                         for (int i = 0; i < SendDataBuffer.Length; i++)
                         {
-                            serialPort.Write(SendDataBuffer, i, 1);
-                            string percentSent = ((Convert.ToDecimal(i) / SendDataBuffer.Length) * 100).ToString("00.00");
-                            Console.Write($"\rSent {percentSent}%");
+                            serialPort.BaseStream.WriteByte(SendDataBuffer[i]);
+                            string percentSent = ((Convert.ToDecimal(i + 1) / SendDataBuffer.Length) * 100).ToString("00.0");
+                            Console.Write($"\rSent [{(i + 1).ToString("D" + SendDataBuffer.Length.ToString().Length)} / {SendDataBuffer.Length} Bytes] {percentSent}% ");
                         }
                         Console.WriteLine();
 
@@ -373,9 +377,15 @@ namespace AtariST.SerialDisk.Comm
                         Crc32Buffer[2] = (byte)((Crc32Value >> 8) & 0xff);
                         Crc32Buffer[3] = (byte)(Crc32Value & 0xff);
 
-                        Logger.Log("Sending CRC32...");
+                        logger.Log("Sending CRC32...", LoggingLevel.Verbose);
 
-                        serialPort.Write(Crc32Buffer, 0, Crc32Buffer.Length);
+                        for (int i = 0; i < Crc32Buffer.Length; i++)
+                        {
+                            serialPort.BaseStream.WriteByte(Crc32Buffer[i]);
+                            string percentSent = ((Convert.ToDecimal(i + 1) / Crc32Buffer.Length) * 100).ToString("00.0");
+                            Console.Write($"\rSent [{(i + 1).ToString("D" + Crc32Buffer.Length.ToString().Length)} / {Crc32Buffer.Length} Bytes] {percentSent}% ");
+                        }
+                        Console.WriteLine();
 
                         TransferEndDateTime = DateTime.Now;
 
@@ -393,9 +403,9 @@ namespace AtariST.SerialDisk.Comm
                 {
                     serialPort.ReadTimeout = readTimeout;
 
-                    Logger.LogError(timeoutEx, "Serial port read timeout");
+                    logger.LogException(timeoutEx, "Serial port read timeout");
 
-                    Logger.Log("Transfer timeout. Retrying...");
+                    logger.Log("Transfer timeout. Retrying...", LoggingLevel.Info);
 
                     byte[] DummyBuffer = new byte[1];
 
@@ -403,6 +413,11 @@ namespace AtariST.SerialDisk.Comm
                 }
             }
 
+        }
+
+        public void Dispose()
+        {
+            serialPort.Dispose();
         }
     }
 }

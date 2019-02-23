@@ -1,6 +1,7 @@
 ﻿using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Shared;
 using System;
+using System.IO;
 using System.IO.Ports;
 using static AtariST.SerialDisk.Shared.Constants;
 
@@ -15,8 +16,9 @@ namespace AtariST.SerialDisk.Utilities
         public const string stopBitsParam = "--stop-bits";
         public const string dataBitsParam = "--data-bits";
         public const string parityParam = "--parity";
-        public const string flowControlParam = "--handshake";
+        public const string handshakeParam = "--handshake";
         public const string verbosityParam = "--verbosity";
+        public const string logFileNameParam = "--log-file";
 
         public static Settings ParseParameters(string[] arguments)
         {
@@ -25,11 +27,15 @@ namespace AtariST.SerialDisk.Utilities
                 SerialSettings = new SerialPortSettings()
             };
 
-            for (int argindex = 0; argindex < arguments.Length; argindex++)
+            for (int argindex = 0; argindex < arguments.Length; argindex+=2)
             {
                 if (argindex == arguments.Length - 1) SetParameter(localDirectoryParam, arguments[argindex], applicationSettings);
+
                 else SetParameter(arguments[argindex], arguments[argindex + 1], applicationSettings);
             }
+
+            // local directory parameter not supplied
+            if (applicationSettings.LocalDirectoryName == null) SetParameter(localDirectoryParam, null, applicationSettings);
 
             return applicationSettings;
         }
@@ -39,6 +45,7 @@ namespace AtariST.SerialDisk.Utilities
             switch (argumentName.ToLowerInvariant())
             {
                 case localDirectoryParam:
+                    if(String.IsNullOrEmpty(argumentValue)) argumentValue = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
                     applicationSettings.LocalDirectoryName = argumentValue;
                     break;
 
@@ -87,7 +94,7 @@ namespace AtariST.SerialDisk.Utilities
 
                         default:
                             ArgumentException argEx = new ArgumentException($"{argumentName} value is invalid.");
-                            Logger.LogError(argEx, argEx.Message);
+                            Console.WriteLine(argEx.Message);
                             throw argEx;
                     }
                     break;
@@ -112,12 +119,12 @@ namespace AtariST.SerialDisk.Utilities
                             break;
                         default:
                             ArgumentException argEx = new ArgumentException($"{argumentName} value is invalid.");
-                            Logger.LogError(argEx, argEx.Message);
+                            Console.WriteLine(argEx.Message);
                             throw argEx;
                     }
                     break;
 
-                case flowControlParam:
+                case handshakeParam:
                     switch (argumentValue)
                     {
                         case "none":
@@ -137,9 +144,13 @@ namespace AtariST.SerialDisk.Utilities
                             break;
                         default:
                             ArgumentException argEx = new ArgumentException($"{argumentName} value is invalid.");
-                            Logger.LogError(argEx, argEx.Message);
+                            Console.WriteLine(argEx.Message);
                             throw argEx;
                     }
+                    break;
+
+                case logFileNameParam:
+                    applicationSettings.LogFileName = argumentValue;
                     break;
             }        
         }
@@ -153,7 +164,7 @@ namespace AtariST.SerialDisk.Utilities
 
             catch (FormatException formatEx)
             {
-                Logger.LogError(formatEx, $"{argumentName} must be a number.");
+                Console.WriteLine($"{argumentName} must be a number.");
                 throw formatEx;
             }
         }

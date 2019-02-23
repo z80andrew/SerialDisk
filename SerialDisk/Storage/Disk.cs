@@ -28,8 +28,12 @@ namespace AtariST.SerialDisk.Storage
         public List<LocalDirectoryContentInfo> LocalDirectoryContentInfo;
         public FileSystemWatcher FileSystemWatcher;
 
-        public Disk(Settings applicationSettings)
+        private Logger logger;
+
+        public Disk(Settings applicationSettings, Logger log)
         {
+            logger = log;
+
             CreateBiosParameterBlock(applicationSettings.DiskSizeMB);
             FatImportDirectoryContents(applicationSettings.LocalDirectoryName, 0);
             WatchLocalDirectory(applicationSettings.LocalDirectoryName);
@@ -444,7 +448,7 @@ namespace AtariST.SerialDisk.Storage
 
                         catch (IndexOutOfRangeException boundsEx)
                         {
-                            Logger.LogError(boundsEx, $"Local directory is too large for the given virtual disk size ({DiskSize / 1024 / 1024} MB).");
+                            logger.LogException(boundsEx, $"Local directory is too large for the given virtual disk size ({DiskSize / 1024 / 1024} MB).");
                             throw boundsEx;
                         }
                     }
@@ -592,7 +596,7 @@ namespace AtariST.SerialDisk.Storage
 
                 catch(IndexOutOfRangeException boundsEx)
                 {
-                    Logger.LogError(boundsEx, $"Local directory is too large for the given virtual disk size ({DiskSize / 1024 / 1024} MB)");
+                    logger.LogException(boundsEx, $"Local directory is too large for the given virtual disk size ({DiskSize / 1024 / 1024} MB)");
                     throw boundsEx;
                 }
             }
