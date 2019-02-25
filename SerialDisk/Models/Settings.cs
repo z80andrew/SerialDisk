@@ -14,7 +14,7 @@ namespace AtariST.SerialDisk.Models
 
         public LoggingLevel LoggingLevel { get; set; } = Constants.LoggingLevel.Error;
         public string LocalDirectoryName { get; set; } = null;
-        public int DiskSizeMB { get; set; } = 32;
+        public int DiskSizeMB { get; set; } = 24;
         public string LogFileName
         {
             get => _logfileName;

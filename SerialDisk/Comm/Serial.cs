@@ -224,6 +224,8 @@ namespace AtariST.SerialDisk.Comm
                         break;
 
                     case ReceiverState.ReceiveWriteData:
+                        int directoryCluster = 0;
+
                         if (ReceivedDataCounter == 0)
                         {
 
@@ -280,6 +282,7 @@ namespace AtariST.SerialDisk.Comm
                                     State = ReceiverState.ReceiveStartMagic;
 
                                 ReceivedDataCounter = -1;
+
                                 break;
                         }
 
