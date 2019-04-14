@@ -1,88 +1,82 @@
+using AtariST.SerialDisk.Comm;
+using AtariST.SerialDisk.Models;
+using AtariST.SerialDisk.Shared;
+using AtariST.SerialDisk.Storage;
+using AtariST.SerialDisk.Utilities;
 using System;
 using System.IO;
 using System.IO.Ports;
-using System.Threading;
+using System.Linq;
 using System.Reflection;
-using AtariST.SerialDisk.Storage;
-using AtariST.SerialDisk.Utilities;
-using AtariST.SerialDisk.Models;
-using AtariST.SerialDisk.Comm;
 
 namespace AtariST.SerialDisk
 {
     class MainClass
-	{
-		private static void PrintUsage()
-		{
-			Console.WriteLine();
+    {
+        private static void PrintUsage(Settings applicationSettings)
+        {
+            Console.WriteLine();
 
-			Console.WriteLine("Usage:");
-			Console.WriteLine(System.AppDomain.CurrentDomain.FriendlyName + " --port=<serial_port_name> [Options] [<virtual_disk_path>]");
-			Console.WriteLine();
+            Console.WriteLine("Usage:");
+            Console.WriteLine(System.AppDomain.CurrentDomain.FriendlyName + " [Options] [<virtual_disk_path>]");
+            Console.WriteLine();
 
-			Console.WriteLine("Options (default):");
-			Console.WriteLine("--disk-size=<disk_size_in_mb> (32)");
-			Console.WriteLine("--baud-rate=<baud_rate> (115200)");
-			Console.WriteLine("--parity=[N|O|E|M|S] (N)");
-			Console.WriteLine("--stop-bits=[N|1|1.5|2] (1)");
-			Console.WriteLine("--data-bits=<data_bits> (8)");
-			Console.WriteLine("--handshake=[None|RTS|RTS_Xon_Xoff|Xon_Xoff] (RTS)");
-			Console.WriteLine();
+            Console.WriteLine("Options (default):");
+            Console.WriteLine($"{Parameters.diskSizeParam} <disk_size_in_MB> ({applicationSettings.DiskSizeMB})");
+            Console.WriteLine($"{Parameters.portParam} [port_name] ({applicationSettings.SerialSettings.PortName})");
+            Console.WriteLine($"{Parameters.baudRateParam} <baud_rate> ({applicationSettings.SerialSettings.BaudRate})");
+            Console.WriteLine($"{Parameters.parityParam} [N|O|E|M|S] ({applicationSettings.SerialSettings.Parity})");
+            Console.WriteLine($"{Parameters.stopBitsParam} [N|1|1.5|2] ({applicationSettings.SerialSettings.StopBits})");
+            Console.WriteLine($"{Parameters.dataBitsParam} <data_bits> ({applicationSettings.SerialSettings.DataBits})");
+            Console.WriteLine($"{Parameters.handshakeParam} [None|RTS|RTS-Xon-Xoff|Xon-Xoff] ({applicationSettings.SerialSettings.Handshake})");
+            Console.WriteLine($"{Parameters.verbosityParam} [0-3] ({applicationSettings.LoggingLevel})");
+            Console.WriteLine($"{Parameters.logFileNameParam} [log_file_name]");
+            Console.WriteLine();
 
-			Console.WriteLine("Serial ports available:");
+            Console.WriteLine("Serial ports available:");
 
-			string[] SerialPortNames = SerialPort.GetPortNames();
+            foreach (string Name in SerialPort.GetPortNames())
+                Console.Write(Name + " ");
 
-			foreach (string Name in SerialPortNames)
-				Console.Write(Name + " ");
+            Console.WriteLine();
+            Console.WriteLine();
+        }
 
-			Console.WriteLine();
-			Console.WriteLine();
-		}
+        public static void Main(string[] Arguments)
+        {
+            Console.WriteLine("Serial Disk v" + Assembly.GetExecutingAssembly().GetName().Version);
 
-		public static void Main(string[] Arguments)
-		{
-			{
-				Console.WriteLine("Serial Disk v" + Assembly.GetExecutingAssembly().GetName().Version);
+            Settings applicationSettings = Parameters.ParseParameters(Arguments);
 
-				Settings applicationSettings = Parameters.ParseParameters(Arguments);
+            if (!Arguments.Any() || (bool)Arguments[0].ToLowerInvariant().StartsWith("--h"))
+            {
+                PrintUsage(applicationSettings);
+                return;
+            }
 
-				if(applicationSettings.SerialSettings.PortName == null)
-				{
-					PrintUsage();
+            if (applicationSettings.LocalDirectoryName != null
+                && !Directory.Exists(applicationSettings.LocalDirectoryName)) throw new Exception("Local directory name invalid.");
 
-					return;
-				}
+            Logger logger = new Logger(applicationSettings.LoggingLevel, applicationSettings.LogFileName);
 
-                if (!Directory.Exists(applicationSettings.LocalDirectoryName))
-                    throw new Exception("Local directory name invalid.");
+            Disk disk = new Disk(applicationSettings, logger);
 
-                Disk disk = new Disk(applicationSettings);
+            Serial serial = new Serial(applicationSettings, disk, logger);
 
-                Serial serial = new Serial(applicationSettings, disk);
+            Console.WriteLine($"Listening on {applicationSettings.SerialSettings.PortName.ToUpperInvariant()}");
 
-                Thread serialDataReceiverThread = new Thread(() => serial.SerialDataReceiver(applicationSettings.LocalDirectoryName, 
-                    applicationSettings.SerialSettings.Timeout, applicationSettings.Verbosity));
+            Console.WriteLine($"Baud rate:{applicationSettings.SerialSettings.BaudRate} | Data bits:{applicationSettings.SerialSettings.DataBits}" +
+                $" | Parity:{applicationSettings.SerialSettings.Parity} | Stop bits:{applicationSettings.SerialSettings.StopBits} | Flow control:{applicationSettings.SerialSettings.Handshake}");
+            Console.WriteLine($"Local directory: {applicationSettings.LocalDirectoryName}");
+            Console.WriteLine($"Logging level: { applicationSettings.LoggingLevel} ");
 
-                serialDataReceiverThread.Start();
+            Console.WriteLine("Press any key to quit.");
+            Console.ReadKey();
 
-                Console.WriteLine($"Listening on {applicationSettings.SerialSettings.PortName.ToUpperInvariant()}");
+            Console.WriteLine("Stopping receiver...");
 
-                Console.WriteLine($"Baud rate:{applicationSettings.SerialSettings.BaudRate} Data bits:{applicationSettings.SerialSettings.DataBits}" +
-                    $" Parity:{applicationSettings.SerialSettings.Parity} Stop bits:{applicationSettings.SerialSettings.StopBits} Flow control:{applicationSettings.SerialSettings.Handshake}");
-                Console.WriteLine($"Local directory: {applicationSettings.LocalDirectoryName}");
-
-				Console.WriteLine("Press any key to quit.");
-				Console.ReadKey();
-
-				Console.WriteLine("Stopping receiver...");
-
-                serial.StopListening();
-
-                serialDataReceiverThread.Join();
-
-                serial.serialPort.Close();
-			}
-		}
-	}
+            logger.Dispose();
+            serial.Dispose();
+        }
+    }
 }
