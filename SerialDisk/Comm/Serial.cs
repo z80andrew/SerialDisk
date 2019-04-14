@@ -129,7 +129,7 @@ namespace AtariST.SerialDisk.Comm
                                         break;
 
                                     case 2:
-                                        logger.Log("Received media change command.", LoggingLevel.Verbose);
+                                        //logger.Log("Received media change command.", LoggingLevel.Verbose);
                                         State = ReceiverState.SendMediaChangeStatus;
                                         break;
 
@@ -224,8 +224,6 @@ namespace AtariST.SerialDisk.Comm
                         break;
 
                     case ReceiverState.ReceiveWriteData:
-                        int directoryCluster = 0;
-
                         if (ReceivedDataCounter == 0)
                         {
 
@@ -247,7 +245,7 @@ namespace AtariST.SerialDisk.Comm
                         {
                             logger.Log("Transfer done (" + (ReceiverDataBuffer.LongLength * 10000000 / (DateTime.Now.Ticks - TransferStartDateTime.Ticks)) + " Bytes/s).", LoggingLevel.Info);
 
-                            disk.WriteSectors(ReceiverDataBuffer.Length, (int)ReceivedSectorIndex, localDirectoryName, ReceiverDataBuffer);
+                            disk.WriteSectors(ReceiverDataBuffer.Length, (int)ReceivedSectorIndex, ReceiverDataBuffer);
 
                             State = ReceiverState.ReceiveStartMagic;
                             ReceivedDataCounter = -1;
@@ -394,7 +392,7 @@ namespace AtariST.SerialDisk.Comm
 
                         State = ReceiverState.ReceiveEndMagic;
 
-                        serialPort.ReadTimeout = (int)((TransferSize * 10 * 1000 * 1.5 / serialPort.BaudRate) - (TransferEndDateTime.Ticks - TransferStartDateTime.Ticks) / 10000); // Set the timeout to 1.5 times the estimated remaining transfer time.
+                        //serialPort.ReadTimeout = (int)((TransferSize * 10 * 1000 * 1.5 / serialPort.BaudRate) - (TransferEndDateTime.Ticks - TransferStartDateTime.Ticks) / 10000); // Set the timeout to 1.5 times the estimated remaining transfer time.
 
                         break;
                 }
