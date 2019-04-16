@@ -125,6 +125,7 @@ namespace AtariST.SerialDisk.Storage
                                             Directory.Delete(directoryContentInfo.ContentName, true);
 
                                             LocalDirectoryContentInfo.Remove(directoryContentInfo);
+                                            ClusterInfo[StartCluster] = null;
                                         }
 
                                         else // It's a file
@@ -135,6 +136,8 @@ namespace AtariST.SerialDisk.Storage
                                             File.Delete(directoryContentInfo.ContentName);
 
                                             LocalDirectoryContentInfo.Remove(directoryContentInfo);
+
+                                            ClusterInfo.Where(ci => ci?.ContentName == directoryContentInfo.ContentName).ToList().ForEach(ci => ci.ContentName = null);
                                         }
 
                                         LocalDirectoryContentInfo.Remove(directoryContentInfo);
@@ -242,8 +245,6 @@ namespace AtariST.SerialDisk.Storage
                                     }
                                 }
 
-                                ClusterInfo[StartCluster].ContentName = NewDirectoryContentName;
-
                                 LocalDirectoryContentInfo NewLocalDirectoryContentInfo = new LocalDirectoryContentInfo();
 
                                 NewLocalDirectoryContentInfo.ContentName = NewDirectoryContentName;
@@ -276,11 +277,12 @@ namespace AtariST.SerialDisk.Storage
             }
         }
 
+        // 0x00 free cluster
         // 0xFFF8–0xFFFF indicates last FAT entry for a file
-        // 0xFFF0-0xFFF6 is marked as reserved in FAT16 but the Atari ST sometimes uses it to mark the end of a file
+        // 0xFFF0-0xFFF7 marks a bad sector in GEMDOS
         private bool IsEndOfFinalizedClusterChain(int clusterValue)
         {
-            return clusterValue >= 0xfff8 || (clusterValue >= 0xfff0 && clusterValue <= 0xfff6);
+            return clusterValue == 0 || clusterValue  >= 0xfff8 || (clusterValue >= 0xfff0 && clusterValue <= 0xfff7);
         }
 
         public string FatCreateShortFileName(string FileName)
@@ -318,7 +320,8 @@ namespace AtariST.SerialDisk.Storage
 
         public int FatGetNextCluster(int CurrentCluster, int directoryOffset = 0)
         {
-            int cluster = (CurrentCluster * 2) - directoryOffset;
+            int cluster = (CurrentCluster * 2);
+            if (directoryOffset != 0) cluster -= RootDirectorySectors;
             return FatBuffer[cluster + 1] << 8 | FatBuffer[cluster];
         }
 
@@ -445,11 +448,9 @@ namespace AtariST.SerialDisk.Storage
                     int WriteSector = Sector - (SectorsPerFat * 2 + RootDirectorySectors) + 2 * SectorsPerCluster;
                     ClusterIndex = WriteSector / SectorsPerCluster;
 
-                    if (ClusterInfo[ClusterIndex] == null)
-                        ClusterInfo[ClusterIndex] = new ClusterInfo();
+                    if (ClusterInfo[ClusterIndex] == null) ClusterInfo[ClusterIndex] = new ClusterInfo();
 
-                    if (ClusterInfo[ClusterIndex].DataBuffer == null)
-                        ClusterInfo[ClusterIndex].DataBuffer = new byte[BytesPerCluster];
+                    if (ClusterInfo[ClusterIndex].DataBuffer == null) ClusterInfo[ClusterIndex].DataBuffer = new byte[BytesPerCluster];
 
                     Array.Copy(DataBuffer, DataOffset, ClusterInfo[ClusterIndex].DataBuffer, (WriteSector - ClusterIndex * SectorsPerCluster) * BytesPerSector, BytesPerSector);
                 }

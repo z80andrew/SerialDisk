@@ -23,8 +23,6 @@ namespace AtariST.SerialDisk.Shared
 
                 string logFolderPath = Path.Combine(folderPath, "log");
 
-                // logFolderPath = Path.GetFullPath(logFolderPath);
-
                 CreateLogFile(logFolderPath, logFileName);
             }
         }
@@ -60,7 +58,9 @@ namespace AtariST.SerialDisk.Shared
             if(String.IsNullOrEmpty(message)) message = exception.Message;
             if (fileStream != null) LogToFile($"{message}: {exception.StackTrace}");
 
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"{DateTime.Now}\t{message}");
+            Console.ResetColor();
             Console.WriteLine(exception);
         }
 
