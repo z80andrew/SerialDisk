@@ -5,9 +5,9 @@ using System.IO;
 using System.IO.Ports;
 using static AtariST.SerialDisk.Shared.Constants;
 
-namespace AtariST.SerialDisk.Utilities
+namespace AtariST.SerialDisk.Common
 {
-    public static class Parameters
+    public static class ApplicationParameters
     {
         public const string localDirectoryParam = "--local-directory";
         public const string diskSizeParam = "--disk-size";
@@ -20,9 +20,9 @@ namespace AtariST.SerialDisk.Utilities
         public const string verbosityParam = "--verbosity";
         public const string logFileNameParam = "--log-file";
 
-        public static Settings ParseParameters(string[] arguments)
+        public static ApplicationSettings ParseParameters(string[] arguments)
         {
-            Settings applicationSettings = new Settings
+            ApplicationSettings applicationSettings = new ApplicationSettings
             {
                 SerialSettings = new SerialPortSettings()
             };
@@ -40,7 +40,7 @@ namespace AtariST.SerialDisk.Utilities
             return applicationSettings;
         }
 
-        private static void SetParameter(string argumentName, string argumentValue, Settings applicationSettings)
+        private static void SetParameter(string argumentName, string argumentValue, ApplicationSettings applicationSettings)
         {
             switch (argumentName.ToLowerInvariant())
             {
@@ -54,7 +54,7 @@ namespace AtariST.SerialDisk.Utilities
                     break;
 
                 case diskSizeParam:
-                    applicationSettings.DiskSizeMB = ParseIntParam(argumentName, argumentValue);
+                    applicationSettings.DiskSizeMiB = ParseIntParam(argumentName, argumentValue);
                     break;
 
                 case portParam:

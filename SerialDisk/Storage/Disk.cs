@@ -13,161 +13,140 @@ namespace AtariST.SerialDisk.Storage
     {
         public bool MediaChanged = true;
 
-        public int DiskSize;
-        public int BytesPerSector;
-        public int SectorsPerCluster;
-        public int BytesPerCluster;
-        public int DiskClusters;
-        public int FatEntriesPerSector;
-        public int SectorsPerFat;
-        public int RootDirectorySectors;
+        private int _rootDirectoryClusterIndex = 0;
 
-        public byte[] RootDirectoryBuffer;
-        public byte[] FatBuffer;
-        public ClusterInfo[] ClusterInfo;
+        private byte[] _rootDirectoryBuffer;
+        private byte[] _fatBuffer;
+        private ClusterInfo[] _clusterInfos;
+        public DiskParameters Parameters { get; set; }
 
-        public string currentLocalDirectory;
+        private List<LocalDirectoryContentInfo> _localDirectoryContentInfos;
+        private FileSystemWatcher _fileSystemWatcher;
 
-        public List<LocalDirectoryContentInfo> LocalDirectoryContentInfo;
-        public FileSystemWatcher FileSystemWatcher;
+        private Logger _logger;
 
-        private Logger logger;
-
-        public Disk(Settings applicationSettings, Logger log)
+        public Disk(DiskParameters diskParams, Logger log)
         {
-            logger = log;
+            _logger = log;
+            Parameters = diskParams;
 
-            CreateBiosParameterBlock(applicationSettings.DiskSizeMB);
-            FatImportDirectoryContents(applicationSettings.LocalDirectoryName, 0);
-            WatchLocalDirectory(applicationSettings.LocalDirectoryName);
-            currentLocalDirectory = applicationSettings.LocalDirectoryName;
+            FatImportLocalDirectoryContents(diskParams.LocalDirectoryPath, 0);
+            WatchLocalDirectory(diskParams.LocalDirectoryPath);
         }
 
         public void WatchLocalDirectory(string localDirectoryName)
         {
-            FileSystemWatcher = new FileSystemWatcher();
+            _fileSystemWatcher = new FileSystemWatcher();
 
-            FileSystemWatcher.Path = localDirectoryName;
-            FileSystemWatcher.NotifyFilter = NotifyFilters.CreationTime | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
-            FileSystemWatcher.Filter = "";
-            FileSystemWatcher.IncludeSubdirectories = true;
-            FileSystemWatcher.Changed += new FileSystemEventHandler(FileChangedHandler);
-            FileSystemWatcher.Created += new FileSystemEventHandler(FileChangedHandler);
-            FileSystemWatcher.Deleted += new FileSystemEventHandler(FileChangedHandler);
-            FileSystemWatcher.Renamed += new RenamedEventHandler(FileRenamedHandler);
-            FileSystemWatcher.EnableRaisingEvents = true;
+            _fileSystemWatcher.Path = localDirectoryName;
+            _fileSystemWatcher.NotifyFilter = NotifyFilters.CreationTime | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
+            _fileSystemWatcher.Filter = "";
+            _fileSystemWatcher.IncludeSubdirectories = true;
+            _fileSystemWatcher.Changed += new FileSystemEventHandler(FileChangedHandler);
+            _fileSystemWatcher.Created += new FileSystemEventHandler(FileChangedHandler);
+            _fileSystemWatcher.Deleted += new FileSystemEventHandler(FileChangedHandler);
+            _fileSystemWatcher.Renamed += new RenamedEventHandler(FileChangedHandler);
+            _fileSystemWatcher.EnableRaisingEvents = true;
         }
 
-        public void CreateBiosParameterBlock(int diskSizeMB)
-        {
-            DiskSize = diskSizeMB * 1024 * 1024;
 
-            BytesPerSector = 512;
 
-            while (BytesPerSector * 64 * 1024 < DiskSize)
-                BytesPerSector *= 2;
-
-            SectorsPerCluster = 2;
-            BytesPerCluster = SectorsPerCluster * BytesPerSector;
-            DiskClusters = DiskSize / BytesPerCluster;
-            FatEntriesPerSector = BytesPerSector / 2;
-            SectorsPerFat = (DiskClusters + FatEntriesPerSector - 1) / FatEntriesPerSector;
-            RootDirectorySectors = 4;
-        }
-
-        public void SyncLocalDisk(int DirectoryCluster = 0)
+        public void SyncLocalDisk(int directoryClusterIndex = 0)
         {
             int verbosity = 3;
 
-            while (DirectoryCluster != 0xffff)
+            while (directoryClusterIndex != 0xffff)
             {
-                int EntryIndex = 0;
-                byte[] DirectoryBuffer;
+                int directoryEntryIndex = 0;
+                byte[] directoryBuffer;
 
-                if (DirectoryCluster == 0)
-                    DirectoryBuffer = RootDirectoryBuffer;
+                if (directoryClusterIndex == 0)
+                    directoryBuffer = _rootDirectoryBuffer;
                 else
-                    DirectoryBuffer = ClusterInfo[DirectoryCluster].DataBuffer;
+                    directoryBuffer = _clusterInfos[directoryClusterIndex].DataBuffer;
 
-                while (EntryIndex < DirectoryBuffer.Length && DirectoryBuffer[EntryIndex] != 0)
+                while (directoryEntryIndex < directoryBuffer.Length && directoryBuffer[directoryEntryIndex] != 0)
                 {
-                    if (DirectoryBuffer[EntryIndex] != 0x2e) // The entry is not "." or "..".
+                    if (directoryBuffer[directoryEntryIndex] != 0x2e) // The entry is not "." or "..".
                     {
-                        string ShortFileName = ASCIIEncoding.ASCII.GetString(DirectoryBuffer, EntryIndex, 8).Trim();
-                        string ShortFileExtension = ASCIIEncoding.ASCII.GetString(DirectoryBuffer, EntryIndex + 8, 3).Trim();
+                        string fileName = ASCIIEncoding.ASCII.GetString(directoryBuffer, directoryEntryIndex, 8).Trim();
+                        string fileExtension = ASCIIEncoding.ASCII.GetString(directoryBuffer, directoryEntryIndex + 8, 3).Trim();
 
-                        if (ShortFileExtension != "")
-                            ShortFileName += "." + ShortFileExtension;
+                        if (fileExtension != "")
+                            fileName += "." + fileExtension;
 
-                        int StartCluster = DirectoryBuffer[EntryIndex + 26] | (DirectoryBuffer[EntryIndex + 27] << 8);
+                        int startClusterIndex = directoryBuffer[directoryEntryIndex + 26] | (directoryBuffer[directoryEntryIndex + 27] << 8);
 
                         // Find the matching local content and check what happened to it.
 
                         string LocalDirectoryContentName = "";
 
-                        foreach (LocalDirectoryContentInfo directoryContentInfo in LocalDirectoryContentInfo)
+                        foreach (LocalDirectoryContentInfo directoryContentInfo in _localDirectoryContentInfos)
                         {
-                            if (directoryContentInfo.EntryIndex == EntryIndex && directoryContentInfo.Cluster == DirectoryCluster)
+                            if (directoryContentInfo.EntryIndex == directoryEntryIndex && directoryContentInfo.DirectoryCluster == directoryClusterIndex)
                             {
                                 LocalDirectoryContentName = directoryContentInfo.ContentName;
 
-                                if (directoryContentInfo.ShortFileName != ShortFileName)
+                                if (directoryContentInfo.ShortFileName != fileName)
                                 {
-                                    if (DirectoryBuffer[EntryIndex] == 0xe5) // Has the entry been deleted?
+                                    if (directoryBuffer[directoryEntryIndex] == 0xe5) // Has the entry been deleted?
                                     {
-                                        FileSystemWatcher.EnableRaisingEvents = false;
+                                        _fileSystemWatcher.EnableRaisingEvents = false;
 
-                                        if (DirectoryBuffer[EntryIndex + 11] == 0x10) // Is it a directory?
+                                        if (directoryBuffer[directoryEntryIndex + 11] == 0x10) // Is it a directory?
                                         {
                                             if (verbosity > 0)
-                                                Console.WriteLine("Deleting local directory \"" + directoryContentInfo.ContentName + "\".");
+                                                Console.WriteLine($"Deleting local directory \"{ directoryContentInfo.ContentName}\".");
 
                                             Directory.Delete(directoryContentInfo.ContentName, true);
 
-                                            LocalDirectoryContentInfo.Remove(directoryContentInfo);
-                                            ClusterInfo[StartCluster] = null;
+                                            _localDirectoryContentInfos.Remove(directoryContentInfo);
+                                            _clusterInfos[startClusterIndex] = null;
                                         }
 
                                         else // It's a file
                                         {
                                             if (verbosity > 0)
-                                                Console.WriteLine("Deleting local file \"" + directoryContentInfo.ContentName + "\".");
+                                                Console.WriteLine($"Deleting local file \"{directoryContentInfo.ContentName}\".");
 
                                             File.Delete(directoryContentInfo.ContentName);
 
-                                            LocalDirectoryContentInfo.Remove(directoryContentInfo);
+                                            _localDirectoryContentInfos.Remove(directoryContentInfo);
 
-                                            ClusterInfo.Where(ci => ci?.ContentName == directoryContentInfo.ContentName).ToList().ForEach(ci => ci.ContentName = null);
+                                            _clusterInfos
+                                                .Where(ci => ci?.ContentName == directoryContentInfo.ContentName)
+                                                .ToList()
+                                                .ForEach(ci => ci.ContentName = null);
                                         }
 
-                                        LocalDirectoryContentInfo.Remove(directoryContentInfo);
+                                        _localDirectoryContentInfos.Remove(directoryContentInfo);
 
-                                        FileSystemWatcher.EnableRaisingEvents = true;
+                                        _fileSystemWatcher.EnableRaisingEvents = true;
                                     }
                                     else // Entry has been renamed.
                                     {
-                                        FileSystemWatcher.EnableRaisingEvents = false;
+                                        _fileSystemWatcher.EnableRaisingEvents = false;
 
-                                        if (DirectoryBuffer[EntryIndex + 11] == 0x10) // Is it a directory?
+                                        if (directoryBuffer[directoryEntryIndex + 11] == 0x10) // Is it a directory?
                                         {
                                             if (verbosity > 0)
-                                                Console.WriteLine("Renaming local directory \"" + directoryContentInfo.ContentName + "\" to \"" + currentLocalDirectory + Path.DirectorySeparatorChar + ShortFileName + "\".");
+                                                Console.WriteLine($"Renaming local directory \"{directoryContentInfo.ContentName}\" to \"{Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName)}\".");
 
-                                            Directory.Move(directoryContentInfo.ContentName, currentLocalDirectory + Path.DirectorySeparatorChar + ShortFileName);
+                                            Directory.Move(directoryContentInfo.ContentName, Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName));
                                         }
 
                                         else // It's a file
                                         {
                                             if (verbosity > 0)
-                                                Console.WriteLine("Renaming local file \"" + directoryContentInfo.ContentName + "\" to \"" + currentLocalDirectory + Path.DirectorySeparatorChar + ShortFileName + "\".");
+                                                Console.WriteLine($"Renaming local file \"{directoryContentInfo.ContentName}\" to \"{Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName)}\".");
 
-                                            File.Move(directoryContentInfo.ContentName, currentLocalDirectory + Path.DirectorySeparatorChar + ShortFileName);
+                                            File.Move(directoryContentInfo.ContentName, Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName));
                                         }
 
-                                        directoryContentInfo.ContentName = currentLocalDirectory + Path.DirectorySeparatorChar + ShortFileName;
-                                        directoryContentInfo.ShortFileName = ShortFileName;
+                                        directoryContentInfo.ContentName = Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName);
+                                        directoryContentInfo.ShortFileName = fileName;
 
-                                        FileSystemWatcher.EnableRaisingEvents = true;
+                                        _fileSystemWatcher.EnableRaisingEvents = true;
                                     }
                                 }
 
@@ -175,172 +154,177 @@ namespace AtariST.SerialDisk.Storage
                             }
                         }
 
-                        if (String.IsNullOrEmpty(LocalDirectoryContentName) && DirectoryBuffer[EntryIndex] != 0xe5) // Is the content new but not been deleted?
+                        if (String.IsNullOrEmpty(LocalDirectoryContentName) && directoryBuffer[directoryEntryIndex] != 0xe5) // Is the content new but not been deleted?
                         {
-                            string NewDirectoryContentName = "";
-                            if (DirectoryCluster != 0) NewDirectoryContentName = Path.Combine(ClusterInfo[DirectoryCluster].ContentName, ShortFileName); // Subdirectory
-                            else NewDirectoryContentName = Path.Combine(currentLocalDirectory, ShortFileName); // Root dir
+                            string newContentPath = "";
+                            if (directoryClusterIndex != _rootDirectoryClusterIndex) newContentPath = Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName); // Subdirectory
+                            else newContentPath = Path.Combine(Parameters.LocalDirectoryPath, fileName); // Root dir
 
-                            ClusterInfo[StartCluster].ContentName = NewDirectoryContentName;
+                            _clusterInfos[startClusterIndex].ContentName = newContentPath;
 
                             try
                             {
-                                if (DirectoryBuffer[EntryIndex + 11] == 0x10 && StartCluster != 0) // Is it a directory with a valid start cluster?
+                                if (directoryBuffer[directoryEntryIndex + 11] == 0x10 && startClusterIndex != 0) // Is it a directory with a valid start cluster?
                                 {
-                                    FileSystemWatcher.EnableRaisingEvents = false;
+                                    _fileSystemWatcher.EnableRaisingEvents = false;
 
                                     if (verbosity > 0)
-                                        Console.WriteLine("Creating local directory \"" + NewDirectoryContentName + "\".");
+                                        Console.WriteLine("Creating local directory \"" + newContentPath + "\".");
 
-                                    var CreatedLocalDirectory = Directory.CreateDirectory(NewDirectoryContentName);
+                                    var CreatedLocalDirectory = Directory.CreateDirectory(newContentPath);
 
-                                    FileSystemWatcher.EnableRaisingEvents = true;
+                                    _fileSystemWatcher.EnableRaisingEvents = true;
                                 }
 
                                 else // it's a file
                                 {
-                                    int Cluster = StartCluster; //FatBuffer[StartCluster]; // == 0 ? DirectoryCluster : StartCluster;
+                                    int fileClusterIndex = startClusterIndex;
 
                                     // Check if the file has been completely written.
-                                    // 0 indicates an unused FAT entry
-                                    while (!IsEndOfFinalizedClusterChain(Cluster) && Cluster != 0)
+                                    while (!IsEndOfClusterChain(fileClusterIndex))
                                     {
-                                        Cluster = FatGetNextCluster(Cluster, DirectoryCluster);
+                                        fileClusterIndex = FatGetClusterValue(fileClusterIndex, directoryClusterIndex);
                                     }
 
-                                    if (IsEndOfFinalizedClusterChain(Cluster))
+                                    if (IsEndOfFileMarker(fileClusterIndex))
                                     {
-                                        FileSystemWatcher.EnableRaisingEvents = false;
+                                        _fileSystemWatcher.EnableRaisingEvents = false;
 
                                         try
                                         {
                                             if (verbosity > 0)
-                                                Console.WriteLine("Saving local file \"" + NewDirectoryContentName + "\".");
+                                                Console.WriteLine("Saving local file \"" + newContentPath + "\".");
 
-                                            int FileSize = DirectoryBuffer[EntryIndex + 28] | (DirectoryBuffer[EntryIndex + 29] << 8) | (DirectoryBuffer[EntryIndex + 30] << 16) | (DirectoryBuffer[EntryIndex + 31] << 24);
+                                            int fileSize = directoryBuffer[directoryEntryIndex + 28] | (directoryBuffer[directoryEntryIndex + 29] << 8) | (directoryBuffer[directoryEntryIndex + 30] << 16) | (directoryBuffer[directoryEntryIndex + 31] << 24);
 
-                                            using (BinaryWriter FileBinaryWriter = new BinaryWriter(File.OpenWrite(NewDirectoryContentName)))
+                                            using (BinaryWriter FileBinaryWriter = new BinaryWriter(File.OpenWrite(newContentPath)))
                                             {
-                                                Cluster = StartCluster;
+                                                fileClusterIndex = startClusterIndex;
 
-                                                while (!IsEndOfFinalizedClusterChain(Cluster))
+                                                while (!IsEndOfClusterChain(fileClusterIndex))
                                                 {
-                                                    ClusterInfo[Cluster].ContentName = NewDirectoryContentName;
+                                                    _clusterInfos[fileClusterIndex].ContentName = newContentPath;
 
-                                                    FileBinaryWriter.Write(ClusterInfo[Cluster].DataBuffer, 0, Math.Min(ClusterInfo[Cluster].DataBuffer.Length, FileSize));
+                                                    FileBinaryWriter.Write(_clusterInfos[fileClusterIndex].DataBuffer, 0, Math.Min(_clusterInfos[fileClusterIndex].DataBuffer.Length, fileSize));
 
-                                                    FileSize -= ClusterInfo[Cluster].DataBuffer.Length;
+                                                    fileSize -= _clusterInfos[fileClusterIndex].DataBuffer.Length;
 
-                                                    Cluster = FatGetNextCluster(Cluster);
+                                                    fileClusterIndex = FatGetClusterValue(fileClusterIndex);
                                                 }
                                             }
                                         }
 
                                         catch (Exception ex)
                                         {
-                                            logger.LogException(ex);
+                                            _logger.LogException(ex);
                                         }
 
-                                        FileSystemWatcher.EnableRaisingEvents = true;
+                                        _fileSystemWatcher.EnableRaisingEvents = true;
                                     }
                                 }
 
-                                LocalDirectoryContentInfo NewLocalDirectoryContentInfo = new LocalDirectoryContentInfo();
+                                LocalDirectoryContentInfo newlocalDirectoryContentInfo = new LocalDirectoryContentInfo();
 
-                                NewLocalDirectoryContentInfo.ContentName = NewDirectoryContentName;
-                                NewLocalDirectoryContentInfo.ShortFileName = ShortFileName;
-                                NewLocalDirectoryContentInfo.EntryIndex = EntryIndex;
-                                NewLocalDirectoryContentInfo.Cluster = DirectoryCluster;
-                                NewLocalDirectoryContentInfo.StartCluster = StartCluster;
+                                newlocalDirectoryContentInfo.ContentName = newContentPath;
+                                newlocalDirectoryContentInfo.ShortFileName = fileName;
+                                newlocalDirectoryContentInfo.EntryIndex = directoryEntryIndex;
+                                newlocalDirectoryContentInfo.DirectoryCluster = directoryClusterIndex;
+                                newlocalDirectoryContentInfo.StartCluster = startClusterIndex;
 
-                                LocalDirectoryContentInfo.Add(NewLocalDirectoryContentInfo);
+                                _localDirectoryContentInfos.Add(newlocalDirectoryContentInfo);
                             }
 
                             catch (Exception ex)
                             {
-                                logger.LogException(ex);
+                                _logger.LogException(ex);
                             }
 
                         }
 
-                        if (DirectoryBuffer[EntryIndex + 11] == 0x10 && DirectoryBuffer[EntryIndex] != 0xe5) // Is the content a non deleted directory?
-                            SyncLocalDisk(StartCluster);
+                        if (directoryBuffer[directoryEntryIndex + 11] == 0x10 && directoryBuffer[directoryEntryIndex] != 0xe5) // Is the content a non deleted directory?
+                            SyncLocalDisk(startClusterIndex);
                     }
 
-                    EntryIndex += 32;
+                    directoryEntryIndex += 32;
                 }
 
-                if (EntryIndex < DirectoryBuffer.Length) // Have we found the last entry in this directory?
+                if (directoryEntryIndex < directoryBuffer.Length)
                     break;
 
-                DirectoryCluster = FatGetNextCluster(DirectoryCluster);
+                directoryClusterIndex = FatGetClusterValue(directoryClusterIndex);
             }
         }
 
-        // 0x00 free cluster
-        // 0xFFF8–0xFFFF indicates last FAT entry for a file
-        // 0xFFF0-0xFFF7 marks a bad sector in GEMDOS
-        private bool IsEndOfFinalizedClusterChain(int clusterValue)
+        private bool IsEndOfClusterChain(int clusterValue)
         {
-            return clusterValue == 0 || clusterValue  >= 0xfff8 || (clusterValue >= 0xfff0 && clusterValue <= 0xfff7);
+            // 0x00 free cluster
+            // 0xFFF8–0xFFFF indicates last FAT entry for a file
+            // 0xFFF0-0xFFF7 marks a bad sector in GEMDOS
+            return clusterValue == 0 || clusterValue >= 0xfff8 || (clusterValue >= 0xfff0 && clusterValue <= 0xfff7);
         }
 
-        public string FatCreateShortFileName(string FileName)
+        private bool IsEndOfFileMarker(int clusterValue)
+        {
+            // 0xFFF8–0xFFFF indicates last FAT entry for a file
+            return clusterValue >= 0xfff8;
+        }
+
+        public string FatCreateShortFileName(string fileName)
         {
             Regex invalidCharactersRegex = new Regex("[^\\-A-Z0-9_\\.]");
 
-            FileName = invalidCharactersRegex.Replace(FileName.ToUpper(), "_");
+            fileName = invalidCharactersRegex.Replace(fileName.ToUpper(), "_");
 
-            string ShortFileName;
+            string shortFileName;
 
-            int DotIndex = FileName.IndexOf(".");
+            int dotIndex = fileName.IndexOf(".");
 
-            if (DotIndex == -1)
-                ShortFileName = FileName;
+            if (dotIndex == -1)
+                shortFileName = fileName;
             else
-                ShortFileName = FileName.Substring(0, DotIndex);
+                shortFileName = fileName.Substring(0, dotIndex);
 
-            if (ShortFileName.Length > 8)
-                ShortFileName = FileName.Substring(0, 8);
+            if (shortFileName.Length > 8)
+                shortFileName = fileName.Substring(0, 8);
 
-            DotIndex = FileName.LastIndexOf(".");
+            dotIndex = fileName.LastIndexOf(".");
 
-            if (DotIndex != -1)
+            if (dotIndex != -1)
             {
-                string Extender = FileName.Substring(DotIndex + 1);
+                string Extender = fileName.Substring(dotIndex + 1);
 
                 if (Extender.Length > 3)
                     Extender = Extender.Substring(0, 3);
 
-                ShortFileName += "." + Extender;
+                shortFileName += "." + Extender;
             }
 
-            return ShortFileName;
+            return shortFileName;
         }
 
-        public int FatGetNextCluster(int CurrentCluster, int directoryOffset = 0)
+        public int FatGetClusterValue(int clusterIndex, int directoryCluster = 0)
         {
-            int cluster = (CurrentCluster * 2);
-            if (directoryOffset != 0) cluster -= RootDirectorySectors;
-            return FatBuffer[cluster + 1] << 8 | FatBuffer[cluster];
+            int cluster = clusterIndex * 2;
+            if (directoryCluster != 0) cluster -= Parameters.RootDirectorySectors;
+            return _fatBuffer[cluster + 1] << 8 | _fatBuffer[cluster];
         }
 
         public int FatGetFreeCluster(int CurrentCluster)
         {
             int NewCluster;
 
-            for (NewCluster = 2; NewCluster < FatBuffer.Length / 2; NewCluster++)
+            for (NewCluster = 2; NewCluster < _fatBuffer.Length / 2; NewCluster++)
             {
-                if (FatBuffer[NewCluster * 2] == 0 && FatBuffer[NewCluster * 2 + 1] == 0)
+                if (_fatBuffer[NewCluster * 2] == 0 && _fatBuffer[NewCluster * 2 + 1] == 0)
                 {
                     if (CurrentCluster > 0)
                     {
-                        FatBuffer[CurrentCluster * 2] = (byte)(NewCluster & 0xff);
-                        FatBuffer[CurrentCluster * 2 + 1] = (byte)((NewCluster >> 8) & 0xff);
+                        _fatBuffer[CurrentCluster * 2] = (byte)(NewCluster & 0xff);
+                        _fatBuffer[CurrentCluster * 2 + 1] = (byte)((NewCluster >> 8) & 0xff);
                     }
 
-                    FatBuffer[NewCluster * 2] = 0xff;
-                    FatBuffer[NewCluster * 2 + 1] = 0xff;
+                    _fatBuffer[NewCluster * 2] = 0xff;
+                    _fatBuffer[NewCluster * 2 + 1] = 0xff;
 
                     break;
                 }
@@ -351,65 +335,65 @@ namespace AtariST.SerialDisk.Storage
 
         public byte[] ReadSectors(int Sector, int NumberOfSectors)
         {
-            byte[] DataBuffer = new byte[NumberOfSectors * BytesPerSector];
+            byte[] DataBuffer = new byte[NumberOfSectors * Parameters.BytesPerSector];
             int DataOffset = 0;
 
             while (NumberOfSectors > 0)
             {
-                if (Sector < SectorsPerFat * 2)
+                if (Sector < Parameters.SectorsPerFat * 2)
                 {
                     int ReadSector = Sector;
 
-                    if (ReadSector >= SectorsPerFat)
-                        ReadSector -= SectorsPerFat;
+                    if (ReadSector >= Parameters.SectorsPerFat)
+                        ReadSector -= Parameters.SectorsPerFat;
 
-                    Array.Copy(FatBuffer, ReadSector * BytesPerSector, DataBuffer, DataOffset, BytesPerSector);
+                    Array.Copy(_fatBuffer, ReadSector * Parameters.BytesPerSector, DataBuffer, DataOffset, Parameters.BytesPerSector);
                 }
-                else if (Sector < SectorsPerFat * 2 + RootDirectorySectors)
+                else if (Sector < Parameters.SectorsPerFat * 2 + Parameters.RootDirectorySectors)
                 {
-                    Array.Copy(RootDirectoryBuffer, (Sector - SectorsPerFat * 2) * BytesPerSector, DataBuffer, DataOffset, BytesPerSector);
+                    Array.Copy(_rootDirectoryBuffer, (Sector - Parameters.SectorsPerFat * 2) * Parameters.BytesPerSector, DataBuffer, DataOffset, Parameters.BytesPerSector);
                 }
                 else
                 {
-                    int ReadSector = Sector - (SectorsPerFat * 2 + RootDirectorySectors) + 2 * SectorsPerCluster;
-                    int ClusterIndex = ReadSector / SectorsPerCluster;
+                    int ReadSector = Sector - (Parameters.SectorsPerFat * 2 + Parameters.RootDirectorySectors) + 2 * Parameters.SectorsPerCluster;
+                    int ClusterIndex = ReadSector / Parameters.SectorsPerCluster;
 
-                    if (ClusterInfo[ClusterIndex] != null)
+                    if (_clusterInfos[ClusterIndex] != null)
                     {
-                        if (ClusterInfo[ClusterIndex].DataBuffer != null)
+                        if (_clusterInfos[ClusterIndex].DataBuffer != null)
                         {
-                            Array.Copy(ClusterInfo[ClusterIndex].DataBuffer, (ReadSector - ClusterIndex * SectorsPerCluster) * BytesPerSector, DataBuffer, DataOffset, BytesPerSector);
+                            Array.Copy(_clusterInfos[ClusterIndex].DataBuffer, (ReadSector - ClusterIndex * Parameters.SectorsPerCluster) * Parameters.BytesPerSector, DataBuffer, DataOffset, Parameters.BytesPerSector);
                         }
                         else
                         {
-                            if (ClusterInfo[ClusterIndex].ContentName != null)
+                            if (_clusterInfos[ClusterIndex].ContentName != null)
                             {
-                                byte[] FileClusterDataBuffer = new byte[BytesPerCluster];
+                                byte[] FileClusterDataBuffer = new byte[Parameters.BytesPerCluster];
                                 try
                                 {
-                                    using (FileStream FileStream = File.OpenRead(ClusterInfo[ClusterIndex].ContentName))
+                                    using (FileStream FileStream = File.OpenRead(_clusterInfos[ClusterIndex].ContentName))
                                     {
-                                        int BytesToRead = Math.Min(BytesPerCluster, (int)(FileStream.Length - ClusterInfo[ClusterIndex].FileOffset));
+                                        int BytesToRead = Math.Min(Parameters.BytesPerCluster, (int)(FileStream.Length - _clusterInfos[ClusterIndex].FileOffset));
 
-                                        FileStream.Seek(ClusterInfo[ClusterIndex].FileOffset, SeekOrigin.Begin);
+                                        FileStream.Seek(_clusterInfos[ClusterIndex].FileOffset, SeekOrigin.Begin);
 
                                         for (int Index = 0; Index < BytesToRead; Index++)
                                             FileClusterDataBuffer[Index] = (byte)FileStream.ReadByte();
 
-                                        Array.Copy(FileClusterDataBuffer, (ReadSector - ClusterIndex * SectorsPerCluster) * BytesPerSector, DataBuffer, DataOffset, BytesPerSector);
+                                        Array.Copy(FileClusterDataBuffer, (ReadSector - ClusterIndex * Parameters.SectorsPerCluster) * Parameters.BytesPerSector, DataBuffer, DataOffset, Parameters.BytesPerSector);
                                     }
                                 }
 
                                 catch (Exception ex)
                                 {
-                                    logger.LogException(ex, "Error reading sectors");
+                                    _logger.LogException(ex, "Error reading sectors");
                                 }
                             }
                         }
                     }
                 }
 
-                DataOffset += BytesPerSector;
+                DataOffset += Parameters.BytesPerSector;
                 NumberOfSectors--;
                 Sector++;
             }
@@ -420,42 +404,42 @@ namespace AtariST.SerialDisk.Storage
         public int WriteSectors(int receiveBufferLength, int StartSector, byte[] DataBuffer)
         {
             int Sector = StartSector;
-            int NumberOfSectors = (int)Math.Ceiling((decimal)receiveBufferLength / BytesPerSector);
+            int NumberOfSectors = (int)Math.Ceiling((decimal)receiveBufferLength / Parameters.BytesPerSector);
             int DataOffset = 0;
             int ClusterIndex = 0;
 
             while (NumberOfSectors > 0)
             {
-                if (Sector < SectorsPerFat * 2) // FAT area?
+                if (Sector < Parameters.SectorsPerFat * 2) // FAT area?
                 {
                     int WriteSector = Sector;
 
-                    if (WriteSector >= SectorsPerFat)
-                        WriteSector -= SectorsPerFat;
+                    if (WriteSector >= Parameters.SectorsPerFat)
+                        WriteSector -= Parameters.SectorsPerFat;
 
-                    Array.Copy(DataBuffer, DataOffset, FatBuffer, WriteSector * BytesPerSector, BytesPerSector);
+                    Array.Copy(DataBuffer, DataOffset, _fatBuffer, WriteSector * Parameters.BytesPerSector, Parameters.BytesPerSector);
 
                     SyncLocalDisk();
                 }
 
-                else if (Sector < SectorsPerFat * 2 + RootDirectorySectors) // Root directory area?
+                else if (Sector < Parameters.SectorsPerFat * 2 + Parameters.RootDirectorySectors) // Root directory area?
                 {
-                    Array.Copy(DataBuffer, DataOffset, RootDirectoryBuffer, (Sector - SectorsPerFat * 2) * BytesPerSector, BytesPerSector);
+                    Array.Copy(DataBuffer, DataOffset, _rootDirectoryBuffer, (Sector - Parameters.SectorsPerFat * 2) * Parameters.BytesPerSector, Parameters.BytesPerSector);
                 }
 
                 else // Data area.
                 {
-                    int WriteSector = Sector - (SectorsPerFat * 2 + RootDirectorySectors) + 2 * SectorsPerCluster;
-                    ClusterIndex = WriteSector / SectorsPerCluster;
+                    int WriteSector = Sector - (Parameters.SectorsPerFat * 2 + Parameters.RootDirectorySectors) + 2 * Parameters.SectorsPerCluster;
+                    ClusterIndex = WriteSector / Parameters.SectorsPerCluster;
 
-                    if (ClusterInfo[ClusterIndex] == null) ClusterInfo[ClusterIndex] = new ClusterInfo();
+                    if (_clusterInfos[ClusterIndex] == null) _clusterInfos[ClusterIndex] = new ClusterInfo();
 
-                    if (ClusterInfo[ClusterIndex].DataBuffer == null) ClusterInfo[ClusterIndex].DataBuffer = new byte[BytesPerCluster];
+                    if (_clusterInfos[ClusterIndex].DataBuffer == null) _clusterInfos[ClusterIndex].DataBuffer = new byte[Parameters.BytesPerCluster];
 
-                    Array.Copy(DataBuffer, DataOffset, ClusterInfo[ClusterIndex].DataBuffer, (WriteSector - ClusterIndex * SectorsPerCluster) * BytesPerSector, BytesPerSector);
+                    Array.Copy(DataBuffer, DataOffset, _clusterInfos[ClusterIndex].DataBuffer, (WriteSector - ClusterIndex * Parameters.SectorsPerCluster) * Parameters.BytesPerSector, Parameters.BytesPerSector);
                 }
 
-                DataOffset += BytesPerSector;
+                DataOffset += Parameters.BytesPerSector;
                 NumberOfSectors--;
                 Sector++;
             }
@@ -463,76 +447,76 @@ namespace AtariST.SerialDisk.Storage
             return ClusterIndex;
         }
 
-        public bool FatAddDirectoryEntry(int DirectoryCluster, string FullFileName, string ShortFileName, byte AttributeFlags, DateTime LastWriteDateTime, long FileSize, int StartCluster)
+        public bool FatAddDirectoryEntry(int directoryClusterIndex, string fullFileName, string shortFileName, byte attributeFlags, DateTime lastWriteDateTime, long fileSize, int startClusterIndex)
         {
-            byte[] DirectoryBuffer;
-            int EntryIndex = 0;
+            byte[] directoryBuffer;
+            int entryIndex = 0;
 
-            if (DirectoryCluster == 0)
-                DirectoryBuffer = RootDirectoryBuffer;
+            if (directoryClusterIndex == _rootDirectoryClusterIndex)
+                directoryBuffer = _rootDirectoryBuffer;
             else
-                DirectoryBuffer = ClusterInfo[DirectoryCluster].DataBuffer;
+                directoryBuffer = _clusterInfos[directoryClusterIndex].DataBuffer;
 
             // Find a free entry.
             do
             {
-                if (DirectoryCluster == 0)
+                if (directoryClusterIndex == 0)
                 {
-                    if (EntryIndex >= RootDirectoryBuffer.Length)
+                    if (entryIndex >= _rootDirectoryBuffer.Length)
                         return false;
                 }
-                else if (EntryIndex >= BytesPerCluster)
+                else if (entryIndex >= Parameters.BytesPerCluster)
                 {
-                    int NextDirectoryCluster = FatGetNextCluster(DirectoryCluster);
+                    int NextDirectoryCluster = FatGetClusterValue(directoryClusterIndex);
 
                     if (NextDirectoryCluster == 0xffff)
                     {
                         try
                         {
-                            int NewDirectoryCluster = FatGetFreeCluster(DirectoryCluster);
+                            int NewDirectoryCluster = FatGetFreeCluster(directoryClusterIndex);
 
-                            ClusterInfo[NewDirectoryCluster] = new ClusterInfo();
+                            _clusterInfos[NewDirectoryCluster] = new ClusterInfo();
 
-                            ClusterInfo[NewDirectoryCluster].ContentName = ClusterInfo[DirectoryCluster].ContentName;
-                            ClusterInfo[NewDirectoryCluster].FileOffset = -1;
-                            ClusterInfo[NewDirectoryCluster].DataBuffer = new byte[BytesPerCluster];
+                            _clusterInfos[NewDirectoryCluster].ContentName = _clusterInfos[directoryClusterIndex].ContentName;
+                            _clusterInfos[NewDirectoryCluster].FileOffset = -1;
+                            _clusterInfos[NewDirectoryCluster].DataBuffer = new byte[Parameters.BytesPerCluster];
 
-                            DirectoryCluster = NewDirectoryCluster;
+                            directoryClusterIndex = NewDirectoryCluster;
                         }
 
-                        catch (IndexOutOfRangeException boundsEx)
+                        catch (IndexOutOfRangeException outOfRangeEx)
                         {
-                            logger.LogException(boundsEx, $"Local directory is too large for the given virtual disk size ({DiskSize / 1024 / 1024} MB).");
-                            throw boundsEx;
+                            _logger.LogException(outOfRangeEx, $"Local directory is too large for the given virtual disk size ({Parameters.DiskTotalBytes / 1024 / 1024} MB).");
+                            throw outOfRangeEx;
                         }
                     }
                     else
                     {
-                        DirectoryCluster = NextDirectoryCluster;
+                        directoryClusterIndex = NextDirectoryCluster;
                     }
 
-                    DirectoryBuffer = ClusterInfo[DirectoryCluster].DataBuffer;
-                    EntryIndex = 0;
+                    directoryBuffer = _clusterInfos[directoryClusterIndex].DataBuffer;
+                    entryIndex = 0;
                 }
 
-                while (EntryIndex < BytesPerCluster && DirectoryBuffer[EntryIndex] != 0)
-                    EntryIndex += 32;
+                while (entryIndex < Parameters.BytesPerCluster && directoryBuffer[entryIndex] != 0)
+                    entryIndex += 32;
             }
-            while (EntryIndex >= BytesPerCluster);
+            while (entryIndex >= Parameters.BytesPerCluster);
 
             // Remember which local content matches this entry.
 
-            if (ShortFileName != "." && ShortFileName != "..")
+            if (shortFileName != "." && shortFileName != "..")
             {
                 LocalDirectoryContentInfo localDirectoryContentInfo = new LocalDirectoryContentInfo();
 
-                localDirectoryContentInfo.ContentName = FullFileName;
-                localDirectoryContentInfo.ShortFileName = ShortFileName;
-                localDirectoryContentInfo.EntryIndex = EntryIndex;
-                localDirectoryContentInfo.Cluster = DirectoryCluster;
-                localDirectoryContentInfo.StartCluster = StartCluster;
+                localDirectoryContentInfo.ContentName = fullFileName;
+                localDirectoryContentInfo.ShortFileName = shortFileName;
+                localDirectoryContentInfo.EntryIndex = entryIndex;
+                localDirectoryContentInfo.DirectoryCluster = directoryClusterIndex;
+                localDirectoryContentInfo.StartCluster = startClusterIndex;
 
-                LocalDirectoryContentInfo.Add(localDirectoryContentInfo);
+                _localDirectoryContentInfos.Add(localDirectoryContentInfo);
             }
 
             // File name.
@@ -540,46 +524,46 @@ namespace AtariST.SerialDisk.Storage
             int Index;
 
             for (Index = 0; Index < (8 + 3); Index++)
-                DirectoryBuffer[EntryIndex + Index] = 0x20;
+                directoryBuffer[entryIndex + Index] = 0x20;
 
             string[] NameAndExtender;
             byte[] AsciiName;
             byte[] AsciiExtender;
 
-            if (ShortFileName == "." || ShortFileName == "..")
+            if (shortFileName == "." || shortFileName == "..")
             {
-                AsciiName = ASCIIEncoding.ASCII.GetBytes(ShortFileName);
+                AsciiName = ASCIIEncoding.ASCII.GetBytes(shortFileName);
                 AsciiExtender = null;
             }
             else
             {
-                NameAndExtender = ShortFileName.Split('.');
+                NameAndExtender = shortFileName.Split('.');
                 AsciiName = ASCIIEncoding.ASCII.GetBytes(NameAndExtender[0]);
                 AsciiExtender = NameAndExtender.Length == 2 ? ASCIIEncoding.ASCII.GetBytes(NameAndExtender[1]) : null;
             }
 
             for (Index = 0; Index < AsciiName.Length; Index++)
-                DirectoryBuffer[EntryIndex + Index] = AsciiName[Index];
+                directoryBuffer[entryIndex + Index] = AsciiName[Index];
 
             if (AsciiExtender != null)
                 for (Index = 0; Index < AsciiExtender.Length; Index++)
-                    DirectoryBuffer[EntryIndex + 8 + Index] = AsciiExtender[Index];
+                    directoryBuffer[entryIndex + 8 + Index] = AsciiExtender[Index];
 
             // File attribute flags.
 
-            DirectoryBuffer[EntryIndex + 11] = AttributeFlags;
+            directoryBuffer[entryIndex + 11] = attributeFlags;
 
             // File write time and date (little endian).
 
             UInt16 FatFileWriteTime = 0;
             UInt16 FatFileWriteDate = 0;
 
-            int TwoSeconds = LastWriteDateTime.Second / 2;
-            int Minutes = LastWriteDateTime.Minute;
-            int Hours = LastWriteDateTime.Hour;
-            int DayOfMonth = LastWriteDateTime.Day;
-            int Month = LastWriteDateTime.Month;
-            int YearsSince1980 = LastWriteDateTime.Year - 1980;
+            int TwoSeconds = lastWriteDateTime.Second / 2;
+            int Minutes = lastWriteDateTime.Minute;
+            int Hours = lastWriteDateTime.Hour;
+            int DayOfMonth = lastWriteDateTime.Day;
+            int Month = lastWriteDateTime.Month;
+            int YearsSince1980 = lastWriteDateTime.Year - 1980;
 
             FatFileWriteTime |= (UInt16)TwoSeconds;
             FatFileWriteTime |= (UInt16)(Minutes << 5);
@@ -589,102 +573,97 @@ namespace AtariST.SerialDisk.Storage
             FatFileWriteDate |= (UInt16)(Month << 5);
             FatFileWriteDate |= (UInt16)(YearsSince1980 << 9);
 
-            DirectoryBuffer[EntryIndex + 22] = (byte)(FatFileWriteTime & 0xff);
-            DirectoryBuffer[EntryIndex + 23] = (byte)((FatFileWriteTime >> 8) & 0xff);
-            DirectoryBuffer[EntryIndex + 24] = (byte)(FatFileWriteDate & 0xff);
-            DirectoryBuffer[EntryIndex + 25] = (byte)((FatFileWriteDate >> 8) & 0xff);
+            directoryBuffer[entryIndex + 22] = (byte)(FatFileWriteTime & 0xff);
+            directoryBuffer[entryIndex + 23] = (byte)((FatFileWriteTime >> 8) & 0xff);
+            directoryBuffer[entryIndex + 24] = (byte)(FatFileWriteDate & 0xff);
+            directoryBuffer[entryIndex + 25] = (byte)((FatFileWriteDate >> 8) & 0xff);
 
             // Cluster (little endian).
 
-            DirectoryBuffer[EntryIndex + 26] = (byte)(StartCluster & 0xff);
-            DirectoryBuffer[EntryIndex + 27] = (byte)((StartCluster >> 8) & 0xff);
+            directoryBuffer[entryIndex + 26] = (byte)(startClusterIndex & 0xff);
+            directoryBuffer[entryIndex + 27] = (byte)((startClusterIndex >> 8) & 0xff);
 
             // File size (little endian).
 
-            DirectoryBuffer[EntryIndex + 28] = (byte)(FileSize & 0xff);
-            DirectoryBuffer[EntryIndex + 29] = (byte)((FileSize >> 8) & 0xff);
-            DirectoryBuffer[EntryIndex + 30] = (byte)((FileSize >> 16) & 0xff);
-            DirectoryBuffer[EntryIndex + 31] = (byte)((FileSize >> 24) & 0xff);
+            directoryBuffer[entryIndex + 28] = (byte)(fileSize & 0xff);
+            directoryBuffer[entryIndex + 29] = (byte)((fileSize >> 8) & 0xff);
+            directoryBuffer[entryIndex + 30] = (byte)((fileSize >> 16) & 0xff);
+            directoryBuffer[entryIndex + 31] = (byte)((fileSize >> 24) & 0xff);
 
             return true;
         }
 
-        public void FatAddDirectory(DirectoryInfo DirectoryInfo, int DirectoryCluster)
+        public void FatAddDirectory(DirectoryInfo directoryInfo, int directoryCluster)
         {
-            int NewDirectoryCluster = FatGetFreeCluster(0);
+            int newDirectoryClusterIndex = FatGetFreeCluster(0);
 
-            ClusterInfo[NewDirectoryCluster] = new ClusterInfo();
+            _clusterInfos[newDirectoryClusterIndex] = new ClusterInfo();
 
-            ClusterInfo[NewDirectoryCluster].ContentName = DirectoryInfo.FullName;
-            ClusterInfo[NewDirectoryCluster].FileOffset = -1;
-            ClusterInfo[NewDirectoryCluster].DataBuffer = new byte[BytesPerCluster];
+            _clusterInfos[newDirectoryClusterIndex].ContentName = directoryInfo.FullName;
+            _clusterInfos[newDirectoryClusterIndex].FileOffset = -1;
+            _clusterInfos[newDirectoryClusterIndex].DataBuffer = new byte[Parameters.BytesPerCluster];
 
-            FatAddDirectoryEntry(DirectoryCluster, DirectoryInfo.FullName, FatCreateShortFileName(DirectoryInfo.Name), 0x10, DirectoryInfo.LastWriteTime, 0, NewDirectoryCluster);
-            FatAddDirectoryEntry(NewDirectoryCluster, "", ".", 0x10, DirectoryInfo.LastWriteTime, 0, NewDirectoryCluster);
-            FatAddDirectoryEntry(NewDirectoryCluster, "", "..", 0x10, DirectoryInfo.LastWriteTime, 0, DirectoryCluster);
+            FatAddDirectoryEntry(directoryCluster, directoryInfo.FullName, FatCreateShortFileName(directoryInfo.Name), 0x10, directoryInfo.LastWriteTime, 0, newDirectoryClusterIndex);
+            FatAddDirectoryEntry(newDirectoryClusterIndex, "", ".", 0x10, directoryInfo.LastWriteTime, 0, newDirectoryClusterIndex);
+            FatAddDirectoryEntry(newDirectoryClusterIndex, "", "..", 0x10, directoryInfo.LastWriteTime, 0, directoryCluster);
 
-            FatImportDirectoryContents(DirectoryInfo.FullName, NewDirectoryCluster);
+            FatImportLocalDirectoryContents(directoryInfo.FullName, newDirectoryClusterIndex);
         }
 
-        public void FatAddFile(FileInfo FileInfo, int DirectoryCluster)
+        public void FatAddFile(FileInfo FileInfo, int directoryClusterIndex)
         {
-            long FileOffset = 0;
-            int FileStartCluster = 0;
-            int NextFileCluster = 0;
+            long fileOffset = 0;
+            int fileStartClusterIndex = 0;
+            int NextFileClusterIndex = 0;
 
-            while (FileOffset < FileInfo.Length)
+            while (fileOffset < FileInfo.Length)
             {
                 try
                 {
-                    NextFileCluster = FatGetFreeCluster(NextFileCluster);
+                    NextFileClusterIndex = FatGetFreeCluster(NextFileClusterIndex);
 
-                    if (FileStartCluster == 0)
-                        FileStartCluster = NextFileCluster;
+                    if (fileStartClusterIndex == _rootDirectoryClusterIndex)
+                        fileStartClusterIndex = NextFileClusterIndex;
 
-                    ClusterInfo[NextFileCluster] = new ClusterInfo();
-                    ClusterInfo[NextFileCluster].ContentName = FileInfo.FullName;
-                    ClusterInfo[NextFileCluster].FileOffset = FileOffset;
+                    _clusterInfos[NextFileClusterIndex] = new ClusterInfo();
+                    _clusterInfos[NextFileClusterIndex].ContentName = FileInfo.FullName;
+                    _clusterInfos[NextFileClusterIndex].FileOffset = fileOffset;
 
-                    FileOffset += BytesPerCluster;
+                    fileOffset += Parameters.BytesPerCluster;
                 }
 
                 catch (IndexOutOfRangeException boundsEx)
                 {
-                    logger.LogException(boundsEx, $"Local directory is too large for the given virtual disk size ({DiskSize / 1024 / 1024} MB)");
+                    _logger.LogException(boundsEx, $"Local directory is too large for the given virtual disk size ({Parameters.DiskTotalBytes / 1024 / 1024} MiB)");
                     throw boundsEx;
                 }
             }
 
-            FatAddDirectoryEntry(DirectoryCluster, FileInfo.FullName, FatCreateShortFileName(FileInfo.Name), 0x00, FileInfo.LastWriteTime, FileInfo.Length, FileStartCluster);
+            FatAddDirectoryEntry(directoryClusterIndex, FileInfo.FullName, FatCreateShortFileName(FileInfo.Name), 0x00, FileInfo.LastWriteTime, FileInfo.Length, fileStartClusterIndex);
         }
 
-        public void FileChangedHandler(object Source, FileSystemEventArgs Args)
+        public void FileChangedHandler(object source, FileSystemEventArgs args)
         {
             MediaChanged = true;
         }
 
-        public void FileRenamedHandler(object Source, FileSystemEventArgs Args)
+        public void FatImportLocalDirectoryContents(string directoryName, int directoryClusterIndex)
         {
-            MediaChanged = true;
-        }
-
-        public void FatImportDirectoryContents(string DirectoryName, int DirectoryCluster)
-        {
-            if (DirectoryCluster == 0)
+            if (directoryClusterIndex == _rootDirectoryClusterIndex)
             {
-                RootDirectoryBuffer = new byte[RootDirectorySectors * BytesPerSector];
-                FatBuffer = new byte[SectorsPerFat * BytesPerSector];
-                ClusterInfo = new ClusterInfo[DiskClusters];
-                LocalDirectoryContentInfo = new List<LocalDirectoryContentInfo>();
+                _rootDirectoryBuffer = new byte[Parameters.RootDirectorySectors * Parameters.BytesPerSector];
+                _fatBuffer = new byte[Parameters.SectorsPerFat * Parameters.BytesPerSector];
+                _clusterInfos = new ClusterInfo[Parameters.DiskClusters];
+                _localDirectoryContentInfos = new List<LocalDirectoryContentInfo>();
             }
 
-            DirectoryInfo DirectoryInfo = new DirectoryInfo(DirectoryName);
+            DirectoryInfo DirectoryInfo = new DirectoryInfo(directoryName);
 
             foreach (DirectoryInfo SubDirectoryInfo in DirectoryInfo.GetDirectories())
-                FatAddDirectory(SubDirectoryInfo, DirectoryCluster);
+                FatAddDirectory(SubDirectoryInfo, directoryClusterIndex);
 
             foreach (FileInfo FileInfo in DirectoryInfo.GetFiles())
-                FatAddFile(FileInfo, DirectoryCluster);
+                FatAddFile(FileInfo, directoryClusterIndex);
         }
     }
 }

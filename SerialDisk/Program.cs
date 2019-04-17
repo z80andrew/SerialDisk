@@ -1,8 +1,8 @@
 using AtariST.SerialDisk.Comm;
+using AtariST.SerialDisk.Common;
 using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Shared;
 using AtariST.SerialDisk.Storage;
-using AtariST.SerialDisk.Utilities;
 using System;
 using System.IO;
 using System.IO.Ports;
@@ -13,7 +13,7 @@ namespace AtariST.SerialDisk
 {
     class MainClass
     {
-        private static void PrintUsage(Settings applicationSettings)
+        private static void PrintUsage(ApplicationSettings applicationSettings)
         {
             Console.WriteLine();
 
@@ -22,15 +22,15 @@ namespace AtariST.SerialDisk
             Console.WriteLine();
 
             Console.WriteLine("Options (default):");
-            Console.WriteLine($"{Parameters.diskSizeParam} <disk_size_in_MB> ({applicationSettings.DiskSizeMB})");
-            Console.WriteLine($"{Parameters.portParam} [port_name] ({applicationSettings.SerialSettings.PortName})");
-            Console.WriteLine($"{Parameters.baudRateParam} <baud_rate> ({applicationSettings.SerialSettings.BaudRate})");
-            Console.WriteLine($"{Parameters.parityParam} [N|O|E|M|S] ({applicationSettings.SerialSettings.Parity})");
-            Console.WriteLine($"{Parameters.stopBitsParam} [N|1|1.5|2] ({applicationSettings.SerialSettings.StopBits})");
-            Console.WriteLine($"{Parameters.dataBitsParam} <data_bits> ({applicationSettings.SerialSettings.DataBits})");
-            Console.WriteLine($"{Parameters.handshakeParam} [None|RTS|RTS-Xon-Xoff|Xon-Xoff] ({applicationSettings.SerialSettings.Handshake})");
-            Console.WriteLine($"{Parameters.verbosityParam} [0-3] ({applicationSettings.LoggingLevel})");
-            Console.WriteLine($"{Parameters.logFileNameParam} [log_file_name]");
+            Console.WriteLine($"{ApplicationParameters.diskSizeParam} <disk_size_in_MiB> ({applicationSettings.DiskSizeMiB})");
+            Console.WriteLine($"{ApplicationParameters.portParam} [port_name] ({applicationSettings.SerialSettings.PortName})");
+            Console.WriteLine($"{ApplicationParameters.baudRateParam} <baud_rate> ({applicationSettings.SerialSettings.BaudRate})");
+            Console.WriteLine($"{ApplicationParameters.parityParam} [N|O|E|M|S] ({applicationSettings.SerialSettings.Parity})");
+            Console.WriteLine($"{ApplicationParameters.stopBitsParam} [N|1|1.5|2] ({applicationSettings.SerialSettings.StopBits})");
+            Console.WriteLine($"{ApplicationParameters.dataBitsParam} <data_bits> ({applicationSettings.SerialSettings.DataBits})");
+            Console.WriteLine($"{ApplicationParameters.handshakeParam} [None|RTS|RTS-Xon-Xoff|Xon-Xoff] ({applicationSettings.SerialSettings.Handshake})");
+            Console.WriteLine($"{ApplicationParameters.verbosityParam} [0-3] ({applicationSettings.LoggingLevel})");
+            Console.WriteLine($"{ApplicationParameters.logFileNameParam} [log_file_name]");
             Console.WriteLine();
 
             Console.WriteLine("Serial ports available:");
@@ -46,7 +46,7 @@ namespace AtariST.SerialDisk
         {
             Console.WriteLine("Serial Disk v" + Assembly.GetExecutingAssembly().GetName().Version);
 
-            Settings applicationSettings = Parameters.ParseParameters(Arguments);
+            ApplicationSettings applicationSettings = ApplicationParameters.ParseParameters(Arguments);
 
             if (!Arguments.Any() || (bool)Arguments[0].ToLowerInvariant().StartsWith("--h"))
             {
@@ -59,9 +59,11 @@ namespace AtariST.SerialDisk
 
             Logger logger = new Logger(applicationSettings.LoggingLevel, applicationSettings.LogFileName);
 
-            Disk disk = new Disk(applicationSettings, logger);
+            DiskParameters diskParameters = new DiskParameters(applicationSettings.LocalDirectoryName, applicationSettings.DiskSizeMiB * 1024 * 1024);
 
-            Serial serial = new Serial(applicationSettings, disk, logger);
+            Disk disk = new Disk(diskParameters, logger);
+
+            Serial serial = new Serial(applicationSettings.SerialSettings, disk, logger);
 
             Console.WriteLine($"Listening on {applicationSettings.SerialSettings.PortName.ToUpperInvariant()}");
 
@@ -75,8 +77,8 @@ namespace AtariST.SerialDisk
 
             Console.WriteLine("Stopping receiver...");
 
-            logger.Dispose();
             serial.Dispose();
+            logger.Dispose();
         }
     }
 }
