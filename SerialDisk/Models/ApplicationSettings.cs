@@ -1,7 +1,7 @@
-﻿using AtariST.SerialDisk.Shared;
+using AtariST.SerialDisk.Shared;
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
-using System.IO.Ports;
 using static AtariST.SerialDisk.Shared.Constants;
 
 namespace AtariST.SerialDisk.Models

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace AtariST.SerialDisk.Storage
+﻿namespace AtariST.SerialDisk.Storage
 {
     public class DiskParameters
     {
@@ -36,34 +32,22 @@ namespace AtariST.SerialDisk.Storage
 
         public int BytesPerCluster
         {
-            get
-            {
-                return SectorsPerCluster * BytesPerSector;
-            }
+            get => SectorsPerCluster * BytesPerSector;
         }
 
         public int DiskClusters
         {
-            get
-            {
-                return DiskTotalBytes / BytesPerCluster;
-            }
+            get => DiskTotalBytes / BytesPerCluster;
         }
 
         public int FatEntriesPerSector
         {
-            get
-            {
-                return BytesPerSector / 2;
-            }
+            get => BytesPerSector / 2;
         }
 
         public int SectorsPerFat
         {
-            get
-            {
-                return (DiskClusters + FatEntriesPerSector - 1) / FatEntriesPerSector;
-            }
+            get => (DiskClusters + FatEntriesPerSector - 1) / FatEntriesPerSector;
         }
 
         public readonly int RootDirectorySectors = 4;

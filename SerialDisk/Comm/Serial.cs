@@ -56,8 +56,8 @@ namespace AtariST.SerialDisk.Comm
             serialPort.DataBits = serialSettings.DataBits;
             serialPort.StopBits = serialSettings.StopBits;
             serialPort.Parity = serialSettings.Parity;
-            serialPort.ReadTimeout = serialSettings.Timeout;
             serialPort.ReceivedBytesThreshold = 1;
+            serialPort.ReadTimeout = 100;
             serialPort.WriteTimeout = -1;
             serialPort.ReadBufferSize = 64 * 1024;
             serialPort.WriteBufferSize = 64 * 1024;
@@ -121,7 +121,7 @@ namespace AtariST.SerialDisk.Comm
                                         break;
 
                                     case 2:
-                                        //logger.Log("Received media change command.", LoggingLevel.Verbose);
+                                        _logger.Log("Received media change command.", LoggingLevel.Verbose);
                                         _state = ReceiverState.SendMediaChangeStatus;
                                         break;
 
@@ -339,7 +339,7 @@ namespace AtariST.SerialDisk.Comm
                         Console.WriteLine();
 
                         byte[] Crc32Buffer = new byte[4];
-                        UInt32 Crc32Value = CRC32.CalculateCrc32(SendDataBuffer);
+                        UInt32 Crc32Value = CRC32.CalculateCRC32(SendDataBuffer);
 
                         Crc32Buffer[0] = (byte)((Crc32Value >> 24) & 0xff);
                         Crc32Buffer[1] = (byte)((Crc32Value >> 16) & 0xff);
@@ -359,8 +359,6 @@ namespace AtariST.SerialDisk.Comm
                         _transferEndDateTime = DateTime.Now;
 
                         _state = ReceiverState.ReceiveEndMagic;
-
-                        //serialPort.ReadTimeout = (int)((TransferSize * 10 * 1000 * 1.5 / serialPort.BaudRate) - (TransferEndDateTime.Ticks - TransferStartDateTime.Ticks) / 10000); // Set the timeout to 1.5 times the estimated remaining transfer time.
 
                         break;
                 }
