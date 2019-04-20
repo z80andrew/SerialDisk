@@ -1,11 +1,12 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using AtariST.SerialDisk.Interfaces;
 using static AtariST.SerialDisk.Shared.Constants;
 
 namespace AtariST.SerialDisk.Shared
 {
-    public class Logger : IDisposable
+    public class Logger : IDisposable, ILogger
     {
         private FileStream _fileStream;
         private string _logFilePath;
@@ -50,12 +51,12 @@ namespace AtariST.SerialDisk.Shared
         {
             if (!displayOnly && _fileStream != null) LogToFile(message);
 
-            if(messageLogLevel >= _logLevel) Console.WriteLine($"{DateTime.Now} {message}");
+            if (messageLogLevel >= _logLevel) Console.WriteLine($"{DateTime.Now} {message}");
         }
 
         public void LogException(Exception exception, string message = "")
         {
-            if(String.IsNullOrEmpty(message)) message = exception.Message;
+            if (String.IsNullOrEmpty(message)) message = exception.Message;
             if (_fileStream != null) LogToFile($"{message}: {exception.StackTrace}");
 
             Console.ForegroundColor = ConsoleColor.Red;
@@ -68,7 +69,7 @@ namespace AtariST.SerialDisk.Shared
         {
             try
             {
-                using (StreamWriter fileWriter = new StreamWriter(_fileStream,Encoding.UTF8, 1024, true))
+                using (StreamWriter fileWriter = new StreamWriter(_fileStream, Encoding.UTF8, 1024, true))
                 {
                     fileWriter.WriteLineAsync($"{DateTime.Now.ToString(Constants.DATE_FORMAT)}\t{DateTime.Now.ToString(Constants.TIME_FORMAT)}\t{message}");
                 }
@@ -84,7 +85,7 @@ namespace AtariST.SerialDisk.Shared
         public void Dispose()
         {
             Console.CursorVisible = true;
-            if(_fileStream != null) _fileStream.Dispose();
+            if (_fileStream != null) _fileStream.Dispose();
         }
     }
 }

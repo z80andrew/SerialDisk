@@ -1,19 +1,18 @@
-using System;
-using System.IO.Ports;
-using AtariST.SerialDisk.Storage;
+using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Utilities;
-using AtariST.SerialDisk.Shared;
+using System;
+using System.IO.Ports;
 using static AtariST.SerialDisk.Shared.Constants;
 
 namespace AtariST.SerialDisk.Comm
 {
-    public class Serial : IDisposable
+    public class Serial : IDisposable, ISerial
     {
         private SerialPort _serialPort;
 
-        private Logger _logger;
-        private Disk _localDisk;
+        private ILogger _logger;
+        private IDisk _localDisk;
 
         private int _readTimeout = 100;
 
@@ -32,7 +31,7 @@ namespace AtariST.SerialDisk.Comm
 
         private ReceiverState _state = ReceiverState.ReceiveStartMagic;
 
-        public Serial(SerialPortSettings serialPortSettings, Disk disk, Logger log)
+        public Serial(SerialPortSettings serialPortSettings, IDisk disk, ILogger log)
         {
             _localDisk = disk;
             _logger = log;
@@ -325,34 +324,34 @@ namespace AtariST.SerialDisk.Comm
                             _logger.Log("Reading sectors " + _receivedSectorIndex + " - " + (_receivedSectorIndex + _receivedSectorCount - 1) + " (" + (_receivedSectorCount * _localDisk.Parameters.BytesPerSector) + " Bytes)... ", LoggingLevel.Info);
 
 
-                        byte[] SendDataBuffer = _localDisk.ReadSectors((int)_receivedSectorIndex, (int)_receivedSectorCount);
+                        byte[] sendDataBuffer = _localDisk.ReadSectors((int)_receivedSectorIndex, (int)_receivedSectorCount);
 
                         _transferStartDateTime = DateTime.Now;
-                        _transferSize = SendDataBuffer.LongLength;
+                        _transferSize = sendDataBuffer.LongLength;
 
-                        for (int i = 0; i < SendDataBuffer.Length; i++)
+                        for (int i = 0; i < sendDataBuffer.Length; i++)
                         {
-                            _serialPort.BaseStream.WriteByte(SendDataBuffer[i]);
-                            string percentSent = ((Convert.ToDecimal(i + 1) / SendDataBuffer.Length) * 100).ToString("00.0");
-                            Console.Write($"\rSent [{(i + 1).ToString("D" + SendDataBuffer.Length.ToString().Length)} / {SendDataBuffer.Length} Bytes] {percentSent}% ");
+                            _serialPort.BaseStream.WriteByte(sendDataBuffer[i]);
+                            string percentSent = ((Convert.ToDecimal(i + 1) / sendDataBuffer.Length) * 100).ToString("00.0");
+                            Console.Write($"\rSent [{(i + 1).ToString("D" + sendDataBuffer.Length.ToString().Length)} / {sendDataBuffer.Length} Bytes] {percentSent}% ");
                         }
                         Console.WriteLine();
 
-                        byte[] Crc32Buffer = new byte[4];
-                        UInt32 Crc32Value = CRC32.CalculateCRC32(SendDataBuffer);
+                        byte[] crc32Buffer = new byte[4];
+                        UInt32 crc32Value = CRC32.CalculateCRC32(sendDataBuffer);
 
-                        Crc32Buffer[0] = (byte)((Crc32Value >> 24) & 0xff);
-                        Crc32Buffer[1] = (byte)((Crc32Value >> 16) & 0xff);
-                        Crc32Buffer[2] = (byte)((Crc32Value >> 8) & 0xff);
-                        Crc32Buffer[3] = (byte)(Crc32Value & 0xff);
+                        crc32Buffer[0] = (byte)((crc32Value >> 24) & 0xff);
+                        crc32Buffer[1] = (byte)((crc32Value >> 16) & 0xff);
+                        crc32Buffer[2] = (byte)((crc32Value >> 8) & 0xff);
+                        crc32Buffer[3] = (byte)(crc32Value & 0xff);
 
                         _logger.Log("Sending CRC32...", LoggingLevel.Verbose);
 
-                        for (int i = 0; i < Crc32Buffer.Length; i++)
+                        for (int i = 0; i < crc32Buffer.Length; i++)
                         {
-                            _serialPort.BaseStream.WriteByte(Crc32Buffer[i]);
-                            string percentSent = ((Convert.ToDecimal(i + 1) / Crc32Buffer.Length) * 100).ToString("00.0");
-                            Console.Write($"\rSent [{(i + 1).ToString("D" + Crc32Buffer.Length.ToString().Length)} / {Crc32Buffer.Length} Bytes] {percentSent}% ");
+                            _serialPort.BaseStream.WriteByte(crc32Buffer[i]);
+                            string percentSent = ((Convert.ToDecimal(i + 1) / crc32Buffer.Length) * 100).ToString("00.0");
+                            Console.Write($"\rSent [{(i + 1).ToString("D" + crc32Buffer.Length.ToString().Length)} / {crc32Buffer.Length} Bytes] {percentSent}% ");
                         }
                         Console.WriteLine();
 

@@ -1,8 +1,10 @@
 using AtariST.SerialDisk.Comm;
+using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Shared;
 using AtariST.SerialDisk.Storage;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,7 +15,7 @@ using System.Text;
 
 namespace AtariST.SerialDisk
 {
-    class MainClass
+    public class SerialDisk
     {
         private static string FormatEnumParams(Type enumerationType)
         {
@@ -79,9 +81,26 @@ namespace AtariST.SerialDisk
             return localDirectoryInfo.FullName;
         }
 
+        private static void ConfigureServices(IServiceCollection serviceCollection)
+        {
+            serviceCollection.AddSingleton<IDisk, Disk>();
+            serviceCollection.AddSingleton<ISerial, Serial>();
+            serviceCollection.AddSingleton<ILogger, Logger>();
+        }
+
         public static void Main(string[] args)
         {
             Console.WriteLine("Serial Disk v" + Assembly.GetExecutingAssembly().GetName().Version);
+
+            #region Dependency injection
+
+            var serviceCollection = new ServiceCollection();
+            ConfigureServices(serviceCollection);
+            var serviceProvider = serviceCollection.BuildServiceProvider();
+
+            #endregion
+
+            #region Application settings
 
             var applicationSettings = new ApplicationSettings();
 
@@ -102,8 +121,6 @@ namespace AtariST.SerialDisk
                 return;
             }
 
-            Logger logger = new Logger(applicationSettings.LoggingLevel, applicationSettings.LogFileName);
-
             if ((bool)args[0].ToLowerInvariant().StartsWith("--h"))
             {
                 PrintUsage(applicationSettings);
@@ -112,6 +129,10 @@ namespace AtariST.SerialDisk
 
             if (String.IsNullOrEmpty(applicationSettings.LocalDirectoryName)
                 || !Directory.Exists(applicationSettings.LocalDirectoryName)) throw new Exception("Local directory name invalid.");
+
+            #endregion
+
+            Logger logger = new Logger(applicationSettings.LoggingLevel, applicationSettings.LogFileName);
 
             DiskParameters diskParameters = new DiskParameters(applicationSettings.LocalDirectoryName, applicationSettings.DiskSizeMiB * 1024 * 1024);
 

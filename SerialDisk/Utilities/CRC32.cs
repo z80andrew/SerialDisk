@@ -28,14 +28,14 @@ namespace AtariST.SerialDisk.Utilities
             }
         }
 
-        public static UInt32 CalculateCRC32(byte[] Buffer)
+        public static UInt32 CalculateCRC32(byte[] buffer)
         {
             if (_crc32Table == null) CreateCrc32Table();
 
             UInt32 crc32Value = 0;
 
-            for (int Index = 0; Index < Buffer.Length; Index++)
-                crc32Value = (crc32Value << 8) ^ _crc32Table[Buffer[Index] ^ ((crc32Value >> 24) & 0xff)];
+            for (int Index = 0; Index < buffer.Length; Index++)
+                crc32Value = (crc32Value << 8) ^ _crc32Table[buffer[Index] ^ ((crc32Value >> 24) & 0xff)];
 
             return crc32Value;
         }
