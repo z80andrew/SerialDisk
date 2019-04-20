@@ -29,6 +29,7 @@
             }
         }
 
+        // Must be 2 on TOS
         public readonly int SectorsPerCluster = 2;
 
         public int BytesPerCluster

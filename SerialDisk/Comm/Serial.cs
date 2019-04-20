@@ -77,11 +77,14 @@ namespace AtariST.SerialDisk.Comm
 
         private void ProcessReceivedByte(byte Data)
         {
+            _localDisk.FileSystemWatcherEnabled = false;
+
             try
             {
                 switch (_state)
                 {
                     case ReceiverState.ReceiveStartMagic:
+                        
                         switch (_receivedDataCounter)
                         {
                             case 0:
@@ -379,6 +382,8 @@ namespace AtariST.SerialDisk.Comm
                 }
             }
 
+            if (_state == ReceiverState.ReceiveStartMagic)
+                _localDisk.FileSystemWatcherEnabled = true;
         }
 
         public void Dispose()
