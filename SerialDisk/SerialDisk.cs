@@ -112,7 +112,10 @@ namespace AtariST.SerialDisk
                     .Build()
                     .Bind(applicationSettings);
 
-                applicationSettings.LocalDirectoryName = ParseLocalDirectoryPath(applicationSettings, args.Last());
+                if (args.Any())
+                {
+                    applicationSettings.LocalDirectoryName = ParseLocalDirectoryPath(applicationSettings, args.Last());
+                }
             }
 
             catch (Exception parameterException)
@@ -121,7 +124,7 @@ namespace AtariST.SerialDisk
                 return;
             }
 
-            if ((bool)args[0].ToLowerInvariant().StartsWith("--h"))
+            if (args.Any() && (bool)args[0].ToLowerInvariant().StartsWith("--h"))
             {
                 PrintUsage(applicationSettings);
                 return;
@@ -129,6 +132,9 @@ namespace AtariST.SerialDisk
 
             if (String.IsNullOrEmpty(applicationSettings.LocalDirectoryName)
                 || !Directory.Exists(applicationSettings.LocalDirectoryName)) throw new Exception("Local directory name invalid.");
+
+            DirectoryInfo localDirectoryInfo = new DirectoryInfo(applicationSettings.LocalDirectoryName);
+            applicationSettings.LocalDirectoryName = localDirectoryInfo.FullName;
 
             #endregion
 
