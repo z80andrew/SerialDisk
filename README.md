@@ -1,8 +1,9 @@
 # SerialDisk
 A virtual Atari ST disk over serial written in .NET Core 3.0
 
-Based on MonoSerialDisk by Sascha
-https://bitbucket.org/AnimaInCorpore/monoserialdisk
+For project information and downloads, please see the SerialDisk wiki  
+https://github.com/z80andrew/SerialDisk/wiki
 
-Requires SerialDisk.TOS to be running on the target machine
-https://bitbucket.org/AnimaInCorpore/stserialdisk
+Based on MonoSerialDisk and StSerialDisk by Sascha  
+https://bitbucket.org/AnimaInCorpore/monoserialdisk  
+https://bitbucket.org/AnimaInCorpore/stserialdisk  
