@@ -1,77 +1,68 @@
-using System;
-using System.IO.Ports;
-using AtariST.SerialDisk.Storage;
+using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Utilities;
-using AtariST.SerialDisk.Shared;
+using System;
+using System.IO.Ports;
 using static AtariST.SerialDisk.Shared.Constants;
 
 namespace AtariST.SerialDisk.Comm
 {
-    public class Serial : IDisposable
+    public class Serial : IDisposable, ISerial
     {
-        private SerialPort serialPort;
+        private SerialPort _serialPort;
 
-        private Logger logger;
-        private Disk disk;
+        private ILogger _logger;
+        private IDisk _localDisk;
 
-        public ReceiverState State { get; set; }
+        private int _readTimeout = 100;
 
-        private string localDirectoryName = ".";
-        private int readTimeout = 100;
+        private int _receivedDataCounter = 0;
 
-        private int ReceivedDataCounter = 0;
+        private UInt32 _receivedSectorIndex = 0;
+        private UInt32 _receivedSectorCount = 0;
+        private byte[] _receiverDataBuffer;
+        private int _receiverDataIndex = 0;
 
-        private UInt32 ReceivedSectorIndex = 0;
-        private UInt32 ReceivedSectorCount = 0;
-        private byte[] ReceiverDataBuffer;
-        private int ReceiverDataIndex = 0;
+        private byte[] _buffer = new byte[4096];
 
-        byte[] buffer = new byte[4096];
-        public Action kickoffRead = null;
+        private DateTime _transferEndDateTime = DateTime.Now;
+        private DateTime _transferStartDateTime = DateTime.Now;
+        private long _transferSize = 0;
 
-        private DateTime TransferEndDateTime = DateTime.Now;
-        private DateTime TransferStartDateTime = DateTime.Now;
-        private long TransferSize = 0;
+        private ReceiverState _state = ReceiverState.ReceiveStartMagic;
 
-        public Serial(Settings applicationSettings, Disk localDisk, Logger log)
+        public Serial(SerialPortSettings serialPortSettings, IDisk disk, ILogger log)
         {
-            localDirectoryName = applicationSettings.LocalDirectoryName;
+            _localDisk = disk;
+            _logger = log;
 
-            disk = localDisk;
-            logger = log;
+            _serialPort = InitializeSerialPort(serialPortSettings);
+            _serialPort.Open();
 
-            State = ReceiverState.ReceiveStartMagic;
+            _logger.Log($"Serial port {serialPortSettings.PortName} opened successfully.", LoggingLevel.Verbose);
 
-            serialPort = new SerialPort(applicationSettings.SerialSettings.PortName);
+            _serialPort.DiscardOutBuffer();
+            _serialPort.DiscardInBuffer();
 
-            ConfigureSerialPort(applicationSettings.SerialSettings);
-
-            serialPort.ReceivedBytesThreshold = 1;
-
-            serialPort.WriteTimeout = -1;
-            serialPort.ReadBufferSize = 64 * 1024;
-            serialPort.WriteBufferSize = 64 * 1024;
-
-            serialPort.Open();
-
-            logger.Log($"Serial port {applicationSettings.SerialSettings.PortName} opened successfully.", LoggingLevel.Verbose);
-
-            serialPort.DiscardOutBuffer();
-            serialPort.DiscardInBuffer();
-
-            serialPort.DataReceived += SerialPort_DataReceived;
-            serialPort.ReceivedBytesThreshold = 1;
+            _serialPort.DataReceived += SerialPort_DataReceived;
         }
 
-        private void ConfigureSerialPort(SerialPortSettings serialSettings)
+        private SerialPort InitializeSerialPort(SerialPortSettings serialSettings)
         {
+            SerialPort serialPort = new SerialPort(serialSettings.PortName);
             serialPort.Handshake = serialSettings.Handshake;
             serialPort.BaudRate = serialSettings.BaudRate;
             serialPort.DataBits = serialSettings.DataBits;
             serialPort.StopBits = serialSettings.StopBits;
             serialPort.Parity = serialSettings.Parity;
-            serialPort.ReadTimeout = serialSettings.Timeout;
+            serialPort.ReceivedBytesThreshold = 1;
+            serialPort.ReadTimeout = 100;
+            serialPort.WriteTimeout = -1;
+            serialPort.ReadBufferSize = 64 * 1024;
+            serialPort.WriteBufferSize = 64 * 1024;
+            serialPort.ReceivedBytesThreshold = 1;
+
+            return serialPort;
         }
 
         private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -86,200 +77,208 @@ namespace AtariST.SerialDisk.Comm
 
         private void ProcessReceivedByte(byte Data)
         {
+            _localDisk.FileSystemWatcherEnabled = false;
+
             try
             {
-                switch (State)
+                switch (_state)
                 {
                     case ReceiverState.ReceiveStartMagic:
-                        switch (ReceivedDataCounter)
+                        
+                        switch (_receivedDataCounter)
                         {
                             case 0:
                                 if (Data != 0x18)
-                                    ReceivedDataCounter = -1;
+                                    _receivedDataCounter = -1;
                                 break;
 
                             case 1:
                                 if (Data != 0x03)
-                                    ReceivedDataCounter = -1;
+                                    _receivedDataCounter = -1;
                                 break;
 
                             case 2:
                                 if (Data != 0x20)
-                                    ReceivedDataCounter = -1;
+                                    _receivedDataCounter = -1;
                                 break;
 
                             case 3:
                                 if (Data != 0x06)
-                                    ReceivedDataCounter = -1;
+                                    _receivedDataCounter = -1;
                                 break;
 
                             case 4:
                                 switch (Data)
                                 {
                                     case 0:
-                                        logger.Log("Received read command.", LoggingLevel.Verbose);
-                                        State = ReceiverState.ReceiveReadSectorIndex;
-                                        ReceivedSectorIndex = 0;
+                                        _logger.Log("Received read command.", LoggingLevel.Verbose);
+                                        _state = ReceiverState.ReceiveReadSectorIndex;
+                                        _receivedSectorIndex = 0;
                                         break;
 
                                     case 1:
-                                        logger.Log("Received write command.", LoggingLevel.Verbose);
-                                        State = ReceiverState.ReceiveWriteSectorIndex;
-                                        ReceivedSectorIndex = 0;
+                                        _logger.Log("Received write command.", LoggingLevel.Verbose);
+                                        _state = ReceiverState.ReceiveWriteSectorIndex;
+                                        _receivedSectorIndex = 0;
                                         break;
 
                                     case 2:
-                                        //logger.Log("Received media change command.", LoggingLevel.Verbose);
-                                        State = ReceiverState.SendMediaChangeStatus;
+                                        _logger.Log("Received media change command.", LoggingLevel.Verbose);
+                                        _state = ReceiverState.SendMediaChangeStatus;
                                         break;
 
                                     case 3:
-                                        logger.Log("Received send BIOS parameter block command.", LoggingLevel.Verbose);
-                                        State = ReceiverState.SendBiosParameterBlock;
+                                        _logger.Log("Received send BIOS parameter block command.", LoggingLevel.Verbose);
+                                        _state = ReceiverState.SendBiosParameterBlock;
                                         break;
                                 }
 
-                                ReceivedDataCounter = -1;
+                                _receivedDataCounter = -1;
                                 break;
                         }
 
                         break;
 
                     case ReceiverState.ReceiveReadSectorIndex:
-                        switch (ReceivedDataCounter)
+                        switch (_receivedDataCounter)
                         {
                             case 0:
                             case 1:
                             case 2:
-                                ReceivedSectorIndex = (ReceivedSectorIndex << 8) + Data;
+                                _receivedSectorIndex = (_receivedSectorIndex << 8) + Data;
                                 break;
 
                             case 3:
-                                logger.Log($"Received read sector index command.", LoggingLevel.Verbose);
-                                ReceivedSectorIndex = (ReceivedSectorIndex << 8) + Data;
-                                State = ReceiverState.ReceiveReadSectorCount;
-                                ReceivedSectorCount = 0;
-                                ReceivedDataCounter = -1;
+                                _logger.Log($"Received read sector index command.", LoggingLevel.Verbose);
+                                _receivedSectorIndex = (_receivedSectorIndex << 8) + Data;
+                                _state = ReceiverState.ReceiveReadSectorCount;
+                                _receivedSectorCount = 0;
+                                _receivedDataCounter = -1;
                                 break;
                         }
 
                         break;
 
                     case ReceiverState.ReceiveReadSectorCount:
-                        switch (ReceivedDataCounter)
+                        switch (_receivedDataCounter)
                         {
                             case 0:
                             case 1:
                             case 2:
-                                ReceivedSectorCount = (ReceivedSectorCount << 8) + Data;
+                                _receivedSectorCount = (_receivedSectorCount << 8) + Data;
                                 break;
 
                             case 3:
-                                logger.Log($"Received read sector count command.", LoggingLevel.Verbose);
-                                ReceivedSectorCount = (ReceivedSectorCount << 8) + Data;
-                                State = ReceiverState.SendReadData;
-                                ReceivedDataCounter = -1;
+                                _logger.Log($"Received read sector count command.", LoggingLevel.Verbose);
+                                _receivedSectorCount = (_receivedSectorCount << 8) + Data;
+                                _state = ReceiverState.SendReadData;
+                                _receivedDataCounter = -1;
                                 break;
                         }
 
                         break;
 
                     case ReceiverState.ReceiveWriteSectorIndex:
-                        switch (ReceivedDataCounter)
+                        switch (_receivedDataCounter)
                         {
                             case 0:
                             case 1:
                             case 2:
-                                ReceivedSectorIndex = (ReceivedSectorIndex << 8) + Data;
+                                _receivedSectorIndex = (_receivedSectorIndex << 8) + Data;
                                 break;
 
                             case 3:
-                                logger.Log($"Received write sector index command.", LoggingLevel.Verbose);
-                                ReceivedSectorIndex = (ReceivedSectorIndex << 8) + Data;
-                                State = ReceiverState.ReceiveWriteSectorCount;
-                                ReceivedSectorCount = 0;
-                                ReceivedDataCounter = -1;
+                                _logger.Log($"Received write sector index command.", LoggingLevel.Verbose);
+                                _receivedSectorIndex = (_receivedSectorIndex << 8) + Data;
+                                _state = ReceiverState.ReceiveWriteSectorCount;
+                                _receivedSectorCount = 0;
+                                _receivedDataCounter = -1;
                                 break;
                         }
 
                         break;
 
                     case ReceiverState.ReceiveWriteSectorCount:
-                        switch (ReceivedDataCounter)
+                        switch (_receivedDataCounter)
                         {
                             case 0:
                             case 1:
                             case 2:
-                                ReceivedSectorCount = (ReceivedSectorCount << 8) + Data;
+                                _receivedSectorCount = (_receivedSectorCount << 8) + Data;
                                 break;
 
                             case 3:
-                                logger.Log($"Received write sector count command.", LoggingLevel.Verbose);
-                                ReceivedSectorCount = (ReceivedSectorCount << 8) + Data;
-                                State = ReceiverState.ReceiveWriteData;
-                                ReceivedDataCounter = -1;
+                                _logger.Log($"Received write sector count command.", LoggingLevel.Verbose);
+                                _receivedSectorCount = (_receivedSectorCount << 8) + Data;
+                                _state = ReceiverState.ReceiveWriteData;
+                                _receivedDataCounter = -1;
                                 break;
                         }
 
                         break;
 
                     case ReceiverState.ReceiveWriteData:
-                        if (ReceivedDataCounter == 0)
+                        if (_receivedDataCounter == 0)
                         {
 
-                            if (ReceivedSectorCount == 1)
-                                logger.Log("Writing sector " + ReceivedSectorIndex + " (" + disk.BytesPerSector + " Bytes)... ", LoggingLevel.Info);
+                            if (_receivedSectorCount == 1)
+                                _logger.Log("Writing sector " + _receivedSectorIndex + " (" + _localDisk.Parameters.BytesPerSector + " Bytes)... ", LoggingLevel.Info);
                             else
-                                logger.Log("Writing sectors " + ReceivedSectorIndex + " - " + (ReceivedSectorIndex + ReceivedSectorCount - 1) + " (" + (ReceivedSectorCount * disk.BytesPerSector) + " Bytes)... ", LoggingLevel.Info);
+                                _logger.Log("Writing sectors " + _receivedSectorIndex + " - " + (_receivedSectorIndex + _receivedSectorCount - 1) + " (" + (_receivedSectorCount * _localDisk.Parameters.BytesPerSector) + " Bytes)... ", LoggingLevel.Info);
 
 
-                            ReceiverDataBuffer = new byte[ReceivedSectorCount * disk.BytesPerSector];
-                            ReceiverDataIndex = 0;
+                            _receiverDataBuffer = new byte[_receivedSectorCount * _localDisk.Parameters.BytesPerSector];
+                            _receiverDataIndex = 0;
 
-                            TransferStartDateTime = DateTime.Now;
+                            _transferStartDateTime = DateTime.Now;
                         }
 
-                        ReceiverDataBuffer[ReceiverDataIndex++] = Data;
+                        _receiverDataBuffer[_receiverDataIndex++] = Data;
 
-                        if (ReceiverDataIndex == ReceivedSectorCount * disk.BytesPerSector)
+                        string percentReceived = ((Convert.ToDecimal(_receiverDataIndex) / _receiverDataBuffer.Length) * 100).ToString("00.0");
+                        Console.Write($"\rReceived [{_receiverDataIndex} / {_receiverDataBuffer.Length} Bytes] {percentReceived}% ");
+
+                        if (_receiverDataIndex == _receivedSectorCount * _localDisk.Parameters.BytesPerSector)
                         {
-                            logger.Log("Transfer done (" + (ReceiverDataBuffer.LongLength * 10000000 / (DateTime.Now.Ticks - TransferStartDateTime.Ticks)) + " Bytes/s).", LoggingLevel.Info);
+                            Console.WriteLine();
 
-                            disk.WriteSectors(ReceiverDataBuffer.Length, (int)ReceivedSectorIndex, ReceiverDataBuffer);
+                            _logger.Log("Transfer done (" + (_receiverDataBuffer.LongLength * 10000000 / (DateTime.Now.Ticks - _transferStartDateTime.Ticks)) + " Bytes/s).", LoggingLevel.Info);
 
-                            State = ReceiverState.ReceiveStartMagic;
-                            ReceivedDataCounter = -1;
+                            _localDisk.WriteSectors(_receiverDataBuffer.Length, (int)_receivedSectorIndex, _receiverDataBuffer);
+
+                            _state = ReceiverState.ReceiveStartMagic;
+                            _receivedDataCounter = -1;
                         }
 
                         break;
 
                     case ReceiverState.ReceiveEndMagic:
-                        serialPort.ReadTimeout = readTimeout;
+                        _serialPort.ReadTimeout = _readTimeout;
 
-                        switch (ReceivedDataCounter)
+                        switch (_receivedDataCounter)
                         {
                             case 0:
-                                logger.Log("Transfer done (" + (TransferSize * 10000000 / (DateTime.Now.Ticks - TransferStartDateTime.Ticks)) + " Bytes/s).", LoggingLevel.Info);
+                                _logger.Log("Transfer done (" + (_transferSize * 10000000 / (DateTime.Now.Ticks - _transferStartDateTime.Ticks)) + " Bytes/s).", LoggingLevel.Info);
 
                                 if (Data != 0x02)
-                                    ReceivedDataCounter = -1;
+                                    _receivedDataCounter = -1;
                                 break;
 
                             case 1:
                                 if (Data != 0x02)
-                                    ReceivedDataCounter = -1;
+                                    _receivedDataCounter = -1;
                                 break;
 
                             case 2:
                                 if (Data != 0x19)
-                                    ReceivedDataCounter = -1;
+                                    _receivedDataCounter = -1;
                                 break;
 
                             case 3:
                                 if (Data == 0x61)
-                                    State = ReceiverState.ReceiveStartMagic;
+                                    _state = ReceiverState.ReceiveStartMagic;
 
-                                ReceivedDataCounter = -1;
+                                _receivedDataCounter = -1;
 
                                 break;
                         }
@@ -287,112 +286,81 @@ namespace AtariST.SerialDisk.Comm
                         break;
                 }
 
-                ReceivedDataCounter++;
+                _receivedDataCounter++;
 
-                switch (State)
+                switch (_state)
                 {
                     case ReceiverState.SendMediaChangeStatus:
-                        if (disk.MediaChanged)
+                        if (_localDisk.MediaChanged)
                         {
-                            logger.Log("Media has been changed. Importing directory \"" + localDirectoryName + "\"... ", LoggingLevel.Info);
+                            _logger.Log("Media has been changed. Importing directory \"" + _localDisk.Parameters.LocalDirectoryPath + "\"... ", LoggingLevel.Info);
 
-                            disk.FatImportDirectoryContents(localDirectoryName, 0);
+                            _localDisk.FatImportLocalDirectoryContents(_localDisk.Parameters.LocalDirectoryPath, 0);
                         }
 
                         byte[] MediaChangedBuffer = new byte[1];
 
-                        MediaChangedBuffer[0] = disk.MediaChanged ? (byte)2 : (byte)0;
-                        serialPort.Write(MediaChangedBuffer, 0, 1);
+                        MediaChangedBuffer[0] = _localDisk.MediaChanged ? (byte)2 : (byte)0;
+                        _serialPort.Write(MediaChangedBuffer, 0, 1);
 
-                        disk.MediaChanged = false;
+                        _localDisk.MediaChanged = false;
 
-                        State = ReceiverState.ReceiveStartMagic;
+                        _state = ReceiverState.ReceiveStartMagic;
 
                         break;
 
                     case ReceiverState.SendBiosParameterBlock:
-                        logger.Log($"Sending BIOS parameter block.", LoggingLevel.Verbose);
+                        _logger.Log($"Sending BIOS parameter block.", LoggingLevel.Verbose);
 
-                        byte[] BiosParameterBlock = new byte[18];
+                        _serialPort.Write(_localDisk.Parameters.BIOSParameterBlock, 0, _localDisk.Parameters.BIOSParameterBlock.Length);
 
-                        BiosParameterBlock[0] = (byte)((disk.BytesPerSector >> 8) & 0xff);
-                        BiosParameterBlock[1] = (byte)(disk.BytesPerSector & 0xff);
-
-                        BiosParameterBlock[2] = (byte)((disk.SectorsPerCluster >> 8) & 0xff);
-                        BiosParameterBlock[3] = (byte)(disk.SectorsPerCluster & 0xff);
-
-                        BiosParameterBlock[4] = (byte)((disk.BytesPerCluster >> 8) & 0xff);
-                        BiosParameterBlock[5] = (byte)(disk.BytesPerCluster & 0xff);
-
-                        BiosParameterBlock[6] = (byte)((disk.RootDirectorySectors >> 8) & 0xff);
-                        BiosParameterBlock[7] = (byte)(disk.RootDirectorySectors & 0xff);
-
-                        BiosParameterBlock[8] = (byte)((disk.SectorsPerFat >> 8) & 0xff);
-                        BiosParameterBlock[9] = (byte)(disk.SectorsPerFat & 0xff);
-
-                        BiosParameterBlock[10] = (byte)((disk.SectorsPerFat >> 8) & 0xff);
-                        BiosParameterBlock[11] = (byte)(disk.SectorsPerFat & 0xff);
-
-                        BiosParameterBlock[12] = (byte)(((disk.SectorsPerFat * 2 + disk.RootDirectorySectors) >> 8) & 0xff);
-                        BiosParameterBlock[13] = (byte)((disk.SectorsPerFat * 2 + disk.RootDirectorySectors) & 0xff);
-
-                        BiosParameterBlock[14] = (byte)((disk.DiskClusters >> 8) & 0xff);
-                        BiosParameterBlock[15] = (byte)(disk.DiskClusters & 0xff);
-
-                        BiosParameterBlock[16] = 0;
-                        BiosParameterBlock[17] = 1;
-
-                        serialPort.Write(BiosParameterBlock, 0, 18);
-
-                        State = ReceiverState.ReceiveStartMagic;
+                        _state = ReceiverState.ReceiveStartMagic;
 
                         break;
 
                     case ReceiverState.SendReadData:
-                        logger.Log("Sending data...", LoggingLevel.Verbose);
+                        _logger.Log("Sending data...", LoggingLevel.Verbose);
 
-                        if (ReceivedSectorCount == 1)
-                            logger.Log("Reading sector " + ReceivedSectorIndex + " (" + disk.BytesPerSector + " Bytes)... ", LoggingLevel.Info);
+                        if (_receivedSectorCount == 1)
+                            _logger.Log("Reading sector " + _receivedSectorIndex + " (" + _localDisk.Parameters.BytesPerSector + " Bytes)... ", LoggingLevel.Info);
                         else
-                            logger.Log("Reading sectors " + ReceivedSectorIndex + " - " + (ReceivedSectorIndex + ReceivedSectorCount - 1) + " (" + (ReceivedSectorCount * disk.BytesPerSector) + " Bytes)... ", LoggingLevel.Info);
+                            _logger.Log("Reading sectors " + _receivedSectorIndex + " - " + (_receivedSectorIndex + _receivedSectorCount - 1) + " (" + (_receivedSectorCount * _localDisk.Parameters.BytesPerSector) + " Bytes)... ", LoggingLevel.Info);
 
 
-                        byte[] SendDataBuffer = disk.ReadSectors((int)ReceivedSectorIndex, (int)ReceivedSectorCount);
+                        byte[] sendDataBuffer = _localDisk.ReadSectors((int)_receivedSectorIndex, (int)_receivedSectorCount);
 
-                        TransferStartDateTime = DateTime.Now;
-                        TransferSize = SendDataBuffer.LongLength;
+                        _transferStartDateTime = DateTime.Now;
+                        _transferSize = sendDataBuffer.LongLength;
 
-                        for (int i = 0; i < SendDataBuffer.Length; i++)
+                        for (int i = 0; i < sendDataBuffer.Length; i++)
                         {
-                            serialPort.BaseStream.WriteByte(SendDataBuffer[i]);
-                            string percentSent = ((Convert.ToDecimal(i + 1) / SendDataBuffer.Length) * 100).ToString("00.0");
-                            Console.Write($"\rSent [{(i + 1).ToString("D" + SendDataBuffer.Length.ToString().Length)} / {SendDataBuffer.Length} Bytes] {percentSent}% ");
+                            _serialPort.BaseStream.WriteByte(sendDataBuffer[i]);
+                            string percentSent = ((Convert.ToDecimal(i + 1) / sendDataBuffer.Length) * 100).ToString("00.0");
+                            Console.Write($"\rSent [{(i + 1).ToString("D" + sendDataBuffer.Length.ToString().Length)} / {sendDataBuffer.Length} Bytes] {percentSent}% ");
                         }
                         Console.WriteLine();
 
-                        byte[] Crc32Buffer = new byte[4];
-                        UInt32 Crc32Value = CRC32.CalculateCrc32(SendDataBuffer);
+                        byte[] crc32Buffer = new byte[4];
+                        UInt32 crc32Value = CRC32.CalculateCRC32(sendDataBuffer);
 
-                        Crc32Buffer[0] = (byte)((Crc32Value >> 24) & 0xff);
-                        Crc32Buffer[1] = (byte)((Crc32Value >> 16) & 0xff);
-                        Crc32Buffer[2] = (byte)((Crc32Value >> 8) & 0xff);
-                        Crc32Buffer[3] = (byte)(Crc32Value & 0xff);
+                        crc32Buffer[0] = (byte)((crc32Value >> 24) & 0xff);
+                        crc32Buffer[1] = (byte)((crc32Value >> 16) & 0xff);
+                        crc32Buffer[2] = (byte)((crc32Value >> 8) & 0xff);
+                        crc32Buffer[3] = (byte)(crc32Value & 0xff);
 
-                        logger.Log("Sending CRC32...", LoggingLevel.Verbose);
+                        _logger.Log("Sending CRC32...", LoggingLevel.Verbose);
 
-                        for (int i = 0; i < Crc32Buffer.Length; i++)
+                        for (int i = 0; i < crc32Buffer.Length; i++)
                         {
-                            serialPort.BaseStream.WriteByte(Crc32Buffer[i]);
-                            string percentSent = ((Convert.ToDecimal(i + 1) / Crc32Buffer.Length) * 100).ToString("00.0");
-                            Console.Write($"\rSent [{(i + 1).ToString("D" + Crc32Buffer.Length.ToString().Length)} / {Crc32Buffer.Length} Bytes] {percentSent}% ");
+                            _serialPort.BaseStream.WriteByte(crc32Buffer[i]);
+                            string percentSent = ((Convert.ToDecimal(i + 1) / crc32Buffer.Length) * 100).ToString("00.0");
+                            Console.Write($"\rSent [{(i + 1).ToString("D" + crc32Buffer.Length.ToString().Length)} / {crc32Buffer.Length} Bytes] {percentSent}% ");
                         }
                         Console.WriteLine();
 
-                        TransferEndDateTime = DateTime.Now;
+                        _transferEndDateTime = DateTime.Now;
 
-                        State = ReceiverState.ReceiveEndMagic;
-
-                        //serialPort.ReadTimeout = (int)((TransferSize * 10 * 1000 * 1.5 / serialPort.BaudRate) - (TransferEndDateTime.Ticks - TransferStartDateTime.Ticks) / 10000); // Set the timeout to 1.5 times the estimated remaining transfer time.
+                        _state = ReceiverState.ReceiveEndMagic;
 
                         break;
                 }
@@ -400,25 +368,30 @@ namespace AtariST.SerialDisk.Comm
 
             catch (TimeoutException timeoutEx)
             {
-                if (State == ReceiverState.ReceiveEndMagic)
+                if (_state == ReceiverState.ReceiveEndMagic)
                 {
-                    serialPort.ReadTimeout = readTimeout;
+                    _serialPort.ReadTimeout = _readTimeout;
 
-                    logger.LogException(timeoutEx, "Serial port read timeout");
+                    _logger.LogException(timeoutEx, "Serial port read timeout");
 
-                    logger.Log("Transfer timeout. Retrying...", LoggingLevel.Info);
+                    _logger.Log("Transfer timeout. Retrying...", LoggingLevel.Info);
 
                     byte[] DummyBuffer = new byte[1];
 
-                    serialPort.Write(DummyBuffer, 0, 1);
+                    _serialPort.Write(DummyBuffer, 0, 1);
                 }
             }
 
+            if (_state == ReceiverState.ReceiveStartMagic)
+            {
+                // _localDisk.FatImportLocalDirectoryContents(_localDisk.Parameters.LocalDirectoryPath, 0);
+                _localDisk.FileSystemWatcherEnabled = true;
+            }
         }
 
         public void Dispose()
         {
-            serialPort.Dispose();
+            _serialPort.Dispose();
         }
     }
 }
