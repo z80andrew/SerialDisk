@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace AtariST.SerialDisk.Models
+﻿namespace AtariST.SerialDisk.Models
 {
     public class ClusterInfo
     {

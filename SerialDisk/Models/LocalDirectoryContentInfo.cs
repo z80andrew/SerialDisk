@@ -2,10 +2,10 @@
 {
     public class LocalDirectoryContentInfo
     {
-        public string ContentName;
-        public string ShortFileName;
-        public int Cluster;
-        public int EntryIndex;
-        public int StartCluster;
+        public string ContentName { get; set; }
+        public string ShortFileName { get; set; }
+        public int DirectoryCluster { get; set; }
+        public int EntryIndex { get; set; }
+        public int StartCluster { get; set; }
     }
 }
