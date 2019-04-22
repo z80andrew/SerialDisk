@@ -383,7 +383,10 @@ namespace AtariST.SerialDisk.Comm
             }
 
             if (_state == ReceiverState.ReceiveStartMagic)
+            {
+                // _localDisk.FatImportLocalDirectoryContents(_localDisk.Parameters.LocalDirectoryPath, 0);
                 _localDisk.FileSystemWatcherEnabled = true;
+            }
         }
 
         public void Dispose()

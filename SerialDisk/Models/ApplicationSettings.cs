@@ -13,7 +13,7 @@ namespace AtariST.SerialDisk.Models
 
         public SerialPortSettings SerialSettings { get; set; }
 
-        public LoggingLevel LoggingLevel { get; set; } = Constants.LoggingLevel.Error;
+        public LoggingLevel LoggingLevel { get; set; } = Constants.LoggingLevel.Info;
 
         public string LocalDirectoryName { get; set; } = ".";
 

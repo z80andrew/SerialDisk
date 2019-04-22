@@ -92,16 +92,11 @@ namespace AtariST.SerialDisk.Storage
                                 {
                                     if (directoryBuffer[directoryEntryIndex] == 0xe5) // Has the entry been deleted?
                                     {
-                                        //_fileSystemWatcher.EnableRaisingEvents = false;
-
                                         if (directoryBuffer[directoryEntryIndex + 11] == 0x10) // Is it a directory?
                                         {
                                             _logger.Log($"Deleting local directory \"{ directoryContentInfo.ContentName}\".", Constants.LoggingLevel.Info);
 
                                             Directory.Delete(directoryContentInfo.ContentName, true);
-
-                                            _localDirectoryContentInfos.Remove(directoryContentInfo);
-                                            _clusterInfos[startClusterIndex] = null;
                                         }
 
                                         else // It's a file
@@ -109,23 +104,17 @@ namespace AtariST.SerialDisk.Storage
                                             _logger.Log($"Deleting local file \"{directoryContentInfo.ContentName}\".", Constants.LoggingLevel.Info);
 
                                             File.Delete(directoryContentInfo.ContentName);
-
-                                            _localDirectoryContentInfos.Remove(directoryContentInfo);
-
-                                            _clusterInfos
-                                                .Where(ci => ci?.ContentName == directoryContentInfo.ContentName)
-                                                .ToList()
-                                                .ForEach(ci => ci.ContentName = null);
                                         }
 
                                         _localDirectoryContentInfos.Remove(directoryContentInfo);
 
-                                        //_fileSystemWatcher.EnableRaisingEvents = true;
+                                        _clusterInfos
+                                            .Where(ci => ci?.ContentName == directoryContentInfo.ContentName)
+                                            .ToList()
+                                            .ForEach(ci => ci.ContentName = null);
                                     }
                                     else // Entry has been renamed.
                                     {
-                                        //_fileSystemWatcher.EnableRaisingEvents = false;
-
                                         if (directoryBuffer[directoryEntryIndex + 11] == 0x10) // Is it a directory?
                                         {
                                             _logger.Log($"Renaming local directory \"{directoryContentInfo.ContentName}\" to \"{Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName)}\".",
@@ -142,10 +131,14 @@ namespace AtariST.SerialDisk.Storage
                                             File.Move(directoryContentInfo.ContentName, Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName));
                                         }
 
+                                        _clusterInfos
+                                            .Where(ci => ci?.ContentName == directoryContentInfo.ContentName)
+                                            .ToList()
+                                            .ForEach(ci => ci.ContentName = Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName));
+
+
                                         directoryContentInfo.ContentName = Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName);
                                         directoryContentInfo.ShortFileName = fileName;
-
-                                        //_fileSystemWatcher.EnableRaisingEvents = true;
                                     }
                                 }
 
@@ -156,8 +149,6 @@ namespace AtariST.SerialDisk.Storage
                         if (String.IsNullOrEmpty(LocalDirectoryContentName) && directoryBuffer[directoryEntryIndex] != 0xe5
                             && startClusterIndex != 0) // Is the content new but not been deleted, and has start cluster set
                         {
-                            _logger.Log("Checking whether to save local file \"" + startClusterIndex + "\".", Constants.LoggingLevel.Info);
-
                             string newContentPath = "";
                             if (directoryClusterIndex != _rootDirectoryClusterIndex) newContentPath = Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName); // Subdirectory
                             else newContentPath = Path.Combine(Parameters.LocalDirectoryPath, fileName); // Root dir
@@ -166,8 +157,6 @@ namespace AtariST.SerialDisk.Storage
                             {
                                 if (directoryBuffer[directoryEntryIndex + 11] == 0x10) // Is it a directory with a valid start cluster?
                                 {
-                                    //_fileSystemWatcher.EnableRaisingEvents = false;
-
                                     _logger.Log("Creating local directory \"" + newContentPath + "\".", Constants.LoggingLevel.Info);
 
                                     var CreatedLocalDirectory = Directory.CreateDirectory(newContentPath);
@@ -184,8 +173,6 @@ namespace AtariST.SerialDisk.Storage
                                         StartCluster = startClusterIndex,
 
                                     });
-
-                                    //_fileSystemWatcher.EnableRaisingEvents = true;
                                 }
 
                                 else // it's a file
@@ -200,8 +187,6 @@ namespace AtariST.SerialDisk.Storage
 
                                     if (IsEndOfFile(fileClusterIndex))
                                     {
-                                        //_fileSystemWatcher.EnableRaisingEvents = false;
-
                                         try
                                         {
                                             _logger.Log("Saving local file \"" + newContentPath + "\".", Constants.LoggingLevel.Info);
@@ -239,8 +224,6 @@ namespace AtariST.SerialDisk.Storage
                                         {
                                             _logger.LogException(ex);
                                         }
-
-                                        //_fileSystemWatcher.EnableRaisingEvents = true;
                                     }
                                 }
                             }
