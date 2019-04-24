@@ -1,8 +1,8 @@
-﻿namespace AtariST.SerialDisk.Storage
+namespace AtariST.SerialDisk.Storage
 {
     public class DiskParameters
     {
-        private int _bytesPerSector = 1;
+        private int _bytesPerSector = 256;
         private byte[] _biosParameterBlock;
 
         public int DiskTotalBytes { get; set; }
@@ -19,8 +19,9 @@
         {
             get
             {
-                if (_bytesPerSector == 1)
+                if (_bytesPerSector == 256)
                 {
+                    // Changes to this must be replicated in StSerialDisk
                     while (_bytesPerSector * 64 * 1024 < DiskTotalBytes)
                         _bytesPerSector *= 2;
                 }

@@ -3,6 +3,7 @@ using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Shared;
 using AtariST.SerialDisk.Storage;
+using AtariST.SerialDisk.Utilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -120,7 +121,7 @@ namespace AtariST.SerialDisk
 
             catch (Exception parameterException)
             {
-                Console.WriteLine($"Error parsing parameters: {parameterException.Message}");
+                Console.WriteLine($"Error parsing parameters: {parameterException.InnerException.Message}");
                 return;
             }
 
@@ -131,7 +132,11 @@ namespace AtariST.SerialDisk
             }
 
             if (String.IsNullOrEmpty(applicationSettings.LocalDirectoryName)
-                || !Directory.Exists(applicationSettings.LocalDirectoryName)) throw new Exception("Local directory name invalid.");
+                || !Directory.Exists(applicationSettings.LocalDirectoryName))
+            {
+                Console.WriteLine($"Local directory path {applicationSettings.LocalDirectoryName} not found.");
+                return;
+            }
 
             DirectoryInfo localDirectoryInfo = new DirectoryInfo(applicationSettings.LocalDirectoryName);
             applicationSettings.LocalDirectoryName = localDirectoryInfo.FullName;
@@ -140,7 +145,9 @@ namespace AtariST.SerialDisk
 
             Logger logger = new Logger(applicationSettings.LoggingLevel, applicationSettings.LogFileName);
 
-            DiskParameters diskParameters = new DiskParameters(applicationSettings.LocalDirectoryName, applicationSettings.DiskSizeMiB * 1024 * 1024);
+            DiskParameters diskParameters = new DiskParameters(applicationSettings.LocalDirectoryName, applicationSettings.DiskSizeMiB * FAT16Helper.BytesPerMiB);
+
+            logger.Log($"Importing local directory contents from {applicationSettings.LocalDirectoryName}", Constants.LoggingLevel.Verbose);
 
             Disk disk = new Disk(diskParameters, logger);
 
@@ -150,7 +157,7 @@ namespace AtariST.SerialDisk
 
             Console.WriteLine($"Baud rate:{applicationSettings.SerialSettings.BaudRate} | Data bits:{applicationSettings.SerialSettings.DataBits}" +
                 $" | Parity:{applicationSettings.SerialSettings.Parity} | Stop bits:{applicationSettings.SerialSettings.StopBits} | Flow control:{applicationSettings.SerialSettings.Handshake}");
-            Console.WriteLine($"Local directory: {applicationSettings.LocalDirectoryName}");
+            Console.WriteLine($"Using local directory {applicationSettings.LocalDirectoryName} as a {applicationSettings.DiskSizeMiB}MiB virtual disk");
             Console.WriteLine($"Logging level: { applicationSettings.LoggingLevel} ");
 
             Console.WriteLine("Press any key to quit.");

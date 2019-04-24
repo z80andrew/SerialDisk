@@ -1,12 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace AtariST.SerialDisk.Utilities
 {
     public static class FAT16Helper
     {
+        public static int BytesPerMiB = 1024 * 1024;
+        public static int MaxDiskSizeBytes { get; } = 31 * FAT16Helper.BytesPerMiB;
+
         public static string GetShortFileName(string fileName)
         {
             Regex invalidCharactersRegex = new Regex("[^\\-A-Z0-9_\\.~]");
@@ -38,6 +41,32 @@ namespace AtariST.SerialDisk.Utilities
             }
 
             return shortFileName;
+        }
+
+        public static void ValidateLocalDirectory(string localDirectoryPath, int diskSizeBytes, int maxRootDirectoryEntries)
+        {
+            try
+            {
+                DirectoryInfo directoryInfo = new DirectoryInfo(localDirectoryPath);
+                uint localDirectorySizeBytes = (uint)Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length));
+
+                if(localDirectorySizeBytes > MaxDiskSizeBytes)
+                    throw new System.InsufficientMemoryException($"Local directory size is {localDirectorySizeBytes / BytesPerMiB} MiB, which is larger than the maximum allowable virtual disk size ({MaxDiskSizeBytes / BytesPerMiB} MiB)");
+
+                else if (localDirectorySizeBytes > diskSizeBytes)
+                    throw new System.InsufficientMemoryException($"Local directory size is {localDirectorySizeBytes / BytesPerMiB} MiB, which is too large for the given virtual disk size ({diskSizeBytes / BytesPerMiB} MiB)");
+
+                int rootDirectoryEntries = Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.TopDirectoryOnly).Count()
+                    + Directory.GetDirectories(directoryInfo.FullName, "*", SearchOption.TopDirectoryOnly).Count();
+
+                if (rootDirectoryEntries > maxRootDirectoryEntries)
+                    throw new System.InsufficientMemoryException($"The root directory has {rootDirectoryEntries} files/directories, which is more than the maximum ({maxRootDirectoryEntries} allowed");
+            }
+
+            catch(Exception ex)
+            {
+                throw ex;
+            }
         }
     }
 }

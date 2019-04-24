@@ -1,4 +1,4 @@
-﻿using AtariST.SerialDisk.Interfaces;
+using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Shared;
 using System;
@@ -33,6 +33,18 @@ namespace AtariST.SerialDisk.Storage
         {
             _logger = log;
             Parameters = diskParams;
+
+            try
+            {
+                int maxRootDirectoryEntries = ((diskParams.RootDirectorySectors * diskParams.BytesPerSector) / 32) - 2; // Each entry is 32 bytes, 2 entries reserved for . and ..
+                FAT16Helper.ValidateLocalDirectory(diskParams.LocalDirectoryPath, diskParams.DiskTotalBytes, maxRootDirectoryEntries);
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogException(ex, ex.Message);
+                throw ex;
+            }
 
             FatImportLocalDirectoryContents(Parameters.LocalDirectoryPath, _rootDirectoryClusterIndex);
             WatchLocalDirectory(Parameters.LocalDirectoryPath);
@@ -435,6 +447,8 @@ namespace AtariST.SerialDisk.Storage
             byte[] directoryBuffer;
             int entryIndex = 0;
 
+            int maxEntryIndex = directoryClusterIndex == 0 ? _rootDirectoryBuffer.Length : Parameters.BytesPerCluster;
+
             if (directoryClusterIndex == _rootDirectoryClusterIndex)
                 directoryBuffer = _rootDirectoryBuffer;
             else
@@ -443,12 +457,7 @@ namespace AtariST.SerialDisk.Storage
             // Find a free entry.
             do
             {
-                if (directoryClusterIndex == 0)
-                {
-                    if (entryIndex >= _rootDirectoryBuffer.Length)
-                        return false;
-                }
-                else if (entryIndex >= Parameters.BytesPerCluster)
+                if (entryIndex >= maxEntryIndex)
                 {
                     int nextDirectoryClusterIndex = FatGetClusterValue(directoryClusterIndex);
                     directoryClusterIndex = FatGetClusterValue(directoryClusterIndex);
@@ -468,8 +477,8 @@ namespace AtariST.SerialDisk.Storage
 
                         catch (IndexOutOfRangeException outOfRangeEx)
                         {
-                            int localDirectorySizeMiB = (int)Directory.GetFiles(Parameters.LocalDirectoryPath, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length)) / 1024 / 1024;
-                            _logger.LogException(outOfRangeEx, $"Local directory size is {localDirectorySizeMiB} MiB, which is too large for the given virtual disk size ({Parameters.DiskTotalBytes / 1024 / 1024} MiB)");
+                            int localDirectorySizeMiB = (int)Directory.GetFiles(Parameters.LocalDirectoryPath, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length)) / FAT16Helper.BytesPerMiB;
+                            _logger.LogException(outOfRangeEx, $"Local directory size is {localDirectorySizeMiB} MiB, which is too large for the given virtual disk size ({Parameters.DiskTotalBytes / FAT16Helper.BytesPerMiB} MiB)");
                             throw outOfRangeEx;
                         }
                     }
@@ -483,10 +492,17 @@ namespace AtariST.SerialDisk.Storage
                     entryIndex = 0;
                 }
 
-                while (entryIndex < Parameters.BytesPerCluster && directoryBuffer[entryIndex] != 0)
+                while (entryIndex < maxEntryIndex && directoryBuffer[entryIndex] != 0)
                     entryIndex += 32;
 
-            } while (entryIndex >= Parameters.BytesPerCluster);
+                if(entryIndex >= maxEntryIndex)
+                {
+                    Exception outofIndexesException = new Exception("Exceeded available directory clusters. There may be too many files in directory.");
+                    _logger.LogException(outofIndexesException, outofIndexesException.Message);
+                    throw outofIndexesException;
+                }
+
+            } while (entryIndex >= maxEntryIndex);
 
             // Remember which local content matches this entry.
 
@@ -618,8 +634,8 @@ namespace AtariST.SerialDisk.Storage
 
                 catch (IndexOutOfRangeException outOfRangeEx)
                 {
-                    int localDirectorySizeMiB = (int)Directory.GetFiles(Parameters.LocalDirectoryPath, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length)) / 1024 / 1024;
-                    _logger.LogException(outOfRangeEx, $"Local directory size is {localDirectorySizeMiB} MiB, which is too large for the given virtual disk size ({Parameters.DiskTotalBytes / 1024 / 1024} MiB)");
+                    int localDirectorySizeMiB = (int)Directory.GetFiles(Parameters.LocalDirectoryPath, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length)) / FAT16Helper.BytesPerMiB;
+                    _logger.LogException(outOfRangeEx, $"Local directory size is {localDirectorySizeMiB} MiB, which is too large for the given virtual disk size ({Parameters.DiskTotalBytes / FAT16Helper.BytesPerMiB} MiB)");
                     throw outOfRangeEx;
                 }
             }
@@ -642,13 +658,13 @@ namespace AtariST.SerialDisk.Storage
                 _localDirectoryContentInfos = new List<LocalDirectoryContentInfo>();
             }
 
-            DirectoryInfo DirectoryInfo = new DirectoryInfo(directoryName);
+            DirectoryInfo directoryInfo = new DirectoryInfo(directoryName);
 
-            foreach (DirectoryInfo SubDirectoryInfo in DirectoryInfo.GetDirectories())
-                FatAddDirectory(SubDirectoryInfo, directoryClusterIndex);
+            foreach (DirectoryInfo subDirectoryInfo in directoryInfo.GetDirectories())
+                FatAddDirectory(subDirectoryInfo, directoryClusterIndex);
 
-            foreach (FileInfo FileInfo in DirectoryInfo.GetFiles())
-                FatAddFile(FileInfo, directoryClusterIndex);
+            foreach (FileInfo fileInfo in directoryInfo.GetFiles())
+                FatAddFile(fileInfo, directoryClusterIndex);
         }
     }
 }
