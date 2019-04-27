@@ -4,9 +4,9 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <RootNamespace>AtariST.SerialDisk</RootNamespace>
-    <AssemblyVersion>2.0.*</AssemblyVersion>
+    <AssemblyVersion>2.1.*</AssemblyVersion>
     <FileVersion>2.0.0.0</FileVersion>
-    <Version>2.0</Version>
+    <Version>2.1</Version>
     <ApplicationIcon />
     <StartupObject></StartupObject>
     <Authors>z80andrew</Authors>
@@ -42,8 +42,17 @@
     <Content Include="atari\hello_l.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <EmbeddedResource Include="Resources\default_config.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
     <Content Include="serialdisk.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Resource">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
   </ItemGroup>
 

@@ -1,10 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using AtariST.SerialDisk.Common;
 using AtariST.SerialDisk.Interfaces;
-using static AtariST.SerialDisk.Shared.Constants;
+using static AtariST.SerialDisk.Common.Constants;
 
-namespace AtariST.SerialDisk.Shared
+namespace AtariST.SerialDisk.Utilities
 {
     public class Logger : IDisposable, ILogger
     {

@@ -1,4 +1,4 @@
-﻿using AtariST.SerialDisk.Shared;
+﻿using AtariST.SerialDisk.Common;
 using System;
 
 namespace AtariST.SerialDisk.Interfaces

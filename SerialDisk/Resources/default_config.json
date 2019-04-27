@@ -1,0 +1,19 @@
+{
+  "LocalDirectoryName": ".",
+  "LoggingLevel": 1,
+
+  "SerialSettings": {
+    "PortName": "COM1",
+    "BaudRate": 9600,
+    "DataBits": 8,
+    "StopBits": 1,
+    "Parity": 0,
+    "Handshake": 0
+  },
+
+  "DiskSettings": {
+    "DiskSizeMiB": 32,
+    "DiskPartitionType": 0,
+    "RootDirectorySectors": 8
+  }
+}

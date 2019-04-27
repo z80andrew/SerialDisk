@@ -1,6 +1,6 @@
 using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
-using AtariST.SerialDisk.Shared;
+using AtariST.SerialDisk.Common;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -37,7 +37,7 @@ namespace AtariST.SerialDisk.Storage
             try
             {
                 int maxRootDirectoryEntries = ((diskParams.RootDirectorySectors * diskParams.BytesPerSector) / 32) - 2; // Each entry is 32 bytes, 2 entries reserved for . and ..
-                FAT16Helper.ValidateLocalDirectory(diskParams.LocalDirectoryPath, diskParams.DiskTotalBytes, maxRootDirectoryEntries);
+                FAT16Helper.ValidateLocalDirectory(diskParams.LocalDirectoryPath, diskParams.DiskTotalBytes, maxRootDirectoryEntries, diskParams.Type);
             }
 
             catch (Exception ex)
@@ -294,10 +294,10 @@ namespace AtariST.SerialDisk.Storage
             return clusterValue >= 0xfff8;
         }
 
-        private int FatGetClusterValue(int clusterIndex, int directoryCluster = 0)
+        private int FatGetClusterValue(int clusterIndex, int directoryClusterIndex = 0)
         {
             int cluster = clusterIndex * 2;
-            if (directoryCluster != 0) cluster -= Parameters.RootDirectorySectors;
+            if (directoryClusterIndex != 0) cluster -= Parameters.RootDirectorySectors;
             return _fatBuffer[cluster + 1] << 8 | _fatBuffer[cluster];
         }
 
@@ -497,7 +497,7 @@ namespace AtariST.SerialDisk.Storage
 
                 if(entryIndex >= maxEntryIndex)
                 {
-                    Exception outofIndexesException = new Exception("Exceeded available directory clusters. There may be too many files in directory.");
+                    Exception outofIndexesException = new Exception($"Exceeded available directory entries in {_clusterInfos[directoryClusterIndex].ContentName}. There may be too many files in directory (max {(maxEntryIndex/32)-2} items).");
                     _logger.LogException(outofIndexesException, outofIndexesException.Message);
                     throw outofIndexesException;
                 }
