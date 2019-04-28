@@ -16,7 +16,7 @@ namespace AtariST.SerialDisk.Storage
             get => _diskSizeTotalBytes;
             set
             {
-                if (value > FAT16Helper.MaxDiskSizeBytes(Type)) throw new ArgumentException($"{value} is larger than the maximum possible disk size for a {Type.ToString()} partition ({FAT16Helper.MaxDiskSizeBytes(Type) / FAT16Helper.BytesPerMiB})");
+                if (value > FAT16Helper.MaxDiskSizeBytes(Type)) throw new ArgumentException($"{value / FAT16Helper.BytesPerMiB}MiB is larger than the maximum possible disk size for a {Type.ToString()} partition ({FAT16Helper.MaxDiskSizeBytes(Type) / FAT16Helper.BytesPerMiB}MiB)");
                 else _diskSizeTotalBytes = value;
             }
         }

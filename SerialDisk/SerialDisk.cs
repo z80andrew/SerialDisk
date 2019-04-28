@@ -14,6 +14,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Runtime.Serialization.Json;
+using static AtariST.SerialDisk.Common.Constants;
 
 namespace AtariST.SerialDisk
 {
@@ -46,14 +47,18 @@ namespace AtariST.SerialDisk
 
             Console.WriteLine("Options (default):");
             Console.WriteLine($"{parameters[0]} <disk_size_in_MiB> ({applicationSettings.DiskSettings.DiskSizeMiB})");
-            Console.WriteLine($"{parameters[1]} [port_name] ({applicationSettings.SerialSettings.PortName})");
-            Console.WriteLine($"{parameters[2]} <baud_rate> ({applicationSettings.SerialSettings.BaudRate})");
-            Console.WriteLine($"{parameters[3]} <data_bits> ({applicationSettings.SerialSettings.DataBits})");
-            Console.WriteLine($"{parameters[4]} [{FormatEnumParams(typeof(StopBits))}] ({applicationSettings.SerialSettings.StopBits})");
-            Console.WriteLine($"{parameters[5]} [{FormatEnumParams(typeof(Parity))}] ({applicationSettings.SerialSettings.Parity})");
-            Console.WriteLine($"{parameters[6]} [{FormatEnumParams(typeof(Handshake))}] ({applicationSettings.SerialSettings.Handshake})");
-            Console.WriteLine($"{parameters[7]} [{FormatEnumParams(typeof(Constants.LoggingLevel))}] ({applicationSettings.LoggingLevel})");
-            Console.WriteLine($"{parameters[8]} [log_file_name]");
+            Console.WriteLine($"{parameters[1]} [{FormatEnumParams(typeof(PartitionType))}] ({applicationSettings.DiskSettings.DiskPartitionType})");
+            Console.WriteLine($"{parameters[2]} <sectors> ({applicationSettings.DiskSettings.RootDirectorySectors})");
+
+            Console.WriteLine($"{parameters[3]} [port_name] ({applicationSettings.SerialSettings.PortName})");
+            Console.WriteLine($"{parameters[4]} <baud_rate> ({applicationSettings.SerialSettings.BaudRate})");
+            Console.WriteLine($"{parameters[5]} <data_bits> ({applicationSettings.SerialSettings.DataBits})");
+            Console.WriteLine($"{parameters[6]} [{FormatEnumParams(typeof(StopBits))}] ({applicationSettings.SerialSettings.StopBits})");
+            Console.WriteLine($"{parameters[7]} [{FormatEnumParams(typeof(Parity))}] ({applicationSettings.SerialSettings.Parity})");
+            Console.WriteLine($"{parameters[8]} [{FormatEnumParams(typeof(Handshake))}] ({applicationSettings.SerialSettings.Handshake})");
+
+            Console.WriteLine($"{parameters[9]} [{FormatEnumParams(typeof(Constants.LoggingLevel))}] ({applicationSettings.LoggingLevel})");
+            Console.WriteLine($"{parameters[10]} [log_file_name]");
             Console.WriteLine();
 
             Console.WriteLine("Serial ports available:");
@@ -124,6 +129,12 @@ namespace AtariST.SerialDisk
                         applicationSettings = (ApplicationSettings)ser.ReadObject(defaultConfigStream);
                 }
 
+                if (args.Any() && args.Where(arg => arg.ToLowerInvariant().StartsWith("--help")).Any())
+                {
+                    PrintUsage(applicationSettings);
+                    return;
+                }
+
                 new ConfigurationBuilder()
                     .AddJsonFile("serialdisk.config", true, false)
                     .AddCommandLine(args, Constants.ConsoleParameterMappings)
@@ -142,11 +153,6 @@ namespace AtariST.SerialDisk
                 return;
             }
 
-            if (args.Any() && (bool)args[0].ToLowerInvariant().StartsWith("--h"))
-            {
-                PrintUsage(applicationSettings);
-                return;
-            }
 
             if (String.IsNullOrEmpty(applicationSettings.LocalDirectoryName)
                 || !Directory.Exists(applicationSettings.LocalDirectoryName))
