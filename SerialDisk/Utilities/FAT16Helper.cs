@@ -12,7 +12,7 @@ namespace AtariST.SerialDisk.Utilities
         public static int MaxDiskSizeBytes(PartitionType partitionType)
         {
             int maxDiskSizeBytes = 32 * BytesPerMiB;
-            if (partitionType != PartitionType.GEM) maxDiskSizeBytes = 511 * BytesPerMiB;
+            if (partitionType != PartitionType.GEM) maxDiskSizeBytes = 512 * BytesPerMiB;
             return maxDiskSizeBytes;
         }
 

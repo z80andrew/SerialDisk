@@ -30,7 +30,7 @@ namespace Tests
         [TestCase(64, 1024, PartitionType.BGM)]
         [TestCase(128, 2048, PartitionType.BGM)]
         [TestCase(256, 4096, PartitionType.BGM)]
-        //[TestCase(511, 8192, PartitionType.BGM)]
+        [TestCase(512, 8192, PartitionType.BGM)]
         public void GetBytesPerSector(int diskSizeMiB, int expectedBytesPerSector, PartitionType partitionType)
         {
             diskParams.Type = partitionType;
@@ -46,7 +46,7 @@ namespace Tests
         [TestCase(64, 2048, PartitionType.BGM)]
         [TestCase(128, 4096, PartitionType.BGM)]
         [TestCase(256, 8192, PartitionType.BGM)]
-        //[TestCase(511, 16384, PartitionType.BGM)]
+        [TestCase(512, 16384, PartitionType.BGM)]
         public void GetBytesPerCluster(int diskSizeMiB, int expectedBytesPerCluster, PartitionType partitionType)
         {
             diskParams.Type = partitionType;
@@ -62,7 +62,7 @@ namespace Tests
         [TestCase(64, 0x8000, PartitionType.BGM)]
         [TestCase(128, 0x8000, PartitionType.BGM)]
         [TestCase(256, 0x8000, PartitionType.BGM)]
-        //[TestCase(511, 0xFFFF, PartitionType.BGM)]
+        [TestCase(512, 0x8000, PartitionType.BGM)]
         public void GetDiskClusters(int diskSizeMiB, int expectedClusters, PartitionType partitionType)
         {
             diskParams.Type = partitionType;

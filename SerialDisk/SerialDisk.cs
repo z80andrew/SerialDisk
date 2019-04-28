@@ -65,18 +65,28 @@ namespace AtariST.SerialDisk
             Console.WriteLine();
         }
 
-        private static string ParseLocalDirectoryPath(string applicationSettingsPath, string lastCommandLineArg)
+        private static string ParseLocalDirectoryPath(string applicationSettingsPath, string[] args)
         {
             string localDirectoryPath = ".";
 
-            if (Directory.Exists(lastCommandLineArg))
-                localDirectoryPath = lastCommandLineArg;
+            // args length is odd, assume final arg is a path
+            if (args.Length % 2 != 0)
+            {
+                if (Directory.Exists(args.Last()))
+                    localDirectoryPath = args.Last();
 
-            else if (Directory.Exists(applicationSettingsPath))
-                localDirectoryPath = applicationSettingsPath;
+                else
+                    throw new Exception($"Could not find path {args.Last()}");
+            }
 
             else
-                throw new Exception($"Could not find path {applicationSettingsPath}");
+            {
+                if (Directory.Exists(applicationSettingsPath))
+                    localDirectoryPath = applicationSettingsPath;
+
+                else
+                    throw new Exception($"Could not find path {applicationSettingsPath}");
+            }
 
 
             DirectoryInfo localDirectoryInfo = new DirectoryInfo(localDirectoryPath);
@@ -108,7 +118,7 @@ namespace AtariST.SerialDisk
 
             try
             {
-                using (var defaultConfigStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("AtariST.SerialDisk.Resource.default_config.json"))
+                using (var defaultConfigStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("AtariST.SerialDisk.Resources.default_config.json"))
                 {
                         DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(ApplicationSettings));
                         applicationSettings = (ApplicationSettings)ser.ReadObject(defaultConfigStream);
@@ -122,13 +132,13 @@ namespace AtariST.SerialDisk
 
                 if (args.Any())
                 {
-                    applicationSettings.LocalDirectoryName = ParseLocalDirectoryPath(applicationSettings.LocalDirectoryName, args.Last());
+                    applicationSettings.LocalDirectoryName = ParseLocalDirectoryPath(applicationSettings.LocalDirectoryName, args);
                 }
             }
 
             catch (Exception parameterException)
             {
-                Console.WriteLine($"Error parsing parameters: {parameterException.InnerException.Message}");
+                Console.WriteLine($"Error parsing parameters: {parameterException.Message}");
                 return;
             }
 

@@ -301,28 +301,33 @@ namespace AtariST.SerialDisk.Storage
             return _fatBuffer[cluster + 1] << 8 | _fatBuffer[cluster];
         }
 
-        private int FatGetFreeCluster(int currentCluster)
+        private int GetNextFreeClusterIndexAndAssignToCluster(int currentCluster)
         {
-            int newCluster;
+            int newClusterIndex = GetNextFreeClusterIndex();
 
-            for (newCluster = 2; newCluster < _fatBuffer.Length / 2; newCluster++)
+            _fatBuffer[currentCluster * 2] = (byte)(newClusterIndex & 0xff);
+            _fatBuffer[currentCluster * 2 + 1] = (byte)((newClusterIndex >> 8) & 0xff);
+
+
+            _fatBuffer[newClusterIndex * 2] = 0xff;
+            _fatBuffer[newClusterIndex * 2 + 1] = 0xff;
+
+            return newClusterIndex;
+        }
+
+        private int GetNextFreeClusterIndex()
+        {
+            int newClusterIndex = 1; // 2 is the first valid cluster index
+            int newClusterValue = 0xFFFF;
+
+            do
             {
-                if (_fatBuffer[newCluster * 2] == 0 && _fatBuffer[newCluster * 2 + 1] == 0)
-                {
-                    if (currentCluster > 0)
-                    {
-                        _fatBuffer[currentCluster * 2] = (byte)(newCluster & 0xff);
-                        _fatBuffer[currentCluster * 2 + 1] = (byte)((newCluster >> 8) & 0xff);
-                    }
+                newClusterIndex++;
+                newClusterValue = FatGetClusterValue(newClusterIndex);
+            } while (newClusterIndex < _fatBuffer.Length / 2 && newClusterValue != 0);
 
-                    _fatBuffer[newCluster * 2] = 0xff;
-                    _fatBuffer[newCluster * 2 + 1] = 0xff;
 
-                    break;
-                }
-            }
-
-            return newCluster;
+            return newClusterIndex;
         }
 
         public byte[] ReadSectors(int sector, int numberOfSectors)
@@ -454,25 +459,28 @@ namespace AtariST.SerialDisk.Storage
             else
                 directoryBuffer = _clusterInfos[directoryClusterIndex].DataBuffer;
 
-            // Find a free entry.
+            // Check whether there is any space left in the cluster
             do
             {
+                // No space left
                 if (entryIndex >= maxEntryIndex)
                 {
                     int nextDirectoryClusterIndex = FatGetClusterValue(directoryClusterIndex);
-                    directoryClusterIndex = FatGetClusterValue(directoryClusterIndex);
 
-                    if (IsEndOfFile(directoryClusterIndex))
+                    // This is the final cluster, allocate new cluster
+                    if (IsEndOfFile(nextDirectoryClusterIndex))
                     {
                         try
                         {
-                            int newDirectoryCluster = FatGetFreeCluster(directoryClusterIndex);
+                            int newDirectoryCluster = GetNextFreeClusterIndexAndAssignToCluster(directoryClusterIndex);
 
                             _clusterInfos[newDirectoryCluster] = new ClusterInfo();
 
                             _clusterInfos[newDirectoryCluster].ContentName = _clusterInfos[directoryClusterIndex].ContentName;
                             _clusterInfos[newDirectoryCluster].FileOffset = -1;
                             _clusterInfos[newDirectoryCluster].DataBuffer = new byte[Parameters.BytesPerCluster];
+
+                            entryIndex = 0;
                         }
 
                         catch (IndexOutOfRangeException outOfRangeEx)
@@ -492,14 +500,18 @@ namespace AtariST.SerialDisk.Storage
                     entryIndex = 0;
                 }
 
+                // Find next unused entry in directory
                 while (entryIndex < maxEntryIndex && directoryBuffer[entryIndex] != 0)
                     entryIndex += 32;
 
-                if(entryIndex >= maxEntryIndex)
+                if (entryIndex >= maxEntryIndex)
                 {
-                    Exception outofIndexesException = new Exception($"Exceeded available directory entries in {_clusterInfos[directoryClusterIndex].ContentName}. There may be too many files in directory (max {(maxEntryIndex/32)-2} items).");
-                    _logger.LogException(outofIndexesException, outofIndexesException.Message);
-                    throw outofIndexesException;
+                    if (directoryClusterIndex == _rootDirectoryClusterIndex)
+                    {
+                        Exception outofIndexesException = new Exception($"Exceeded available directory entries in {_clusterInfos[directoryClusterIndex].ContentName}. There may be too many files in directory (max {(maxEntryIndex / 32) - 2} items).");
+                        _logger.LogException(outofIndexesException, outofIndexesException.Message);
+                        throw outofIndexesException;
+                    }
                 }
 
             } while (entryIndex >= maxEntryIndex);
@@ -595,7 +607,7 @@ namespace AtariST.SerialDisk.Storage
 
         private void FatAddDirectory(DirectoryInfo directoryInfo, int directoryCluster)
         {
-            int newDirectoryClusterIndex = FatGetFreeCluster(0);
+            int newDirectoryClusterIndex = GetNextFreeClusterIndexAndAssignToCluster(0); // Is there is a cleaner way to do this?
 
             _clusterInfos[newDirectoryClusterIndex] = new ClusterInfo();
 
@@ -620,7 +632,7 @@ namespace AtariST.SerialDisk.Storage
             {
                 try
                 {
-                    nextFileClusterIndex = FatGetFreeCluster(nextFileClusterIndex);
+                    nextFileClusterIndex = GetNextFreeClusterIndexAndAssignToCluster(nextFileClusterIndex);
 
                     if (fileStartClusterIndex == _rootDirectoryClusterIndex)
                         fileStartClusterIndex = nextFileClusterIndex;
