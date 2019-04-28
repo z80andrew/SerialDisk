@@ -4,12 +4,12 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <RootNamespace>AtariST.SerialDisk</RootNamespace>
-    <AssemblyVersion>2.0.*</AssemblyVersion>
+    <AssemblyVersion>2.1.*</AssemblyVersion>
     <FileVersion>2.0.0.0</FileVersion>
-    <Version>2.0</Version>
+    <Version>2.1</Version>
     <ApplicationIcon />
     <StartupObject></StartupObject>
-    <Authors>z80andrew, Sascha</Authors>
+    <Authors>z80andrew</Authors>
     <Company />
     <Description>A virtual FAT16 disk over serial for the Atari ST</Description>
     <PackageProjectUrl>https://github.com/z80andrew/SerialDisk</PackageProjectUrl>
@@ -17,7 +17,7 @@
     <RepositoryType>GitHub</RepositoryType>
     <PackageReleaseNotes></PackageReleaseNotes>
     <Copyright>z80andrew 2019</Copyright>
-  <Deterministic>False</Deterministic>	
+    <Deterministic>False</Deterministic>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -26,26 +26,43 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Atari\SERDISK1.TOS" />
+    <None Remove="atari\hello_l.txt" />
+    <None Remove="atari\hello_m.txt" />
+    <None Remove="atari\SERDISK1.TOS" />
     <None Remove="serialdisk.config" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Atari\bin\SERDISK1.TOS">
+    <Content Include="atari\bin\SERDISK1.TOS">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="serialdisk.config">
+    <Content Include="atari\hello_m.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="atari\hello_l.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <EmbeddedResource Include="Resources\default_config.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <Content Include="serialdisk.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="2.2.4" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
-    <PackageReference Include="System.IO.Ports" Version="4.5.0" />
+    <Content Update="Resource">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.0.0-preview4.19216.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.0.0-preview4.19216.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="3.0.0-preview4.19216.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.0.0-preview4.19216.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.0.0-preview4.19216.2" />
+    <PackageReference Include="System.IO.Ports" Version="4.6.0-preview4.19212.13" />
   </ItemGroup>
 
   <ItemGroup>

@@ -3,9 +3,9 @@ using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Utilities;
 using System;
 using System.IO.Ports;
-using static AtariST.SerialDisk.Shared.Constants;
+using static AtariST.SerialDisk.Common.Constants;
 
-namespace AtariST.SerialDisk.Comm
+namespace AtariST.SerialDisk.Comms
 {
     public class Serial : IDisposable, ISerial
     {

@@ -1,28 +1,44 @@
-﻿namespace AtariST.SerialDisk.Storage
+using AtariST.SerialDisk.Models;
+using AtariST.SerialDisk.Utilities;
+using System;
+using static AtariST.SerialDisk.Common.Constants;
+
+namespace AtariST.SerialDisk.Storage
 {
     public class DiskParameters
     {
-        private int _bytesPerSector = 1;
+        private int _diskSizeTotalBytes = FAT16Helper.MaxDiskSizeBytes(PartitionType.GEM);
+        private int _bytesPerSector = 256;
         private byte[] _biosParameterBlock;
 
-        public int DiskTotalBytes { get; set; }
-
-        public DiskParameters(string localDirectoryPath, int diskTotalBytes)
+        public int DiskTotalBytes
         {
-            LocalDirectoryPath = localDirectoryPath;
-            DiskTotalBytes = diskTotalBytes;
+            get => _diskSizeTotalBytes;
+            set
+            {
+                if (value > FAT16Helper.MaxDiskSizeBytes(Type)) throw new ArgumentException($"{value / FAT16Helper.BytesPerMiB}MiB is larger than the maximum possible disk size for a {Type.ToString()} partition ({FAT16Helper.MaxDiskSizeBytes(Type) / FAT16Helper.BytesPerMiB}MiB)");
+                else _diskSizeTotalBytes = value;
+            }
         }
+
+        public PartitionType Type { get; set; } = PartitionType.GEM;
 
         public string LocalDirectoryPath { get; set; }
 
         public int BytesPerSector
         {
             get
-            {
-                if (_bytesPerSector == 1)
+            {              
+                if (_bytesPerSector == 256)
                 {
-                    while (_bytesPerSector * 64 * 1024 < DiskTotalBytes)
-                        _bytesPerSector *= 2;
+                    if (Type == PartitionType.GEM) _bytesPerSector = 512;
+
+                    else
+                    {
+                        // 0xFFFF is maximum number of sectors (word)
+                        while (_bytesPerSector * 0x10000 < DiskTotalBytes)
+                            _bytesPerSector *= 2;
+                    }
                 }
 
                 return _bytesPerSector;
@@ -39,7 +55,12 @@
 
         public int DiskClusters
         {
-            get => DiskTotalBytes / BytesPerCluster;
+            get
+            {
+                int diskClusters = DiskTotalBytes / BytesPerCluster;
+                if (Type == PartitionType.GEM && diskClusters == 0x8000) diskClusters = 0x7FFF; // Clamp GEM partition to 15-bit addresssing
+                return diskClusters;
+            }
         }
 
         public int FatEntriesPerSector
@@ -52,7 +73,7 @@
             get => (DiskClusters + FatEntriesPerSector - 1) / FatEntriesPerSector;
         }
 
-        public readonly int RootDirectorySectors = 4;
+        public int RootDirectorySectors { get; set; }
 
         public byte[] BIOSParameterBlock
         {
@@ -92,6 +113,14 @@
 
                 return _biosParameterBlock;
             }
+        }
+
+        public DiskParameters(string localDirectoryPath, AtariDiskSettings diskSettings)
+        {
+            LocalDirectoryPath = localDirectoryPath;
+            Type = diskSettings.DiskPartitionType;
+            DiskTotalBytes = diskSettings.DiskSizeMiB * FAT16Helper.BytesPerMiB;
+            RootDirectorySectors = diskSettings.RootDirectorySectors;
         }
     }
 }

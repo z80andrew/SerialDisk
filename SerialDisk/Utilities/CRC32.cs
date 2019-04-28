@@ -10,7 +10,7 @@ namespace AtariST.SerialDisk.Utilities
         {
             _crc32Table = new UInt32[256];
 
-            UInt32 Crc32Poly = 0x04c11db7;
+            UInt32 Crc32Poly = 0x04c11db7; // matches main.asm
 
             for (int ByteIndex = 0; ByteIndex < 256; ByteIndex++)
             {

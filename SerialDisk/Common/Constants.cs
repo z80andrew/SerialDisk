@@ -1,11 +1,17 @@
 ﻿using System.Collections.Generic;
 
-namespace AtariST.SerialDisk.Shared
+namespace AtariST.SerialDisk.Common
 {
     public static class Constants
     {
         public const string DATE_FORMAT = "yyyy-MM-dd";
         public const string TIME_FORMAT = "HH:mm:ss";
+
+        public enum PartitionType
+        {
+            GEM,
+            BGM
+        }
 
         public static Dictionary<string, string> ConsoleParameterMappings
         {
@@ -13,7 +19,9 @@ namespace AtariST.SerialDisk.Shared
             {
                 return new Dictionary<string, string>
                 {
-                    { "--disk-size", "DiskSizeMiB" },
+                    { "--disk-size", "DiskSettings:DiskSizeMiB" },
+                    { "--partition-type", "DiskSettings:DiskPartitionType" },
+                    { "--root-directory-sectors", "DiskSettings:RootDirectorySettings" },
 
                     { "--port", "SerialSettings:PortName" },
                     { "--baud-rate", "SerialSettings:BaudRate" },

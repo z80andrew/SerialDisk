@@ -1,8 +1,9 @@
-using AtariST.SerialDisk.Comm;
+using AtariST.SerialDisk.Comms;
 using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
-using AtariST.SerialDisk.Shared;
+using AtariST.SerialDisk.Common;
 using AtariST.SerialDisk.Storage;
+using AtariST.SerialDisk.Utilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -12,6 +13,8 @@ using System.IO.Ports;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Runtime.Serialization.Json;
+using static AtariST.SerialDisk.Common.Constants;
 
 namespace AtariST.SerialDisk
 {
@@ -43,15 +46,19 @@ namespace AtariST.SerialDisk
             List<String> parameters = Constants.ConsoleParameterMappings.Keys.ToList();
 
             Console.WriteLine("Options (default):");
-            Console.WriteLine($"{parameters[0]} <disk_size_in_MiB> ({applicationSettings.DiskSizeMiB})");
-            Console.WriteLine($"{parameters[1]} [port_name] ({applicationSettings.SerialSettings.PortName})");
-            Console.WriteLine($"{parameters[2]} <baud_rate> ({applicationSettings.SerialSettings.BaudRate})");
-            Console.WriteLine($"{parameters[3]} <data_bits> ({applicationSettings.SerialSettings.DataBits})");
-            Console.WriteLine($"{parameters[4]} [{FormatEnumParams(typeof(StopBits))}] ({applicationSettings.SerialSettings.StopBits})");
-            Console.WriteLine($"{parameters[5]} [{FormatEnumParams(typeof(Parity))}] ({applicationSettings.SerialSettings.Parity})");
-            Console.WriteLine($"{parameters[6]} [{FormatEnumParams(typeof(Handshake))}] ({applicationSettings.SerialSettings.Handshake})");
-            Console.WriteLine($"{parameters[7]} [{FormatEnumParams(typeof(Constants.LoggingLevel))}] ({applicationSettings.LoggingLevel})");
-            Console.WriteLine($"{parameters[8]} [log_file_name]");
+            Console.WriteLine($"{parameters[0]} <disk_size_in_MiB> ({applicationSettings.DiskSettings.DiskSizeMiB})");
+            Console.WriteLine($"{parameters[1]} [{FormatEnumParams(typeof(PartitionType))}] ({applicationSettings.DiskSettings.DiskPartitionType})");
+            Console.WriteLine($"{parameters[2]} <sectors> ({applicationSettings.DiskSettings.RootDirectorySectors})");
+
+            Console.WriteLine($"{parameters[3]} [port_name] ({applicationSettings.SerialSettings.PortName})");
+            Console.WriteLine($"{parameters[4]} <baud_rate> ({applicationSettings.SerialSettings.BaudRate})");
+            Console.WriteLine($"{parameters[5]} <data_bits> ({applicationSettings.SerialSettings.DataBits})");
+            Console.WriteLine($"{parameters[6]} [{FormatEnumParams(typeof(StopBits))}] ({applicationSettings.SerialSettings.StopBits})");
+            Console.WriteLine($"{parameters[7]} [{FormatEnumParams(typeof(Parity))}] ({applicationSettings.SerialSettings.Parity})");
+            Console.WriteLine($"{parameters[8]} [{FormatEnumParams(typeof(Handshake))}] ({applicationSettings.SerialSettings.Handshake})");
+
+            Console.WriteLine($"{parameters[9]} [{FormatEnumParams(typeof(Constants.LoggingLevel))}] ({applicationSettings.LoggingLevel})");
+            Console.WriteLine($"{parameters[10]} [log_file_name]");
             Console.WriteLine();
 
             Console.WriteLine("Serial ports available:");
@@ -63,18 +70,28 @@ namespace AtariST.SerialDisk
             Console.WriteLine();
         }
 
-        private static string ParseLocalDirectoryPath(ApplicationSettings applicationSettings, string lastCommandLineArg)
+        private static string ParseLocalDirectoryPath(string applicationSettingsPath, string[] args)
         {
             string localDirectoryPath = ".";
 
-            if (Directory.Exists(lastCommandLineArg))
-                localDirectoryPath = lastCommandLineArg;
+            // args length is odd, assume final arg is a path
+            if (args.Length % 2 != 0)
+            {
+                if (Directory.Exists(args.Last()))
+                    localDirectoryPath = args.Last();
 
-            else if (Directory.Exists(applicationSettings.LocalDirectoryName))
-                localDirectoryPath = applicationSettings.LocalDirectoryName;
+                else
+                    throw new Exception($"Could not find path {args.Last()}");
+            }
 
             else
-                throw new Exception($"Could not find path {applicationSettings.LocalDirectoryName}");
+            {
+                if (Directory.Exists(applicationSettingsPath))
+                    localDirectoryPath = applicationSettingsPath;
+
+                else
+                    throw new Exception($"Could not find path {applicationSettingsPath}");
+            }
 
 
             DirectoryInfo localDirectoryInfo = new DirectoryInfo(localDirectoryPath);
@@ -102,10 +119,22 @@ namespace AtariST.SerialDisk
 
             #region Application settings
 
-            var applicationSettings = new ApplicationSettings();
+            ApplicationSettings applicationSettings;
 
             try
             {
+                using (var defaultConfigStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("AtariST.SerialDisk.Resources.default_config.json"))
+                {
+                        DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(ApplicationSettings));
+                        applicationSettings = (ApplicationSettings)ser.ReadObject(defaultConfigStream);
+                }
+
+                if (args.Any() && args.Where(arg => arg.ToLowerInvariant().StartsWith("--help")).Any())
+                {
+                    PrintUsage(applicationSettings);
+                    return;
+                }
+
                 new ConfigurationBuilder()
                     .AddJsonFile("serialdisk.config", true, false)
                     .AddCommandLine(args, Constants.ConsoleParameterMappings)
@@ -114,7 +143,7 @@ namespace AtariST.SerialDisk
 
                 if (args.Any())
                 {
-                    applicationSettings.LocalDirectoryName = ParseLocalDirectoryPath(applicationSettings, args.Last());
+                    applicationSettings.LocalDirectoryName = ParseLocalDirectoryPath(applicationSettings.LocalDirectoryName, args);
                 }
             }
 
@@ -124,23 +153,21 @@ namespace AtariST.SerialDisk
                 return;
             }
 
-            if (args.Any() && (bool)args[0].ToLowerInvariant().StartsWith("--h"))
-            {
-                PrintUsage(applicationSettings);
-                return;
-            }
 
             if (String.IsNullOrEmpty(applicationSettings.LocalDirectoryName)
-                || !Directory.Exists(applicationSettings.LocalDirectoryName)) throw new Exception("Local directory name invalid.");
-
-            DirectoryInfo localDirectoryInfo = new DirectoryInfo(applicationSettings.LocalDirectoryName);
-            applicationSettings.LocalDirectoryName = localDirectoryInfo.FullName;
+                || !Directory.Exists(applicationSettings.LocalDirectoryName))
+            {
+                Console.WriteLine($"Local directory path {applicationSettings.LocalDirectoryName} not found.");
+                return;
+            }
 
             #endregion
 
             Logger logger = new Logger(applicationSettings.LoggingLevel, applicationSettings.LogFileName);
 
-            DiskParameters diskParameters = new DiskParameters(applicationSettings.LocalDirectoryName, applicationSettings.DiskSizeMiB * 1024 * 1024);
+            DiskParameters diskParameters = new DiskParameters(applicationSettings.LocalDirectoryName, applicationSettings.DiskSettings);
+
+            logger.Log($"Importing local directory contents from {applicationSettings.LocalDirectoryName}", Constants.LoggingLevel.Verbose);
 
             Disk disk = new Disk(diskParameters, logger);
 
@@ -150,7 +177,7 @@ namespace AtariST.SerialDisk
 
             Console.WriteLine($"Baud rate:{applicationSettings.SerialSettings.BaudRate} | Data bits:{applicationSettings.SerialSettings.DataBits}" +
                 $" | Parity:{applicationSettings.SerialSettings.Parity} | Stop bits:{applicationSettings.SerialSettings.StopBits} | Flow control:{applicationSettings.SerialSettings.Handshake}");
-            Console.WriteLine($"Local directory: {applicationSettings.LocalDirectoryName}");
+            Console.WriteLine($"Using local directory {applicationSettings.LocalDirectoryName} as a {applicationSettings.DiskSettings.DiskSizeMiB}MiB virtual disk");
             Console.WriteLine($"Logging level: { applicationSettings.LoggingLevel} ");
 
             Console.WriteLine("Press any key to quit.");

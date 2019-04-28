@@ -1,6 +1,6 @@
-﻿using AtariST.SerialDisk.Interfaces;
+using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
-using AtariST.SerialDisk.Shared;
+using AtariST.SerialDisk.Common;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -33,6 +33,18 @@ namespace AtariST.SerialDisk.Storage
         {
             _logger = log;
             Parameters = diskParams;
+
+            try
+            {
+                int maxRootDirectoryEntries = ((diskParams.RootDirectorySectors * diskParams.BytesPerSector) / 32) - 2; // Each entry is 32 bytes, 2 entries reserved for . and ..
+                FAT16Helper.ValidateLocalDirectory(diskParams.LocalDirectoryPath, diskParams.DiskTotalBytes, maxRootDirectoryEntries, diskParams.Type);
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogException(ex, ex.Message);
+                throw ex;
+            }
 
             FatImportLocalDirectoryContents(Parameters.LocalDirectoryPath, _rootDirectoryClusterIndex);
             WatchLocalDirectory(Parameters.LocalDirectoryPath);
@@ -282,35 +294,40 @@ namespace AtariST.SerialDisk.Storage
             return clusterValue >= 0xfff8;
         }
 
-        private int FatGetClusterValue(int clusterIndex, int directoryCluster = 0)
+        private int FatGetClusterValue(int clusterIndex, int directoryClusterIndex = 0)
         {
             int cluster = clusterIndex * 2;
-            if (directoryCluster != 0) cluster -= Parameters.RootDirectorySectors;
+            if (directoryClusterIndex != 0) cluster -= Parameters.RootDirectorySectors;
             return _fatBuffer[cluster + 1] << 8 | _fatBuffer[cluster];
         }
 
-        private int FatGetFreeCluster(int currentCluster)
+        private int GetNextFreeClusterIndexAndAssignToCluster(int currentCluster)
         {
-            int newCluster;
+            int newClusterIndex = GetNextFreeClusterIndex();
 
-            for (newCluster = 2; newCluster < _fatBuffer.Length / 2; newCluster++)
+            _fatBuffer[currentCluster * 2] = (byte)(newClusterIndex & 0xff);
+            _fatBuffer[currentCluster * 2 + 1] = (byte)((newClusterIndex >> 8) & 0xff);
+
+
+            _fatBuffer[newClusterIndex * 2] = 0xff;
+            _fatBuffer[newClusterIndex * 2 + 1] = 0xff;
+
+            return newClusterIndex;
+        }
+
+        private int GetNextFreeClusterIndex()
+        {
+            int newClusterIndex = 1; // 2 is the first valid cluster index
+            int newClusterValue = 0xFFFF;
+
+            do
             {
-                if (_fatBuffer[newCluster * 2] == 0 && _fatBuffer[newCluster * 2 + 1] == 0)
-                {
-                    if (currentCluster > 0)
-                    {
-                        _fatBuffer[currentCluster * 2] = (byte)(newCluster & 0xff);
-                        _fatBuffer[currentCluster * 2 + 1] = (byte)((newCluster >> 8) & 0xff);
-                    }
+                newClusterIndex++;
+                newClusterValue = FatGetClusterValue(newClusterIndex);
+            } while (newClusterIndex < _fatBuffer.Length / 2 && newClusterValue != 0);
 
-                    _fatBuffer[newCluster * 2] = 0xff;
-                    _fatBuffer[newCluster * 2 + 1] = 0xff;
 
-                    break;
-                }
-            }
-
-            return newCluster;
+            return newClusterIndex;
         }
 
         public byte[] ReadSectors(int sector, int numberOfSectors)
@@ -435,41 +452,41 @@ namespace AtariST.SerialDisk.Storage
             byte[] directoryBuffer;
             int entryIndex = 0;
 
+            int maxEntryIndex = directoryClusterIndex == 0 ? _rootDirectoryBuffer.Length : Parameters.BytesPerCluster;
+
             if (directoryClusterIndex == _rootDirectoryClusterIndex)
                 directoryBuffer = _rootDirectoryBuffer;
             else
                 directoryBuffer = _clusterInfos[directoryClusterIndex].DataBuffer;
 
-            // Find a free entry.
+            // Check whether there is any space left in the cluster
             do
             {
-                if (directoryClusterIndex == 0)
-                {
-                    if (entryIndex >= _rootDirectoryBuffer.Length)
-                        return false;
-                }
-                else if (entryIndex >= Parameters.BytesPerCluster)
+                // No space left
+                if (entryIndex >= maxEntryIndex)
                 {
                     int nextDirectoryClusterIndex = FatGetClusterValue(directoryClusterIndex);
-                    directoryClusterIndex = FatGetClusterValue(directoryClusterIndex);
 
-                    if (IsEndOfFile(directoryClusterIndex))
+                    // This is the final cluster, allocate new cluster
+                    if (IsEndOfFile(nextDirectoryClusterIndex))
                     {
                         try
                         {
-                            int newDirectoryCluster = FatGetFreeCluster(directoryClusterIndex);
+                            int newDirectoryCluster = GetNextFreeClusterIndexAndAssignToCluster(directoryClusterIndex);
 
                             _clusterInfos[newDirectoryCluster] = new ClusterInfo();
 
                             _clusterInfos[newDirectoryCluster].ContentName = _clusterInfos[directoryClusterIndex].ContentName;
                             _clusterInfos[newDirectoryCluster].FileOffset = -1;
                             _clusterInfos[newDirectoryCluster].DataBuffer = new byte[Parameters.BytesPerCluster];
+
+                            entryIndex = 0;
                         }
 
                         catch (IndexOutOfRangeException outOfRangeEx)
                         {
-                            int localDirectorySizeMiB = (int)Directory.GetFiles(Parameters.LocalDirectoryPath, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length)) / 1024 / 1024;
-                            _logger.LogException(outOfRangeEx, $"Local directory size is {localDirectorySizeMiB} MiB, which is too large for the given virtual disk size ({Parameters.DiskTotalBytes / 1024 / 1024} MiB)");
+                            int localDirectorySizeMiB = (int)Directory.GetFiles(Parameters.LocalDirectoryPath, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length)) / FAT16Helper.BytesPerMiB;
+                            _logger.LogException(outOfRangeEx, $"Local directory size is {localDirectorySizeMiB} MiB, which is too large for the given virtual disk size ({Parameters.DiskTotalBytes / FAT16Helper.BytesPerMiB} MiB)");
                             throw outOfRangeEx;
                         }
                     }
@@ -483,10 +500,21 @@ namespace AtariST.SerialDisk.Storage
                     entryIndex = 0;
                 }
 
-                while (entryIndex < Parameters.BytesPerCluster && directoryBuffer[entryIndex] != 0)
+                // Find next unused entry in directory
+                while (entryIndex < maxEntryIndex && directoryBuffer[entryIndex] != 0)
                     entryIndex += 32;
 
-            } while (entryIndex >= Parameters.BytesPerCluster);
+                if (entryIndex >= maxEntryIndex)
+                {
+                    if (directoryClusterIndex == _rootDirectoryClusterIndex)
+                    {
+                        Exception outofIndexesException = new Exception($"Exceeded available directory entries in {_clusterInfos[directoryClusterIndex].ContentName}. There may be too many files in directory (max {(maxEntryIndex / 32) - 2} items).");
+                        _logger.LogException(outofIndexesException, outofIndexesException.Message);
+                        throw outofIndexesException;
+                    }
+                }
+
+            } while (entryIndex >= maxEntryIndex);
 
             // Remember which local content matches this entry.
 
@@ -579,7 +607,7 @@ namespace AtariST.SerialDisk.Storage
 
         private void FatAddDirectory(DirectoryInfo directoryInfo, int directoryCluster)
         {
-            int newDirectoryClusterIndex = FatGetFreeCluster(0);
+            int newDirectoryClusterIndex = GetNextFreeClusterIndexAndAssignToCluster(0); // Is there is a cleaner way to do this?
 
             _clusterInfos[newDirectoryClusterIndex] = new ClusterInfo();
 
@@ -604,7 +632,7 @@ namespace AtariST.SerialDisk.Storage
             {
                 try
                 {
-                    nextFileClusterIndex = FatGetFreeCluster(nextFileClusterIndex);
+                    nextFileClusterIndex = GetNextFreeClusterIndexAndAssignToCluster(nextFileClusterIndex);
 
                     if (fileStartClusterIndex == _rootDirectoryClusterIndex)
                         fileStartClusterIndex = nextFileClusterIndex;
@@ -618,8 +646,8 @@ namespace AtariST.SerialDisk.Storage
 
                 catch (IndexOutOfRangeException outOfRangeEx)
                 {
-                    int localDirectorySizeMiB = (int)Directory.GetFiles(Parameters.LocalDirectoryPath, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length)) / 1024 / 1024;
-                    _logger.LogException(outOfRangeEx, $"Local directory size is {localDirectorySizeMiB} MiB, which is too large for the given virtual disk size ({Parameters.DiskTotalBytes / 1024 / 1024} MiB)");
+                    int localDirectorySizeMiB = (int)Directory.GetFiles(Parameters.LocalDirectoryPath, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length)) / FAT16Helper.BytesPerMiB;
+                    _logger.LogException(outOfRangeEx, $"Local directory size is {localDirectorySizeMiB} MiB, which is too large for the given virtual disk size ({Parameters.DiskTotalBytes / FAT16Helper.BytesPerMiB} MiB)");
                     throw outOfRangeEx;
                 }
             }
@@ -642,13 +670,13 @@ namespace AtariST.SerialDisk.Storage
                 _localDirectoryContentInfos = new List<LocalDirectoryContentInfo>();
             }
 
-            DirectoryInfo DirectoryInfo = new DirectoryInfo(directoryName);
+            DirectoryInfo directoryInfo = new DirectoryInfo(directoryName);
 
-            foreach (DirectoryInfo SubDirectoryInfo in DirectoryInfo.GetDirectories())
-                FatAddDirectory(SubDirectoryInfo, directoryClusterIndex);
+            foreach (DirectoryInfo subDirectoryInfo in directoryInfo.GetDirectories())
+                FatAddDirectory(subDirectoryInfo, directoryClusterIndex);
 
-            foreach (FileInfo FileInfo in DirectoryInfo.GetFiles())
-                FatAddFile(FileInfo, directoryClusterIndex);
+            foreach (FileInfo fileInfo in directoryInfo.GetFiles())
+                FatAddFile(fileInfo, directoryClusterIndex);
         }
     }
 }
