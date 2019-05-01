@@ -2,6 +2,7 @@ using NUnit.Framework;
 using AtariST.SerialDisk.Storage;
 using AtariST.SerialDisk.Models;
 using static AtariST.SerialDisk.Common.Constants;
+using System;
 
 namespace Tests
 {
@@ -59,10 +60,10 @@ namespace Tests
 
         [TestCase(16, 0x4000, PartitionType.GEM)]
         [TestCase(32, 0x7FFF, PartitionType.GEM)]
-        [TestCase(64, 0x8000, PartitionType.BGM)]
-        [TestCase(128, 0x8000, PartitionType.BGM)]
-        [TestCase(256, 0x8000, PartitionType.BGM)]
-        [TestCase(512, 0x8000, PartitionType.BGM)]
+        [TestCase(64, 0x7FFF, PartitionType.BGM)]
+        [TestCase(128, 0x7FFF, PartitionType.BGM)]
+        [TestCase(256, 0x7FFF, PartitionType.BGM)]
+        [TestCase(512, 0x7FFF, PartitionType.BGM)]
         public void GetDiskClusters(int diskSizeMiB, int expectedClusters, PartitionType partitionType)
         {
             diskParams.Type = partitionType;
@@ -73,20 +74,47 @@ namespace Tests
             Assert.AreEqual(expectedClusters, diskClusters);
         }
 
-        [Test]
-        public void GetFatEntriesPerSector()
+        [TestCase(64, PartitionType.GEM)]
+        [TestCase(1024, PartitionType.BGM)]
+        public void InvalidDiskSize(int diskSizeMiB, PartitionType partitionType)
         {
-            int fatEntriesPerSector = diskParams.FatEntriesPerSector;
+            diskParams.Type = partitionType;
 
-            Assert.AreEqual(256, fatEntriesPerSector);
+            Assert.That(() => { diskParams.DiskTotalBytes = diskSizeMiB * 1024 * 1024; },
+                Throws.TypeOf<ArgumentException>()
+                    .With.Message.Contains($"{diskSizeMiB}MiB is larger than the maximum possible disk size for a {partitionType} partition"));
         }
 
-        [Test]
-        public void GetSectorsPerFat()
+        [TestCase(16, 256, PartitionType.GEM)]
+        [TestCase(32, 256, PartitionType.GEM)]
+        [TestCase(64, 512, PartitionType.BGM)]
+        [TestCase(128, 1024, PartitionType.BGM)]
+        [TestCase(256, 2048, PartitionType.BGM)]
+        [TestCase(512, 4096, PartitionType.BGM)]
+        public void GetFatEntriesPerSector(int diskSizeMiB, int expectedClusters, PartitionType partitionType)
         {
+            diskParams.Type = partitionType;
+            diskParams.DiskTotalBytes = diskSizeMiB * 1024 * 1024;
+
+            int fatEntriesPerSector = diskParams.FatEntriesPerSector;
+
+            Assert.AreEqual(expectedClusters, fatEntriesPerSector);
+        }
+
+        [TestCase(16, 64, PartitionType.GEM)]
+        [TestCase(32, 128, PartitionType.GEM)]
+        [TestCase(64, 64, PartitionType.BGM)]
+        [TestCase(128, 32, PartitionType.BGM)]
+        [TestCase(256, 16, PartitionType.BGM)]
+        [TestCase(512, 8, PartitionType.BGM)]
+        public void GetSectorsPerFat(int diskSizeMiB, int expectedSectorsPerFat, PartitionType partitionType)
+        {
+            diskParams.Type = partitionType;
+            diskParams.DiskTotalBytes = diskSizeMiB * 1024 * 1024;
+
             int sectorsPerFat = diskParams.SectorsPerFat;
 
-            Assert.AreEqual(128, sectorsPerFat);
+            Assert.AreEqual(expectedSectorsPerFat, sectorsPerFat);
         }
 
     }

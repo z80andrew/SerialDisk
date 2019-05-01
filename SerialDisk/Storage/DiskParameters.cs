@@ -58,7 +58,7 @@ namespace AtariST.SerialDisk.Storage
             get
             {
                 int diskClusters = DiskTotalBytes / BytesPerCluster;
-                if (Type == PartitionType.GEM && diskClusters == 0x8000) diskClusters = 0x7FFF; // Clamp GEM partition to 15-bit addresssing
+                if (diskClusters == 0x8000) diskClusters = 0x7FFF; // Clamp to 15-bit addresssing
                 return diskClusters;
             }
         }
