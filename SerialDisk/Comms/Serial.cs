@@ -2,6 +2,7 @@ using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Utilities;
 using System;
+using System.IO;
 using System.IO.Ports;
 using static AtariST.SerialDisk.Common.Constants;
 
@@ -23,8 +24,6 @@ namespace AtariST.SerialDisk.Comms
         private byte[] _receiverDataBuffer;
         private int _receiverDataIndex = 0;
 
-        private byte[] _buffer = new byte[4096];
-
         private DateTime _transferEndDateTime = DateTime.Now;
         private DateTime _transferStartDateTime = DateTime.Now;
         private long _transferSize = 0;
@@ -36,8 +35,17 @@ namespace AtariST.SerialDisk.Comms
             _localDisk = disk;
             _logger = log;
 
-            _serialPort = InitializeSerialPort(serialPortSettings);
-            _serialPort.Open();
+            try
+            {
+                _serialPort = InitializeSerialPort(serialPortSettings);
+                _serialPort.Open();
+            }
+
+            catch(Exception portException) when(portException is IOException || portException is UnauthorizedAccessException)
+            {
+                _logger.LogException(portException, $"Error opening serial port {serialPortSettings.PortName}");
+                throw portException;
+            }
 
             _logger.Log($"Serial port {serialPortSettings.PortName} opened successfully.", LoggingLevel.Verbose);
 
@@ -49,18 +57,20 @@ namespace AtariST.SerialDisk.Comms
 
         private SerialPort InitializeSerialPort(SerialPortSettings serialSettings)
         {
-            SerialPort serialPort = new SerialPort(serialSettings.PortName);
-            serialPort.Handshake = serialSettings.Handshake;
-            serialPort.BaudRate = serialSettings.BaudRate;
-            serialPort.DataBits = serialSettings.DataBits;
-            serialPort.StopBits = serialSettings.StopBits;
-            serialPort.Parity = serialSettings.Parity;
-            serialPort.ReceivedBytesThreshold = 1;
-            serialPort.ReadTimeout = 100;
-            serialPort.WriteTimeout = -1;
-            serialPort.ReadBufferSize = 64 * 1024;
-            serialPort.WriteBufferSize = 64 * 1024;
-            serialPort.ReceivedBytesThreshold = 1;
+            SerialPort serialPort = new SerialPort()
+            {
+                PortName = serialSettings.PortName,
+                Handshake = serialSettings.Handshake,
+                BaudRate = serialSettings.BaudRate,
+                DataBits = serialSettings.DataBits,
+                StopBits = serialSettings.StopBits,
+                Parity = serialSettings.Parity,
+                ReadTimeout = 100,
+                WriteTimeout = -1,
+                ReadBufferSize = 64 * 1024,
+                WriteBufferSize = 64 * 1024,
+                ReceivedBytesThreshold = 1
+            };
 
             return serialPort;
         }

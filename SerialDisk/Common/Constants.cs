@@ -7,6 +7,12 @@ namespace AtariST.SerialDisk.Common
         public const string DATE_FORMAT = "yyyy-MM-dd";
         public const string TIME_FORMAT = "HH:mm:ss";
 
+        public enum TOSVersion
+        {
+            TOS100,
+            TOS104
+        }
+
         public enum PartitionType
         {
             GEM,

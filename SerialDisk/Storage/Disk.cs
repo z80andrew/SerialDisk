@@ -37,7 +37,7 @@ namespace AtariST.SerialDisk.Storage
             try
             {
                 int maxRootDirectoryEntries = ((diskParams.RootDirectorySectors * diskParams.BytesPerSector) / 32) - 2; // Each entry is 32 bytes, 2 entries reserved for . and ..
-                FAT16Helper.ValidateLocalDirectory(diskParams.LocalDirectoryPath, diskParams.DiskTotalBytes, maxRootDirectoryEntries, diskParams.Type);
+                FAT16Helper.ValidateLocalDirectory(diskParams.LocalDirectoryPath, diskParams.DiskTotalBytes, maxRootDirectoryEntries, diskParams.Type, diskParams.TOS);
             }
 
             catch (Exception ex)
@@ -52,12 +52,14 @@ namespace AtariST.SerialDisk.Storage
 
         protected virtual void WatchLocalDirectory(string localDirectoryName)
         {
-            _fileSystemWatcher = new FileSystemWatcher();
+            _fileSystemWatcher = new FileSystemWatcher()
+            {
+                Path = localDirectoryName,
+                NotifyFilter = NotifyFilters.CreationTime | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName,
+                Filter = "",
+                IncludeSubdirectories = true
+            };
 
-            _fileSystemWatcher.Path = localDirectoryName;
-            _fileSystemWatcher.NotifyFilter = NotifyFilters.CreationTime | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
-            _fileSystemWatcher.Filter = "";
-            _fileSystemWatcher.IncludeSubdirectories = true;
             _fileSystemWatcher.Changed += new FileSystemEventHandler(FileChangedHandler);
             _fileSystemWatcher.Created += new FileSystemEventHandler(FileChangedHandler);
             _fileSystemWatcher.Deleted += new FileSystemEventHandler(FileChangedHandler);
@@ -533,7 +535,6 @@ namespace AtariST.SerialDisk.Storage
             }
 
             // File name.
-
             int fileNameIndex;
 
             for (fileNameIndex = 0; fileNameIndex < (8 + 3); fileNameIndex++)

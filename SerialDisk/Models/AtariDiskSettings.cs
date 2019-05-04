@@ -8,6 +8,7 @@ namespace AtariST.SerialDisk.Models
 {
     public class AtariDiskSettings
     {
+        public TOSVersion DiskTOSCompatibility { get; set; }
         public PartitionType DiskPartitionType { get; set; }
 
         public int RootDirectorySectors { get; set; }

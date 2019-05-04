@@ -163,7 +163,7 @@ namespace AtariST.SerialDisk
 
             #endregion
 
-            Logger logger = new Logger(applicationSettings.LoggingLevel, applicationSettings.LogFileName);
+            using Logger logger = new Logger(applicationSettings.LoggingLevel, applicationSettings.LogFileName);
 
             DiskParameters diskParameters = new DiskParameters(applicationSettings.LocalDirectoryName, applicationSettings.DiskSettings);
 
@@ -171,7 +171,7 @@ namespace AtariST.SerialDisk
 
             Disk disk = new Disk(diskParameters, logger);
 
-            Serial serial = new Serial(applicationSettings.SerialSettings, disk, logger);
+            using Serial serial = new Serial(applicationSettings.SerialSettings, disk, logger);
 
             Console.WriteLine($"Listening on {applicationSettings.SerialSettings.PortName.ToUpperInvariant()}");
 
@@ -182,11 +182,6 @@ namespace AtariST.SerialDisk
 
             Console.WriteLine("Press any key to quit.");
             Console.ReadKey();
-
-            Console.WriteLine("Stopping receiver...");
-
-            serial.Dispose();
-            logger.Dispose();
         }
     }
 }
