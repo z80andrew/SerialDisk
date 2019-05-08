@@ -12,7 +12,7 @@
   },
 
   "DiskSettings": {
-    "DiskSizeMiB": 32,
+    "DiskSizeMiB": 16,
     "DiskPartitionType": 0,
     "DiskTOSCompatibility": 0,
     "RootDirectorySectors": 8

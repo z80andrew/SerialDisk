@@ -48,17 +48,18 @@ namespace AtariST.SerialDisk
             Console.WriteLine("Options (default):");
             Console.WriteLine($"{parameters[0]} <disk_size_in_MiB> ({applicationSettings.DiskSettings.DiskSizeMiB})");
             Console.WriteLine($"{parameters[1]} [{FormatEnumParams(typeof(PartitionType))}] ({applicationSettings.DiskSettings.DiskPartitionType})");
-            Console.WriteLine($"{parameters[2]} <sectors> ({applicationSettings.DiskSettings.RootDirectorySectors})");
+            Console.WriteLine($"{parameters[2]} [{FormatEnumParams(typeof(TOSVersion))}] ({applicationSettings.DiskSettings.DiskTOSCompatibility})");
+            Console.WriteLine($"{parameters[3]} <sectors> ({applicationSettings.DiskSettings.RootDirectorySectors})");
 
-            Console.WriteLine($"{parameters[3]} [port_name] ({applicationSettings.SerialSettings.PortName})");
-            Console.WriteLine($"{parameters[4]} <baud_rate> ({applicationSettings.SerialSettings.BaudRate})");
-            Console.WriteLine($"{parameters[5]} <data_bits> ({applicationSettings.SerialSettings.DataBits})");
-            Console.WriteLine($"{parameters[6]} [{FormatEnumParams(typeof(StopBits))}] ({applicationSettings.SerialSettings.StopBits})");
-            Console.WriteLine($"{parameters[7]} [{FormatEnumParams(typeof(Parity))}] ({applicationSettings.SerialSettings.Parity})");
-            Console.WriteLine($"{parameters[8]} [{FormatEnumParams(typeof(Handshake))}] ({applicationSettings.SerialSettings.Handshake})");
+            Console.WriteLine($"{parameters[4]} [port_name] ({applicationSettings.SerialSettings.PortName})");
+            Console.WriteLine($"{parameters[5]} <baud_rate> ({applicationSettings.SerialSettings.BaudRate})");
+            Console.WriteLine($"{parameters[6]} <data_bits> ({applicationSettings.SerialSettings.DataBits})");
+            Console.WriteLine($"{parameters[7]} [{FormatEnumParams(typeof(StopBits))}] ({applicationSettings.SerialSettings.StopBits})");
+            Console.WriteLine($"{parameters[8]} [{FormatEnumParams(typeof(Parity))}] ({applicationSettings.SerialSettings.Parity})");
+            Console.WriteLine($"{parameters[9]} [{FormatEnumParams(typeof(Handshake))}] ({applicationSettings.SerialSettings.Handshake})");
 
-            Console.WriteLine($"{parameters[9]} [{FormatEnumParams(typeof(Constants.LoggingLevel))}] ({applicationSettings.LoggingLevel})");
-            Console.WriteLine($"{parameters[10]} [log_file_name]");
+            Console.WriteLine($"{parameters[10]} [{FormatEnumParams(typeof(Constants.LoggingLevel))}] ({applicationSettings.LoggingLevel})");
+            Console.WriteLine($"{parameters[11]} [log_file_name]");
             Console.WriteLine();
 
             Console.WriteLine("Serial ports available:");
@@ -125,8 +126,8 @@ namespace AtariST.SerialDisk
             {
                 using (var defaultConfigStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("AtariST.SerialDisk.Resources.default_config.json"))
                 {
-                        DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(ApplicationSettings));
-                        applicationSettings = (ApplicationSettings)ser.ReadObject(defaultConfigStream);
+                    DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(ApplicationSettings));
+                    applicationSettings = (ApplicationSettings)ser.ReadObject(defaultConfigStream);
                 }
 
                 if (args.Any() && args.Where(arg => arg.ToLowerInvariant().StartsWith("--help")).Any())
@@ -165,13 +166,25 @@ namespace AtariST.SerialDisk
 
             using Logger logger = new Logger(applicationSettings.LoggingLevel, applicationSettings.LogFileName);
 
-            DiskParameters diskParameters = new DiskParameters(applicationSettings.LocalDirectoryName, applicationSettings.DiskSettings);
+            logger.Log($"Operating system: {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture} {System.Runtime.InteropServices.RuntimeInformation.OSDescription}", LoggingLevel.Verbose);
+            logger.Log($"Framework version: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", LoggingLevel.Verbose);
 
-            logger.Log($"Importing local directory contents from {applicationSettings.LocalDirectoryName}", Constants.LoggingLevel.Verbose);
+            try
+            {
+                DiskParameters diskParameters = new DiskParameters(applicationSettings.LocalDirectoryName, applicationSettings.DiskSettings);
 
-            Disk disk = new Disk(diskParameters, logger);
+                logger.Log($"Importing local directory contents from {applicationSettings.LocalDirectoryName}", Constants.LoggingLevel.Verbose);
 
-            using Serial serial = new Serial(applicationSettings.SerialSettings, disk, logger);
+                Disk disk = new Disk(diskParameters, logger);
+
+                using Serial serial = new Serial(applicationSettings.SerialSettings, disk, logger);
+            }
+
+            catch (ArgumentException argEx)
+            {
+                logger.LogException(argEx, argEx.Message);
+                return;
+            }
 
             Console.WriteLine($"Listening on {applicationSettings.SerialSettings.PortName.ToUpperInvariant()}");
 

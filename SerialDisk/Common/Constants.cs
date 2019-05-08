@@ -27,6 +27,7 @@ namespace AtariST.SerialDisk.Common
                 {
                     { "--disk-size", "DiskSettings:DiskSizeMiB" },
                     { "--partition-type", "DiskSettings:DiskPartitionType" },
+                    { "--tos-version", "DiskSettings:DiskTOSCompatibility" },
                     { "--root-directory-sectors", "DiskSettings:RootDirectorySettings" },
 
                     { "--port", "SerialSettings:PortName" },
@@ -62,9 +63,7 @@ namespace AtariST.SerialDisk.Common
         public enum LoggingLevel
         {
             Verbose = 0,
-            Info,
-            Warn,
-            Error
+            Info
         };
     }
 }
