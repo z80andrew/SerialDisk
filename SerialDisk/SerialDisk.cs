@@ -177,7 +177,7 @@ namespace AtariST.SerialDisk
 
                 Disk disk = new Disk(diskParameters, logger);
 
-                using Serial serial = new Serial(applicationSettings.SerialSettings, disk, logger);
+                Serial serial = new Serial(applicationSettings.SerialSettings, disk, logger);
             }
 
             catch (ArgumentException argEx)
@@ -193,8 +193,14 @@ namespace AtariST.SerialDisk
             Console.WriteLine($"Using local directory {applicationSettings.LocalDirectoryName} as a {applicationSettings.DiskSettings.DiskSizeMiB}MiB virtual disk");
             Console.WriteLine($"Logging level: { applicationSettings.LoggingLevel} ");
 
-            Console.WriteLine("Press any key to quit.");
-            Console.ReadKey();
+            Console.WriteLine("Press Ctrl-X to quit.");
+
+            var keyInfo = new ConsoleKeyInfo();
+
+            do
+            {
+                keyInfo = Console.ReadKey(true);
+            } while ((keyInfo.Modifiers & ConsoleModifiers.Control) == 0 || keyInfo.Key != ConsoleKey.X);            
         }
     }
 }

@@ -113,6 +113,7 @@
 	addq	#8,sp
 .endm
 
+| amount: number of bytes to allocate
 .macro	Malloc amount
 	move.l	\amount,-(sp)
 	move	#72,-(sp)
@@ -120,6 +121,7 @@
 	addq	#6,sp
 .endm
 
+| block: address of block to release
 .macro	Mfree saddr
 	pea		\saddr
 	move	#73,-(sp)
@@ -160,4 +162,3 @@
 	trap	#1
 	addq	#6,sp
 .endm
-

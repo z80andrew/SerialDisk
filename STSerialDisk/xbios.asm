@@ -101,3 +101,18 @@
 	trap	#14
 	lea		16(sp),sp
 .endm
+
+| func:
+| 0	Switch cursor off (hide it)
+| 1	Switch cursor on
+| 2	Enable cursor blink
+| 3	Disable cursor blink
+| 4	The blink rate of the cursor will be set to the value rate
+| 5	Returns the current blink rate
+.macro Cursconf func, rate
+	move.w    \rate,-(sp)
+	move.w    \func,-(sp)
+	move.w    #21,-(sp)
+	trap      #14
+	addq.l    #6,sp
+.endm
