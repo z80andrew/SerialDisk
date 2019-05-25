@@ -2,13 +2,6 @@
 .include "../bios.asm"
 .include "../xbios.asm"
 
-.macro SendStartMagic
-	Bconout	#1,#0x18
-	Bconout	#1,#0x03
-	Bconout	#1,#0x20
-	Bconout	#1,#0x06
-.endm
-
 |-------------------------------------------------------------------------------
 
 |.equ hdv_init, 		0x46a															| Vector to the initialisation routines for the floppy disk drives. (Unused?)
@@ -19,11 +12,14 @@
 .equ _drvbits, 		0x4c2															| Bit-table for the mounted drives of the BIOS.
 |.equ _dskbufp, 		0x4c6															| Pointer to a 1024-byte buffer for reading and writing to floppy disks or hard drives. (Unused?)
 																					| Also used by the VDI.
+.equ _hz_200,		0x4ba															| Number of elapsed 200Hz interrupts since boot (timer C)
 
 .equ cmd_read, 		0x00
 .equ cmd_write, 	0x01
 .equ cmd_mediach,	0x02
 .equ cmd_bpb, 		0x03
+
+.equ serial_timeout,200																| Serial read timeout. 200 = 1 second.
 
 |-------------------------------------------------------------------------------
 
@@ -40,7 +36,7 @@ start:
 
 	jbsr	create_crc32_table													| Jump to subroutine create_crc32_table
 
-	Super	0																	| Enable supervisor mode?
+	Super	0																	| Enable supervisor mode
 	move.l	d0,a0																| Move d0 to a0 - why?
 
 	bset.b	#4,_drvbits+2.w														| Set drive "M:" as mounted
@@ -53,10 +49,10 @@ start:
 	move.l	#_hdv_rw,hdv_rw.w													| Move address of label _hdv_rw to a word of hdv_rw to override the default method
 	move.l	#_hdv_mediach,hdv_mediach.w											| Move address of label _hdv_mediach to a word of hdv_mediach to override the default method
 
-	Super	(a0)																| Disable supervisor mode?
-
 	Cursconf #0,#0																| Hide cursor, 0 blink rate
 	jbsr	welcome_message
+
+	Super	(a0)																| Enable supervisor mode for Ptermres stack
 
 	Ptermres d7,#0																| Terminate and stay resident
 
@@ -92,7 +88,7 @@ _hdv_mediach:
 |-------------------------------------------------------------------------------
 
 _bpb:
-	SendStartMagic
+	jbsr send_start_magic
 
 	| Send the command.
 
@@ -103,6 +99,10 @@ _bpb:
 	lea		disk_bpb,a3															| Load the address of label disk_bpb into a3
 	move	#9*2-1,d3															| Move the length of bpb into d3 (9 parameters of 2 bytes each, -1 for 0-based index)
 1:
+	jbsr 	await_serial
+	tst		d0
+	jeq		99f
+
 	Bconin	#1																	| Read a byte from BIOS console serial
 	move.b	d0,(a3)+															| Move the received byte from d0 into a3, increment a3
 
@@ -121,14 +121,14 @@ _bpb:
 
 	move	d1,sector_size_shift_value											| Move the left shift value into a variable
 
-	move.l	#disk_bpb,d0														| Move the address of label disk_bpb into d0
-
+	move.l	#disk_bpb,d0														| Move the address of populated disk_bpb into d0
+99:
 	rts																			| Return to caller
 
 |-------------------------------------------------------------------------------
 
 _rw:
-	SendStartMagic
+	jbsr send_start_magic
 
 	| Send the command.
 
@@ -159,8 +159,8 @@ _rw:
 
 	moveq	#0,d3																| clear d3
 	move	10(sp),d3															| move "count" (number of sectors) to d3
-	move	sector_size_shift_value,d0											| move sector shift (in bits) to d0
-	lsl.l	d0,d3																| shift left, i.e. multiply number of sectors by bytes per sector to get total bytes
+	move	sector_size_shift_value,d0											| move sector shift (num. bits) to d0
+	lsl.l	d0,d3																| shift "count" left, i.e. multiply number of sectors by bytes per sector to get total bytes
 
 	| Get the destination/source buffer address.
 
@@ -178,7 +178,7 @@ _rw:
 	subq.l	#1,d3																| subtract 1 from number of sectors
 	jne		1b																	| Jump if number of sectors != 0 - backwards to label 1:
 
-	clr.l	d0
+	clr.l	d0																	| Clear d0 to return 0 (success)
 
 	rts
 2:
@@ -187,6 +187,14 @@ _rw:
 	move.l	a3,a4																| Move address of received data into a4
 	move.l	d3,d4																| Move length of received data into d4
 1:
+	jbsr 	await_serial														| Wait for serial data
+	tst		d0																	| Was anything received?
+	jne		2f																	| Yes, jump to read
+
+	move.l	#-1,d0																| Set error return value for subroutine
+	jmp		99f																	| Jump to end
+
+2:
 	Bconin	#1																	| Read byte from serial
 	move.b	d0,(a3)+															| Add read byte to buffer, increment address to next buffer byte
 
@@ -217,16 +225,16 @@ _rw:
 	jbsr	calculate_crc32														| Get CRC32 from subroutine
 
 	cmp.l	received_crc32,d0													| Compare calculated CRC32 in d0 with received CRC32
-	jne		_rw																	| Jump if not equal - to label _rw
+	jne		_rw																	| Jump if CRCs not equal - to label _rw (retry read / write)
 
-	clr.l	d0																	| Clear d0
-
+	clr.l	d0																	| Clear d0 to return 0 (success)
+99:
 	rts																			| Return to caller
 
 |-------------------------------------------------------------------------------
 
 _mediach:
-	SendStartMagic
+	jbsr send_start_magic
 
 	| Send the command.
 
@@ -234,14 +242,19 @@ _mediach:
 
 	| Get the media changed status.
 
+	jbsr await_serial															| Wait for serial data
+	tst.l	d0																	| Was anything received?
+	jeq		99f																	| No, jump to end with return value 0 (media not changed)
+
 	Bconin	#1
 	and.l	#0xff,d0
-
+99:
 	rts
 
 |-------------------------------------------------------------------------------
 
 | Sends the start communication "magic numbers" to SerialDisk
+
 send_start_magic:
 	Bconout	#1,#0x18
 	Bconout	#1,#0x03
@@ -303,15 +316,40 @@ calculate_crc32:
 
 	rts																			| Return to caller
 
+|-------------------------------------------------------------------------------
+|
+| Output:
+| d0 = 0 if no data received
+|
+| Destroys:
+| a5, d5, d6
+
+await_serial:
+    lea     _hz_200,a5
+	move.l  (a5),d5      														| Initial timerC
+	addi.l  #serial_timeout,d5      											| Increase to Max timerC
+
+1:
+    Bconstat #1           														| Read the bacon state
+    | move.l	#0,d0
+	tst     d0           														| Test for presence of bacon
+	jne     2f     		 														| There is bacon - stop checking
+
+    lea     _hz_200,a5
+	move.l  (a5),d6      														| Current timerC
+
+	cmp.l    d5,d6       														| Compare max timerC with current timerC
+	jgt	     2f     															| Timeout if current timerC is greater than max timerC
+
+	jra      1b        															| Check serial status again if current timerC is less than max timerC
+2:
+	rts
+
+|-------------------------------------------------------------------------------
+
 welcome_message:
 	Cconws	welcome_string
-
-	move.w #0x32,d1																| 50 = 1 second at 50Hz
-1:
-	|move.w #37,-(a7) 															| Set up wait for vertical blank (50Hz on PAL)
- 	|trap #14 																	| Call XBIOS - wait for vblank
-
- 	dbf d1,1b 																	| If counter != 0, loop
+	jbsr	await_serial
 
 	rts
 
