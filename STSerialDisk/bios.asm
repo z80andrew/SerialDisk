@@ -2,7 +2,7 @@
 	move	\dev,-(sp)
 	move	#2,-(sp)
 	trap	#13
-	addq	#4,sp
+	addq.l	#4,sp
 .endm
 
 .macro	Bconout dev, c
@@ -10,14 +10,14 @@
 	move	\dev,-(sp)
 	move	#3,-(sp)
 	trap	#13
-	addq	#6,sp
+	addq.l	#6,sp
 .endm
 
 .macro	Bconstat dev
 	move	\dev,-(sp)
 	move	#1,-(sp)
 	trap	#13
-	addq	#4,sp
+	addq.l	#4,sp
 .endm
 
 .macro	Bcostat dev
@@ -37,7 +37,7 @@
 	move	\dev,-(sp)
 	move	#7,-(sp)
 	trap	#13
-	addq	#4,sp
+	addq.l	#4,sp
 .endm
 
 .macro	Getmpb p_mpb
@@ -58,7 +58,7 @@
 	move	\dev,-(sp)
 	move	#9,-(sp)
 	trap	#13
-	addq	#4,sp
+	addq.l	#4,sp
 .endm
 
 .macro	Rwabs rwflag, buf, count, recno, dev, lrecno

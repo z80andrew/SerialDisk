@@ -4,22 +4,23 @@
 
 |-------------------------------------------------------------------------------
 
-|.equ hdv_init, 		0x46a															| Vector to the initialisation routines for the floppy disk drives. (Unused?)
-.equ hdv_bpb, 		0x472															| Vector to routine that establishes the BPB of a BIOS drive.
-.equ hdv_rw, 		0x476															| Vector to the routine for reading and writing of blocks to BIOS drives.
-.equ hdv_mediach, 	0x47e															| Vector to routine for establishing the media-change status of a BIOS drive. The BIOS device number is passed on the stack (4(sp)).
-|.equ _hdv_boot, 	0x47a															| Vector to the routine for loading the boot sector.
-.equ _drvbits, 		0x4c2															| Bit-table for the mounted drives of the BIOS.
-|.equ _dskbufp, 		0x4c6															| Pointer to a 1024-byte buffer for reading and writing to floppy disks or hard drives. (Unused?)
-																					| Also used by the VDI.
-.equ _hz_200,		0x4ba															| Number of elapsed 200Hz interrupts since boot (timer C)
+| Atari memory addresses
+.equ hdv_bpb, 		0x472														| Vector to routine that establishes the BPB of a BIOS drive.
+.equ hdv_rw, 		0x476														| Vector to the routine for reading and writing of blocks to BIOS drives.
+.equ hdv_mediach, 	0x47e														| Vector to routine for establishing the media-change status of a BIOS drive. The BIOS device number is passed on the stack (4(sp)).
+.equ _drvbits, 		0x4c2														| Bit-table for the mounted drives of the BIOS.
+.equ _dskbufp, 		0x4c6														| Pointer to a 1024-byte buffer for reading and writing to floppy disks or hard drives. (Unused)
+.equ _hz_200,		0x4ba														| Number of elapsed 200Hz interrupts since boot (timer C)
 
+| SerialDisk commands
 .equ cmd_read, 		0x00
 .equ cmd_write, 	0x01
 .equ cmd_mediach,	0x02
 .equ cmd_bpb, 		0x03
 
-.equ serial_timeout,200																| Serial read timeout. 200 = 1 second.
+| Other constants
+.equ serial_timeout,1000														| Serial read timeout. 200 = 1 second.
+.equ crc32_poly,	0x04c11db7													| Polynomial for CRC32 calculation
 
 |-------------------------------------------------------------------------------
 
@@ -29,15 +30,15 @@
 
 start:
 	move.l	4(sp),a0															| Our base page.
-	add.l	#0x100,d7															| Size of base page. (always 0x100)
 	move.l	0xc(a0),d7															| TEXT. (Code to execute)
 	add.l	0x14(a0),d7															| DATA. (Initialised vars)
 	add.l	0x1c(a0),d7															| BSS. (Uninitialised vars)
+	add.l	#0x100,d7															| Size of base page. (always 0x100)
 
 	jbsr	create_crc32_table													| Jump to subroutine create_crc32_table
 
 	Super	0																	| Enable supervisor mode
-	move.l	d0,a0																| Move d0 to a0 - why?
+	move.l	d0,a0																| Move returned old supervisor stack pointer to a0
 
 	bset.b	#4,_drvbits+2.w														| Set drive "M:" as mounted
 
@@ -54,7 +55,7 @@ start:
 
 	Super	(a0)																| Enable supervisor mode for Ptermres stack
 
-	Ptermres d7,#0																| Terminate and stay resident
+	Ptermres d7,#0																| Terminate and stay resident with allocated memory size d7, return code 0
 
 |-------------------------------------------------------------------------------
 
@@ -99,6 +100,7 @@ _bpb:
 	lea		disk_bpb,a3															| Load the address of label disk_bpb into a3
 	move	#9*2-1,d3															| Move the length of bpb into d3 (9 parameters of 2 bytes each, -1 for 0-based index)
 1:
+	move.l	#serial_timeout,d0
 	jbsr 	await_serial
 	tst		d0
 	jeq		99f
@@ -187,6 +189,7 @@ _rw:
 	move.l	a3,a4																| Move address of received data into a4
 	move.l	d3,d4																| Move length of received data into d4
 1:
+	move.l	#serial_timeout,d0
 	jbsr 	await_serial														| Wait for serial data
 	tst		d0																	| Was anything received?
 	jne		2f																	| Yes, jump to read
@@ -206,6 +209,15 @@ _rw:
 	move	#4-1,d3																| Move counter into d3 (There are 4 bytes to read, -1 for 0-based index)
 	lea		received_crc32,a3													| Load address of label received_crc32 into a3
 1:
+	move.l	#serial_timeout,d0
+	jbsr 	await_serial														| Wait for serial data
+	tst		d0																	| Was anything received?
+	jne		2f																	| Yes, jump to read
+
+	move.l	#-1,d0																| Set error return value for subroutine
+	jmp		99f																	| Jump to end
+
+2:
 	Bconin	#1																	| Read a byte from BIOS console serial
 	move.b	d0,(a3)+
 
@@ -242,10 +254,13 @@ _mediach:
 
 	| Get the media changed status.
 
+	move.l	#serial_timeout,d0
 	jbsr await_serial															| Wait for serial data
-	tst.l	d0																	| Was anything received?
-	jeq		99f																	| No, jump to end with return value 0 (media not changed)
-
+	tst.l	d0																	| Is there data in the buffer?
+	jne		1f																	| Yes, jump to read
+	move.l	#2,d0																| No, jump to end with return value 2 (media definitely changed)
+	jmp		99f																	| so that get_bpb will be called next
+1:
 	Bconin	#1
 	and.l	#0xff,d0
 99:
@@ -264,6 +279,8 @@ send_start_magic:
 	rts
 
 |-------------------------------------------------------------------------------
+| Corrupts
+| a0, d0, d1, d2
 
 create_crc32_table:
 	lea		crc32_table,a0
@@ -277,7 +294,7 @@ create_crc32_table:
 	add.l	d1,d1																| double d1 (shift left 1 bit)
 	jcc		3f																	| if zero, skip polynomial XOR
 
-	eor.l	#0x04c11db7,d1														| XOR polynomial with d1
+	eor.l	#crc32_poly,d1														| XOR polynomial with d1
 3:
 	dbf		d2,2b																| decrement loop counter, process next bit
 
@@ -289,10 +306,15 @@ create_crc32_table:
 	rts
 
 |-------------------------------------------------------------------------------
+| Input
 | a0.l = buffer address.
 | d0.l = buffer size.
 |
-| d0.l = CRC32-POSIX checksum.
+| Output
+| d0.l = CRC32/POSIX checksum.
+|
+| Corrupts
+| a0, a1, d1, d7
 
 calculate_crc32:
 	move.l	d0,d7																| Move long d0 into d7 (data length)
@@ -312,28 +334,29 @@ calculate_crc32:
 	subq.l	#1,d7																| Subtract 1 from d7 (remaining data length)
 	jne		1b																	| Jump if not zero - backwards to label 1:
 
-	eor.l   #0xFFFFFFFF,d0       												| invert checksum
+	eor.l   #0xFFFFFFFF,d0       												| Invert checksum
 
-	rts																			| Return to caller
+	rts
 
 |-------------------------------------------------------------------------------
+| Input:
+| d0 = timeout in 200ths of a second
 |
 | Output:
 | d0 = 0 if no data received
 |
 | Destroys:
-| a5, d5, d6
+| a5, d0, d6
 
 await_serial:
     lea     _hz_200,a5
-	move.l  (a5),d5      														| Initial timerC
-	addi.l  #serial_timeout,d5      											| Increase to Max timerC
+	move.l  (a5),d5      														| Store current timerC
+	add.l	d0,d5      															| Increase to max timerC
 
 1:
-    Bconstat #1           														| Read the bacon state
-    | move.l	#0,d0
-	tst     d0           														| Test for presence of bacon
-	jne     2f     		 														| There is bacon - stop checking
+    Bconstat #1           														| Read the serial buffer state
+	tst     d0           														| Test for presence of data in buffer
+	jne     2f     		 														| There is data - stop checking
 
     lea     _hz_200,a5
 	move.l  (a5),d6      														| Current timerC
@@ -348,8 +371,9 @@ await_serial:
 |-------------------------------------------------------------------------------
 
 welcome_message:
-	Cconws	welcome_string
-	jbsr	await_serial
+	Cconws	welcome_string														| Display welcome message in console
+	move.l	#200,d0																| Set timeout
+	jbsr	await_serial														| Use await_serial as a way to keep the message on screen
 
 	rts
 
@@ -388,10 +412,6 @@ crc32_table:
 
 received_crc32:
 	ds.l	1
-
-disk_buffer:
-	ds.b	8192																| 8192KiB is the maximum sector size
-																				| Can this be replaced with a Malloc()?
 
 |-------------------------------------------------------------------------------
 

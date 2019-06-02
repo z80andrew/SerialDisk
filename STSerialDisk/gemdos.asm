@@ -154,6 +154,7 @@
 	move.l	\keep,-(sp)
 	move	#49,-(sp)
 	trap	#1
+	addq.l	#8,sp
 .endm
 
 .macro Super stack
