@@ -56,10 +56,10 @@
 .endm
 
 .macro	Fclose handle
-	move	\handle,-(sp)
-	move	#62,-(sp)
+	move.w	\handle,-(sp)
+	move.w	#62,-(sp)
 	trap	#1
-	addq	#4,sp
+	addq.l	#4,sp
 .endm
 
 .macro	Fcreate fname, attribs
@@ -71,18 +71,18 @@
 .endm
 
 .macro	Fopen fname, mode
-	move	\mode,-(sp)
+	move.w	\mode,-(sp)
 	pea		\fname
-	move	#61,-(sp)
+	move.w	#61,-(sp)
 	trap	#1
-	addq	#8,sp
+	addq.l	#8,sp
 .endm
 
 .macro	Fread handle, count, buffer
 	pea		\buffer
 	move.l	\count,-(sp)
-	move	\handle,-(sp)
-	move	#63,-(sp)
+	move.w	\handle,-(sp)
+	move.w	#63,-(sp)
 	trap	#1
 	lea		12(sp),sp
 .endm

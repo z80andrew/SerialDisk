@@ -35,12 +35,14 @@ start:
 	add.l	0x1c(a0),d7															| BSS. (Uninitialised vars)
 	add.l	#0x100,d7															| Size of base page. (always 0x100)
 
-	jbsr	create_crc32_table													| Jump to subroutine create_crc32_table
+	jbsr	read_config_file
+	jbsr	create_crc32_table
 
 	Super	0																	| Enable supervisor mode
 	move.l	d0,a0																| Move returned old supervisor stack pointer to a0
 
-	bset.b	#4,_drvbits+2.w														| Set drive "M:" as mounted
+	jbsr 	mount_drive
+	|bset.b	#4,_drvbits+2.w														| Drive "M:".
 
 	move.l	hdv_bpb.w,old_hdv_bpb												| Move a word of hdv_bpb to old_hdv_bpb so we can call the stock method when needed
 	move.l	hdv_rw.w,old_hdv_rw													| Move a word of hdv_rw to old_hdv_rw so we can call the stock method when needed
@@ -79,10 +81,10 @@ _hdv_mediach:
 	lea		_mediach,a1															| Load the address of custom _mediach into a1
 
 1:
-	cmp		#12,d0																| Drive "M:" is BIOS device number 12. Compare 12 with device number in d0
-	jne		1f																	| Not drive M, jump forward to label 1:
+	cmp.w	disk_identifier,d0													| Comapre drive id with device number in d0
+	jne		1f																	| Drive ids don't match, jump forward to label 1:
 
-	move.l	a1,a0																| Drive M, move a1 to a0 (use custom method)
+	move.l	a1,a0																| Drive ids match, move a1 to a0 (use custom method)
 1:
 	jmp		(a0)																| Jump to address pointed by a0
 
@@ -267,6 +269,24 @@ _mediach:
 	rts
 
 |-------------------------------------------------------------------------------
+| Corrupts d0,d1
+| TODO: Check if drive is already mounted
+
+mount_drive:
+	clr.l	d0																	| clear d0
+	move.w	disk_identifier,d0													| move the virtual disk id into d0
+	move.l	_drvbits,d1															| load the list of mounted drives into d1
+	|and.l	d0,d1
+	|jeq		1f
+	|move.l	#-1,d0
+	|jmp 	99f
+1:
+	bset.l	d0,d1																| set the bit at location d0 in d1
+	move.l	d1,_drvbits															| put the updated list of mounted drives into memory
+99:
+	rts
+
+|-------------------------------------------------------------------------------
 
 | Sends the start communication "magic numbers" to SerialDisk
 
@@ -338,6 +358,21 @@ calculate_crc32:
 
 	rts
 
+await:
+    lea     _hz_200,a5
+	move.l  (a5),d5      														| Store current timerC
+	add.l	d0,d5      															| Increase to max timerC
+
+1:
+	move.l  (a5),d6      														| Current timerC
+
+	cmp.l    d5,d6       														| Compare max timerC with current timerC
+	jgt	     2f     															| Timeout if current timerC is greater than max timerC
+
+	jra      1b        															| Check serial status again if current timerC is less than max timerC
+2:
+	rts
+
 |-------------------------------------------------------------------------------
 | Input:
 | d0 = timeout in 200ths of a second
@@ -372,8 +407,28 @@ await_serial:
 
 welcome_message:
 	Cconws	welcome_string														| Display welcome message in console
+	move.w	disk_identifier,d0
+	addi.w	#0x41,d0
+	Cconout	d0
 	move.l	#200,d0																| Set timeout
 	jbsr	await_serial														| Use await_serial as a way to keep the message on screen
+
+	rts
+
+|-------------------------------------------------------------------------------
+
+read_config_file:
+	move	#77,disk_identifier													| move 'M' into disk id
+
+	Fopen	config_filename,#0													| attempt to open config file
+	tst.w	d0																	| check return value
+	jmi		99f																	| return value is negative (failed), skip read attempt
+	Fread	d0,#1,disk_identifier+1												| read first byte of file into d0
+	Fclose	d0																	| close the file handle
+
+	Cconws	config_found_string													| display the config file found message
+99:
+	subi.w	#0x41,disk_identifier												| convert the ASCII character to its numeric value
 
 	rts
 
@@ -384,13 +439,25 @@ welcome_message:
 |-------------------------------------------------------------------------------
 
 welcome_string:
-	.asciz	"SerialDisk v2.2\r\nConfigured on drive M"
+	.asciz	"SerialDisk v2.2\r\nConfigured on drive "
+
+config_found_string:
+	.asciz	"Using configuration file SERDISK.CFG\r\n"
+
+already_mounted_string:
+	.asciz	"Using configuration file SERDISK.CFG"
+
+config_filename:
+	.asciz	"SERDISK.CFG"
 
 |-------------------------------------------------------------------------------
 
 .bss
 
 |-------------------------------------------------------------------------------
+
+disk_identifier:
+	ds.w	1
 
 disk_bpb:
 	ds.w	9
