@@ -42,17 +42,17 @@
 .endm
 
 .macro	Cconout c
-	move	\c,-(sp)
-	move	#2,-(sp)
+	move.w	\c,-(sp)
+	move.w	#2,-(sp)
 	trap	#1
-	addq	#4,sp
+	addq.l	#4,sp
 .endm
 
 .macro	Cconws str
 	pea		\str
-	move	#9,-(sp)
+	move.w	#9,-(sp)
 	trap	#1
-	addq	#6,sp
+	addq.l	#6,sp
 .endm
 
 .macro	Fclose handle
@@ -159,7 +159,7 @@
 
 .macro Super stack
 	pea		\stack
-	move	#32,-(sp)
+	move.w	#32,-(sp)
 	trap	#1
-	addq	#6,sp
+	addq.l	#6,sp
 .endm

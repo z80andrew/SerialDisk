@@ -21,6 +21,7 @@
 | Other constants
 .equ serial_timeout,1000														| Serial read timeout. 200 = 1 second.
 .equ crc32_poly,	0x04c11db7													| Polynomial for CRC32 calculation
+.equ ascii_offset,	0x41														| Offset from number to its ASCII equivalent
 
 |-------------------------------------------------------------------------------
 
@@ -35,14 +36,48 @@ start:
 	add.l	0x1c(a0),d7															| BSS. (Uninitialised vars)
 	add.l	#0x100,d7															| Size of base page. (always 0x100)
 
-	jbsr	read_config_file
-	jbsr	create_crc32_table
+	| Free unused memory
 
-	Super	0																	| Enable supervisor mode
+	move.l    d7,-(sp)      													| Return to the stack
+    move.l    a0,-(sp)      													| Basepage address to stack
+    clr.w     -(sp)         													| Fill parameter
+    move.w    #0x4a,-(sp)    													| Set command Mshrink
+    trap      #1            													| Call GEMDOS
+    lea       0xc(sp),sp     													| Correct stack
+
+    Super	(a0)																| Enable supervisor mode for stack
+
+	Cursconf #0,#0																| Hide cursor, 0 blink rate
+	Cconws	welcome_string
+	jbsr	create_crc32_table
+	jbsr	read_config_file
+
 	move.l	d0,a0																| Move returned old supervisor stack pointer to a0
 
 	jbsr 	mount_drive
-	|bset.b	#4,_drvbits+2.w														| Drive "M:".
+
+	tst.w	d0																	| Test drive mounted successfully
+	jpl		1f																	| Result positive = drive mounted successfully
+
+	| Drive is already mounted
+
+	move.w	disk_identifier,d0													| Move disk_id into d0
+	addi.w	#ascii_offset,d0													| Convert to ASCII representation
+	Cconout	d0
+	Cconws	drive_already_mounted_string
+
+	move.l	#300,d0																| Set wait time
+	jbsr	wait
+
+	Pterm 	#0
+
+1:
+	Cconws	drive_mounted_string
+	move.w	disk_identifier,d0													| Move disk_id into d0
+	addi.w	#ascii_offset,d0													| Convert to ASCII representation
+	Cconout	d0
+
+	| Configure drive r/w procs
 
 	move.l	hdv_bpb.w,old_hdv_bpb												| Move a word of hdv_bpb to old_hdv_bpb so we can call the stock method when needed
 	move.l	hdv_rw.w,old_hdv_rw													| Move a word of hdv_rw to old_hdv_rw so we can call the stock method when needed
@@ -52,10 +87,11 @@ start:
 	move.l	#_hdv_rw,hdv_rw.w													| Move address of label _hdv_rw to a word of hdv_rw to override the default method
 	move.l	#_hdv_mediach,hdv_mediach.w											| Move address of label _hdv_mediach to a word of hdv_mediach to override the default method
 
-	Cursconf #0,#0																| Hide cursor, 0 blink rate
-	jbsr	welcome_message
+	|Super	(a0)																| Enable supervisor mode for Ptermres stack
+	|Super	0																	| Disable supervisor mode
 
-	Super	(a0)																| Enable supervisor mode for Ptermres stack
+	move.l	#300,d0																| Set wait time
+	jbsr 	wait
 
 	Ptermres d7,#0																| Terminate and stay resident with allocated memory size d7, return code 0
 
@@ -169,7 +205,6 @@ _rw:
 	| Get the destination/source buffer address.
 
 	move.l	6(sp),a3															| "buf" (1024KiB buffer address).
-	|move.l	disk_buffer,a3														| "buf" (8192KiB buffer address).
 
 	tst		4(sp)																| set flags based on value of "rwflag" (0: read, 1: write).
 	jeq		2f																	| Jump if equal (zero) - forwards to label 2:
@@ -257,7 +292,7 @@ _mediach:
 	| Get the media changed status.
 
 	move.l	#serial_timeout,d0
-	jbsr await_serial															| Wait for serial data
+	jbsr 	await_serial														| Wait for serial data
 	tst.l	d0																	| Is there data in the buffer?
 	jne		1f																	| Yes, jump to read
 	move.l	#2,d0																| No, jump to end with return value 2 (media definitely changed)
@@ -269,20 +304,24 @@ _mediach:
 	rts
 
 |-------------------------------------------------------------------------------
+| Output
+| d0.w = Id of mounted drive. Negative if drive already mounted.
+|
 | Corrupts d0,d1
-| TODO: Check if drive is already mounted
 
 mount_drive:
-	clr.l	d0																	| clear d0
-	move.w	disk_identifier,d0													| move the virtual disk id into d0
-	move.l	_drvbits,d1															| load the list of mounted drives into d1
-	|and.l	d0,d1
-	|jeq		1f
-	|move.l	#-1,d0
-	|jmp 	99f
+	clr.l	d0																	| Clear d0
+	move.w	disk_identifier,d0													| Move the virtual disk id into d0
+	move.l	_drvbits,d1															| Load the list of mounted drives into d1
+	btst	d0,d1																| Has this drive id already been mounted?
+
+	jeq		1f																	| Result is 0; this drive is not mounted
+
+	move.w	#-1,d0
+	jmp 	99f
 1:
-	bset.l	d0,d1																| set the bit at location d0 in d1
-	move.l	d1,_drvbits															| put the updated list of mounted drives into memory
+	bset.l	d0,d1																| Set the bit at location d0 in d1 (always long-word between registers)
+	move.l	d1,_drvbits															| Put the updated list of mounted drives into memory
 99:
 	rts
 
@@ -358,12 +397,17 @@ calculate_crc32:
 
 	rts
 
-await:
+|-------------------------------------------------------------------------------
+| Input:
+| d0 = timeout in 200ths of a second
+|
+wait:
     lea     _hz_200,a5
 	move.l  (a5),d5      														| Store current timerC
 	add.l	d0,d5      															| Increase to max timerC
 
 1:
+	lea     _hz_200,a5
 	move.l  (a5),d6      														| Current timerC
 
 	cmp.l    d5,d6       														| Compare max timerC with current timerC
@@ -374,9 +418,6 @@ await:
 	rts
 
 |-------------------------------------------------------------------------------
-| Input:
-| d0 = timeout in 200ths of a second
-|
 | Output:
 | d0 = 0 if no data received
 |
@@ -386,7 +427,7 @@ await:
 await_serial:
     lea     _hz_200,a5
 	move.l  (a5),d5      														| Store current timerC
-	add.l	d0,d5      															| Increase to max timerC
+	addi.l	#serial_timeout,d5      											| Increase to max timerC
 
 1:
     Bconstat #1           														| Read the serial buffer state
@@ -405,30 +446,18 @@ await_serial:
 
 |-------------------------------------------------------------------------------
 
-welcome_message:
-	Cconws	welcome_string														| Display welcome message in console
-	move.w	disk_identifier,d0
-	addi.w	#0x41,d0
-	Cconout	d0
-	move.l	#200,d0																| Set timeout
-	jbsr	await_serial														| Use await_serial as a way to keep the message on screen
-
-	rts
-
-|-------------------------------------------------------------------------------
-
 read_config_file:
-	move	#77,disk_identifier													| move 'M' into disk id
+	move	#77,disk_identifier													| move ASCII 'M' into disk id
 
 	Fopen	config_filename,#0													| attempt to open config file
 	tst.w	d0																	| check return value
 	jmi		99f																	| return value is negative (failed), skip read attempt
-	Fread	d0,#1,disk_identifier+1												| read first byte of file into d0
+	Fread	d0,#1,disk_identifier+1												| read first byte of file into disk_identifier+1
 	Fclose	d0																	| close the file handle
 
 	Cconws	config_found_string													| display the config file found message
 99:
-	subi.w	#0x41,disk_identifier												| convert the ASCII character to its numeric value
+	subi.w	#ascii_offset,disk_identifier										| convert the ASCII character to its numeric value
 
 	rts
 
@@ -439,13 +468,16 @@ read_config_file:
 |-------------------------------------------------------------------------------
 
 welcome_string:
-	.asciz	"SerialDisk v2.2\r\nConfigured on drive "
+	.asciz	"SerialDisk v2.2\r\n"
 
 config_found_string:
 	.asciz	"Using configuration file SERDISK.CFG\r\n"
 
-already_mounted_string:
-	.asciz	"Using configuration file SERDISK.CFG"
+drive_mounted_string:
+	.asciz	"Configured on drive "
+
+drive_already_mounted_string:
+	.asciz	" drive is already mounted"
 
 config_filename:
 	.asciz	"SERDISK.CFG"
