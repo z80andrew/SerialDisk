@@ -116,3 +116,10 @@
 	trap      #14
 	addq.l    #6,sp
 .endm
+
+.macro Supexec func
+	pea       \func			| Offset 2
+	move.w    #38,-(sp)		| Offset 0
+	trap      #14			| Call XBIOS
+	addq.l    #6,sp			| Correct stack
+.endm

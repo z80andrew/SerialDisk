@@ -45,19 +45,29 @@ start:
     trap      #1            													| Call GEMDOS
     lea       0xc(sp),sp     													| Correct stack
 
-    Super	(a0)																| Enable supervisor mode for stack
-
 	Cursconf #0,#0																| Hide cursor, 0 blink rate
 	Cconws	welcome_string
 	jbsr	create_crc32_table
+
 	jbsr	read_config_file
+	tst.w	d0																	| Test config file valid
+	jpl		1f																	| Result positive = config file valid
 
-	move.l	d0,a0																| Move returned old supervisor stack pointer to a0
+	| Drive id in config file is invalid
 
-	jbsr 	mount_drive
+	move.w	disk_identifier,d0													| Move disk_id into d0
+	addi.w	#ascii_offset,d0													| Convert to ASCII representation
+	Cconout	d0
+	Cconws	drive_invalid_id_string
 
+	Supexec	wait
+
+	Pterm 	#0
+
+1:
+	Supexec	mount_drive
 	tst.w	d0																	| Test drive mounted successfully
-	jpl		1f																	| Result positive = drive mounted successfully
+	jpl		2f																	| Result positive = drive mounted successfully
 
 	| Drive is already mounted
 
@@ -66,19 +76,25 @@ start:
 	Cconout	d0
 	Cconws	drive_already_mounted_string
 
-	move.l	#300,d0																| Set wait time
-	jbsr	wait
+	Supexec	wait
 
 	Pterm 	#0
+2:
+	| Drive mounted successfully
 
-1:
 	Cconws	drive_mounted_string
 	move.w	disk_identifier,d0													| Move disk_id into d0
 	addi.w	#ascii_offset,d0													| Convert to ASCII representation
 	Cconout	d0
 
-	| Configure drive r/w procs
+	Supexec	config_drive_rw
 
+	Supexec wait
+
+	Ptermres d7,#0
+
+|-------------------------------------------------------------------------------
+config_drive_rw:
 	move.l	hdv_bpb.w,old_hdv_bpb												| Move a word of hdv_bpb to old_hdv_bpb so we can call the stock method when needed
 	move.l	hdv_rw.w,old_hdv_rw													| Move a word of hdv_rw to old_hdv_rw so we can call the stock method when needed
 	move.l	hdv_mediach.w,old_hdv_mediach										| Move a word of hdv_mediach to old_hdv_mediach so we can call the stock method when needed
@@ -86,14 +102,7 @@ start:
 	move.l	#_hdv_bpb,hdv_bpb.w													| Move address of label _hdv_bpb to a word of hdv_bpb to override the default method
 	move.l	#_hdv_rw,hdv_rw.w													| Move address of label _hdv_rw to a word of hdv_rw to override the default method
 	move.l	#_hdv_mediach,hdv_mediach.w											| Move address of label _hdv_mediach to a word of hdv_mediach to override the default method
-
-	|Super	(a0)																| Enable supervisor mode for Ptermres stack
-	|Super	0																	| Disable supervisor mode
-
-	move.l	#300,d0																| Set wait time
-	jbsr 	wait
-
-	Ptermres d7,#0																| Terminate and stay resident with allocated memory size d7, return code 0
+rts
 
 |-------------------------------------------------------------------------------
 
@@ -197,24 +206,24 @@ _rw:
 	move.b	10+1(sp),d0
 	Bconout	#1,d0
 
-	moveq	#0,d3																| clear d3
-	move	10(sp),d3															| move "count" (number of sectors) to d3
-	move	sector_size_shift_value,d0											| move sector shift (num. bits) to d0
-	lsl.l	d0,d3																| shift "count" left, i.e. multiply number of sectors by bytes per sector to get total bytes
+	moveq	#0,d3																| Clear d3
+	move	10(sp),d3															| Move "count" (number of sectors) to d3
+	move	sector_size_shift_value,d0											| Move sector shift (num. bits) to d0
+	lsl.l	d0,d3																| Shift "count" left, i.e. multiply number of sectors by bytes per sector to get total bytes
 
 	| Get the destination/source buffer address.
 
 	move.l	6(sp),a3															| "buf" (1024KiB buffer address).
 
-	tst		4(sp)																| set flags based on value of "rwflag" (0: read, 1: write).
+	tst		4(sp)																| Set flags based on value of "rwflag" (0: read, 1: write).
 	jeq		2f																	| Jump if equal (zero) - forwards to label 2:
 
 	| Write data.
 1:
-	move.b	(a3)+,d0															| move buffer address into d0, increment to next byte in rw struct
+	move.b	(a3)+,d0															| Move buffer address into d0, increment to next byte in rw struct
 	Bconout	#1,d0																| Write byte to serial
 
-	subq.l	#1,d3																| subtract 1 from number of sectors
+	subq.l	#1,d3																| Subtract 1 from number of sectors
 	jne		1b																	| Jump if number of sectors != 0 - backwards to label 1:
 
 	clr.l	d0																	| Clear d0 to return 0 (success)
@@ -344,23 +353,23 @@ send_start_magic:
 create_crc32_table:
 	lea		crc32_table,a0
 
-	clr.l	d0																	| clear d0
+	clr.l	d0																	| Clear d0
 1:
-	move.l	d0,d1																| clear d1
+	move.l	d0,d1																| Clear d1
 
-	moveq	#8-1,d2																| put bit counter in d2
+	moveq	#8-1,d2																| Put bit counter in d2
 2:
-	add.l	d1,d1																| double d1 (shift left 1 bit)
-	jcc		3f																	| if zero, skip polynomial XOR
+	add.l	d1,d1																| Double d1 (shift left 1 bit)
+	jcc		3f																	| If zero, skip polynomial XOR
 
 	eor.l	#crc32_poly,d1														| XOR polynomial with d1
 3:
-	dbf		d2,2b																| decrement loop counter, process next bit
+	dbf		d2,2b																| Decrement loop counter, process next bit
 
-	move.l	d1,(a0)+															| put result into table, increment a0 to next table entry
+	move.l	d1,(a0)+															| Put result into table, increment a0 to next table entry
 
-	add.l	#0x01000000,d0														| add 0x01000000 to d0 (0xFF*0x01000000 == 0x100000000 which overflows to 0x0)
-	jne		1b																	| haven't reached end of table, process next table entry
+	add.l	#0x01000000,d0														| Add 0x01000000 to d0 (0xFF*0x01000000 == 0x100000000 which overflows to 0x0)
+	jne		1b																	| Haven't reached end of table, process next table entry
 
 	rts
 
@@ -398,13 +407,11 @@ calculate_crc32:
 	rts
 
 |-------------------------------------------------------------------------------
-| Input:
-| d0 = timeout in 200ths of a second
-|
+
 wait:
     lea     _hz_200,a5
 	move.l  (a5),d5      														| Store current timerC
-	add.l	d0,d5      															| Increase to max timerC
+	add.l	#300,d5      														| Increase to max timerC (1.5 seconds)
 
 1:
 	lea     _hz_200,a5
@@ -413,7 +420,7 @@ wait:
 	cmp.l    d5,d6       														| Compare max timerC with current timerC
 	jgt	     2f     															| Timeout if current timerC is greater than max timerC
 
-	jra      1b        															| Check serial status again if current timerC is less than max timerC
+	jra      1b        															| Loop if current timerC is less than max timerC
 2:
 	rts
 
@@ -445,19 +452,33 @@ await_serial:
 	rts
 
 |-------------------------------------------------------------------------------
+| Output:
+| d0 = positive if config file valid or not present, otherwise negative
+|
 
 read_config_file:
-	move	#77,disk_identifier													| move ASCII 'M' into disk id
+	move	#0x4d,disk_identifier												| Move ASCII 'M' into disk id
 
-	Fopen	config_filename,#0													| attempt to open config file
-	tst.w	d0																	| check return value
-	jmi		99f																	| return value is negative (failed), skip read attempt
-	Fread	d0,#1,disk_identifier+1												| read first byte of file into disk_identifier+1
-	Fclose	d0																	| close the file handle
+	Fopen	config_filename,#0													| Attempt to open config file
+	tst.w	d0																	| Check return value
+	jmi		1f																	| Return value is negative (failed), skip read attempt
+	Fread	d0,#1,disk_identifier+1												| Read first byte of file into disk_identifier+1
+	Fclose	d0																	| Close the file handle
 
-	Cconws	config_found_string													| display the config file found message
+	Cconws	config_found_string													| Display the config file found message
+
+	cmp.w	#0x50,disk_identifier												| Compare read byte with ASCII 'P'
+	jgt		2f																	| Read character is > ASCII 'P' so it is invalid
+
+	cmp.w	#0x43,disk_identifier												| Compare read byte with ASCII 'C'
+	jlt		2f																	| Read character is < ASCII 'C' so it is invalid
+1:
+	clr.l	d0																	| Put success return value in d0
+	jmp		99f																	| No problems encountered, jump to end
+2:
+	move.w	#-1,d0																| Put failure return value in d0
 99:
-	subi.w	#ascii_offset,disk_identifier										| convert the ASCII character to its numeric value
+	subi.w	#ascii_offset,disk_identifier										| Convert the ASCII character to its numeric value
 
 	rts
 
@@ -478,6 +499,9 @@ drive_mounted_string:
 
 drive_already_mounted_string:
 	.asciz	" drive is already mounted"
+
+drive_invalid_id_string:
+	.asciz	" is not a valid drive letter (C-P)"
 
 config_filename:
 	.asciz	"SERDISK.CFG"

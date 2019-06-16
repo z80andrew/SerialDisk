@@ -661,7 +661,8 @@ namespace AtariST.SerialDisk.Storage
             string shortFileName = FAT16Helper.GetShortFileName(fileInfo.Name);
             int duplicateId = 1;
 
-            while(_localDirectoryContentInfos.Where(ldi => ldi.ShortFileName.Equals(shortFileName, StringComparison.InvariantCultureIgnoreCase)).Any())
+            while(_localDirectoryContentInfos.Where(ldi => ldi.ShortFileName.Equals(shortFileName, StringComparison.InvariantCultureIgnoreCase) &&
+                ldi.DirectoryCluster == directoryClusterIndex).Any())
             {
                 int numberStringLength = duplicateId.ToString().Length + 1; // +1 for ~
                 int replaceIndex = shortFileName.LastIndexOf('.') != -1 ? shortFileName.LastIndexOf('.') : shortFileName.Length;
