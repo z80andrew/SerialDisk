@@ -24,13 +24,11 @@ namespace Tests
             Assert.AreEqual(expectedShortFileName, shortFileName);
         }
 
-        [TestCase(PartitionType.GEM, TOSVersion.TOS104, 0x7FFF * 512 * 2)]
-        [TestCase(PartitionType.GEM, TOSVersion.TOS100, 0x3FFF * 512 * 2)]
-        [TestCase(PartitionType.BGM, TOSVersion.TOS100, 0x3FFF * 8192 * 2)]
-        [TestCase(PartitionType.BGM, TOSVersion.TOS104, 0x7FFF * 8192 * 2)]
-        public void ValidDiskSizes(PartitionType partitionType, TOSVersion tosVersion, int expectedMaxDiskSizeBytes)
+        [TestCase(TOSVersion.TOS100, 0x3FFF * 8192 * 2)]
+        [TestCase(TOSVersion.TOS104, 0x7FFF * 8192 * 2)]
+        public void ValidDiskSizes(TOSVersion tosVersion, int expectedMaxDiskSizeBytes)
         {
-            var maxDiskSizeBytes = FAT16Helper.MaxDiskSizeBytes(partitionType, tosVersion);
+            var maxDiskSizeBytes = FAT16Helper.MaxDiskSizeBytes(tosVersion);
 
             Assert.AreEqual(expectedMaxDiskSizeBytes, maxDiskSizeBytes);
         }

@@ -7,16 +7,18 @@ namespace AtariST.SerialDisk.Common
         public const string DATE_FORMAT = "yyyy-MM-dd";
         public const string TIME_FORMAT = "HH:mm:ss";
 
+        public static int MaxSectorSize
+        {
+            get
+            {
+                return 8192;
+            }
+        }
+
         public enum TOSVersion
         {
             TOS100,
             TOS104
-        }
-
-        public enum PartitionType
-        {
-            GEM,
-            BGM
         }
 
         public static Dictionary<string, string> ConsoleParameterMappings
@@ -26,7 +28,6 @@ namespace AtariST.SerialDisk.Common
                 return new Dictionary<string, string>
                 {
                     { "--disk-size", "DiskSettings:DiskSizeMiB" },
-                    { "--partition-type", "DiskSettings:DiskPartitionType" },
                     { "--tos-version", "DiskSettings:DiskTOSCompatibility" },
                     { "--root-directory-sectors", "DiskSettings:RootDirectorySettings" },
 

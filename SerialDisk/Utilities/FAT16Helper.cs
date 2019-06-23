@@ -10,19 +10,14 @@ namespace AtariST.SerialDisk.Utilities
     {
         public static int BytesPerMiB = 1024 * 1024;
 
-        public static int MaxSectorSize(PartitionType partitionType)
-        {
-            return partitionType == PartitionType.GEM ? 512 : 8192;
-        }
-
-        public static int MaxDiskClusters(PartitionType partitionType, TOSVersion minimumTOSVersion)
+        public static int MaxDiskClusters(TOSVersion minimumTOSVersion)
         {
             return minimumTOSVersion == TOSVersion.TOS100 ? 0x3FFF : 0x7FFF;
         }
 
-        public static int MaxDiskSizeBytes(PartitionType partitionType, TOSVersion tosVersion)
+        public static int MaxDiskSizeBytes(TOSVersion tosVersion)
         {
-            int maxDiskSizeBytes = MaxDiskClusters(partitionType, tosVersion) * (MaxSectorSize(partitionType) * 2); // 2 sectors per cluster
+            int maxDiskSizeBytes = MaxDiskClusters(tosVersion) * (MaxSectorSize * 2); // 2 sectors per cluster
 
             return maxDiskSizeBytes;
         }
@@ -60,15 +55,15 @@ namespace AtariST.SerialDisk.Utilities
             return shortFileName;
         }
 
-        public static void ValidateLocalDirectory(string localDirectoryPath, int diskSizeBytes, int maxRootDirectoryEntries, PartitionType partitionType, TOSVersion tosVersion)
+        public static void ValidateLocalDirectory(string localDirectoryPath, int diskSizeBytes, int maxRootDirectoryEntries, TOSVersion tosVersion)
         {
             try
             {
                 DirectoryInfo directoryInfo = new DirectoryInfo(localDirectoryPath);
                 uint localDirectorySizeBytes = (uint)Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length));
 
-                if(localDirectorySizeBytes > MaxDiskSizeBytes(partitionType, tosVersion))
-                    throw new System.InsufficientMemoryException($"Local directory size is {localDirectorySizeBytes / BytesPerMiB} MiB, which is larger than the maximum allowable virtual disk size for a {partitionType} partition ({MaxDiskSizeBytes(partitionType, tosVersion) / BytesPerMiB} MiB)");
+                if(localDirectorySizeBytes > MaxDiskSizeBytes(tosVersion))
+                    throw new System.InsufficientMemoryException($"Local directory size is {localDirectorySizeBytes / BytesPerMiB} MiB, which is larger than the maximum allowable virtual disk size ({MaxDiskSizeBytes(tosVersion) / BytesPerMiB} MiB)");
 
                 else if (localDirectorySizeBytes > diskSizeBytes)
                     throw new System.InsufficientMemoryException($"Local directory size is {localDirectorySizeBytes / BytesPerMiB} MiB, which is too large for the given virtual disk size ({diskSizeBytes / BytesPerMiB} MiB)");

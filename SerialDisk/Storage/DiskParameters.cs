@@ -10,15 +10,15 @@ namespace AtariST.SerialDisk.Storage
         private int _diskSizeTotalBytes;
         private int _bytesPerSector;
         private byte[] _biosParameterBlock;
- 
+
         public int DiskTotalBytes
         {
             get => _diskSizeTotalBytes;
             set
             {
-                if (value - (FAT16Helper.MaxSectorSize(Type)*2) > FAT16Helper.MaxDiskSizeBytes(Type, TOS)) // Allow for an extra cluster so max size can exactly match 32/512MiB despite 14/15 bit addressing limitation
-                    throw new ArgumentException($"{value / FAT16Helper.BytesPerMiB}MiB is larger than the maximum possible disk size for a " +
-                        $"{TOS} {Type.ToString()} partition ({(FAT16Helper.MaxDiskSizeBytes(Type, TOS) + (FAT16Helper.MaxSectorSize(Type) * 2)) / FAT16Helper.BytesPerMiB}MiB)");
+                if (value - (MaxSectorSize * 2) > FAT16Helper.MaxDiskSizeBytes(TOS)) // Allow for an extra cluster so max size can exactly match 32/512MiB despite 14/15 bit addressing limitation
+                    throw new ArgumentException($"{value / FAT16Helper.BytesPerMiB}MiB is larger than the maximum possible disk size " +
+                        $"({(FAT16Helper.MaxDiskSizeBytes(TOS) + (MaxSectorSize * 2)) / FAT16Helper.BytesPerMiB}MiB)");
 
                 else
                 {
@@ -35,8 +35,6 @@ namespace AtariST.SerialDisk.Storage
             }
         }
 
-        public PartitionType Type { get; set; }
-
         public TOSVersion TOS { get; set; }
 
         public string LocalDirectoryPath { get; set; }
@@ -44,18 +42,15 @@ namespace AtariST.SerialDisk.Storage
         public int BytesPerSector
         {
             get
-            {              
+            {
                 if (_bytesPerSector == 0)
                 {
-                    if (Type == PartitionType.GEM) _bytesPerSector = 512;
+                    _bytesPerSector = 512;
 
-                    else
-                    {
-                        _bytesPerSector = 256;
-
-                        while ((_bytesPerSector * 2) * (MaxClusters+1) < DiskTotalBytes)
-                            _bytesPerSector *= 2;
-                    }
+                    // MaxClusters + 1 because max clusters on the Atari is 32767 when 1024-byte boundaries
+                    // would normally end on 32768
+                    while ((_bytesPerSector * 2) * (MaxClusters + 1) < DiskTotalBytes)
+                        _bytesPerSector *= 2;
                 }
 
                 return _bytesPerSector;
@@ -135,7 +130,6 @@ namespace AtariST.SerialDisk.Storage
         public DiskParameters(string localDirectoryPath, AtariDiskSettings diskSettings)
         {
             LocalDirectoryPath = localDirectoryPath;
-            Type = diskSettings.DiskPartitionType;
             TOS = diskSettings.DiskTOSCompatibility;
             DiskTotalBytes = diskSettings.DiskSizeMiB * FAT16Helper.BytesPerMiB;
             RootDirectorySectors = diskSettings.RootDirectorySectors;

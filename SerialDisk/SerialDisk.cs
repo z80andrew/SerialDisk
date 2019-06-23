@@ -47,19 +47,18 @@ namespace AtariST.SerialDisk
 
             Console.WriteLine("Options (default):");
             Console.WriteLine($"{parameters[0]} <disk_size_in_MiB> ({applicationSettings.DiskSettings.DiskSizeMiB})");
-            Console.WriteLine($"{parameters[1]} [{FormatEnumParams(typeof(PartitionType))}] ({applicationSettings.DiskSettings.DiskPartitionType})");
-            Console.WriteLine($"{parameters[2]} [{FormatEnumParams(typeof(TOSVersion))}] ({applicationSettings.DiskSettings.DiskTOSCompatibility})");
-            Console.WriteLine($"{parameters[3]} <sectors> ({applicationSettings.DiskSettings.RootDirectorySectors})");
+            Console.WriteLine($"{parameters[1]} [{FormatEnumParams(typeof(TOSVersion))}] ({applicationSettings.DiskSettings.DiskTOSCompatibility})");
+            Console.WriteLine($"{parameters[2]} <sectors> ({applicationSettings.DiskSettings.RootDirectorySectors})");
 
-            Console.WriteLine($"{parameters[4]} [port_name] ({applicationSettings.SerialSettings.PortName})");
-            Console.WriteLine($"{parameters[5]} <baud_rate> ({applicationSettings.SerialSettings.BaudRate})");
-            Console.WriteLine($"{parameters[6]} <data_bits> ({applicationSettings.SerialSettings.DataBits})");
-            Console.WriteLine($"{parameters[7]} [{FormatEnumParams(typeof(StopBits))}] ({applicationSettings.SerialSettings.StopBits})");
-            Console.WriteLine($"{parameters[8]} [{FormatEnumParams(typeof(Parity))}] ({applicationSettings.SerialSettings.Parity})");
-            Console.WriteLine($"{parameters[9]} [{FormatEnumParams(typeof(Handshake))}] ({applicationSettings.SerialSettings.Handshake})");
+            Console.WriteLine($"{parameters[3]} [port_name] ({applicationSettings.SerialSettings.PortName})");
+            Console.WriteLine($"{parameters[4]} <baud_rate> ({applicationSettings.SerialSettings.BaudRate})");
+            Console.WriteLine($"{parameters[5]} <data_bits> ({applicationSettings.SerialSettings.DataBits})");
+            Console.WriteLine($"{parameters[6]} [{FormatEnumParams(typeof(StopBits))}] ({applicationSettings.SerialSettings.StopBits})");
+            Console.WriteLine($"{parameters[7]} [{FormatEnumParams(typeof(Parity))}] ({applicationSettings.SerialSettings.Parity})");
+            Console.WriteLine($"{parameters[8]} [{FormatEnumParams(typeof(Handshake))}] ({applicationSettings.SerialSettings.Handshake})");
 
-            Console.WriteLine($"{parameters[10]} [{FormatEnumParams(typeof(Constants.LoggingLevel))}] ({applicationSettings.LoggingLevel})");
-            Console.WriteLine($"{parameters[11]} [log_file_name]");
+            Console.WriteLine($"{parameters[9]} [{FormatEnumParams(typeof(Constants.LoggingLevel))}] ({applicationSettings.LoggingLevel})");
+            Console.WriteLine($"{parameters[10]} [log_file_name]");
             Console.WriteLine();
 
             Console.WriteLine("Serial ports available:");
