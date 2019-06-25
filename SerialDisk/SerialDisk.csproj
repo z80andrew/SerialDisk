@@ -18,7 +18,6 @@
     <PackageReleaseNotes></PackageReleaseNotes>
     <Copyright>z80andrew 2019</Copyright>
     <Deterministic>False</Deterministic>
-    <PublishTrimmed>true</PublishTrimmed>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
