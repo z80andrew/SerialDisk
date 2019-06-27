@@ -9,16 +9,7 @@ namespace AtariST.SerialDisk.Common
 
         public static int MaxSectorSize
         {
-            get
-            {
-                return 8192;
-            }
-        }
-
-        public enum TOSVersion
-        {
-            TOS100,
-            TOS104
+            get => 512;
         }
 
         public static Dictionary<string, string> ConsoleParameterMappings
@@ -44,6 +35,12 @@ namespace AtariST.SerialDisk.Common
             }
         }
 
+        public enum TOSVersion
+        {
+            TOS100,
+            TOS104
+        }
+
         public enum ReceiverState
         {
             ReceiveStartMagic = 0,
@@ -63,8 +60,8 @@ namespace AtariST.SerialDisk.Common
 
         public enum LoggingLevel
         {
-            Verbose = 0,
-            Info
+            Info = 0,
+            Verbose
         };
     }
 }

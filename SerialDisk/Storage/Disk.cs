@@ -29,9 +29,9 @@ namespace AtariST.SerialDisk.Storage
         }
         public bool MediaChanged { get; set; } = true;
 
-        public Disk(DiskParameters diskParams, ILogger log)
+        public Disk(DiskParameters diskParams, ILogger logger)
         {
-            _logger = log;
+            _logger = logger;
             Parameters = diskParams;
 
             try

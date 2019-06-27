@@ -107,7 +107,7 @@ namespace AtariST.SerialDisk
 
         public static void Main(string[] args)
         {
-            Console.WriteLine("Serial Disk v" + Assembly.GetExecutingAssembly().GetName().Version);
+            Console.WriteLine("\n\rSerial Disk v" + Assembly.GetExecutingAssembly().GetName().Version);
 
             #region Dependency injection
 
@@ -141,10 +141,7 @@ namespace AtariST.SerialDisk
                     .Build()
                     .Bind(applicationSettings);
 
-                if (args.Any())
-                {
-                    applicationSettings.LocalDirectoryName = ParseLocalDirectoryPath(applicationSettings.LocalDirectoryName, args);
-                }
+                applicationSettings.LocalDirectoryName = ParseLocalDirectoryPath(applicationSettings.LocalDirectoryName, args);
             }
 
             catch (Exception parameterException)
@@ -170,7 +167,7 @@ namespace AtariST.SerialDisk
 
             try
             {
-                DiskParameters diskParameters = new DiskParameters(applicationSettings.LocalDirectoryName, applicationSettings.DiskSettings);
+                DiskParameters diskParameters = new DiskParameters(applicationSettings.LocalDirectoryName, applicationSettings.DiskSettings, logger);
 
                 logger.Log($"Importing local directory contents from {applicationSettings.LocalDirectoryName}", Constants.LoggingLevel.Verbose);
 
@@ -181,16 +178,16 @@ namespace AtariST.SerialDisk
 
             catch (ArgumentException argEx)
             {
-                logger.LogException(argEx, argEx.Message);
+                // If there was an initialization error, quit
                 return;
             }
 
-            Console.WriteLine($"Listening on {applicationSettings.SerialSettings.PortName.ToUpperInvariant()}");
+            logger.Log($"Listening on {applicationSettings.SerialSettings.PortName.ToUpperInvariant()}", LoggingLevel.Info);
 
-            Console.WriteLine($"Baud rate:{applicationSettings.SerialSettings.BaudRate} | Data bits:{applicationSettings.SerialSettings.DataBits}" +
-                $" | Parity:{applicationSettings.SerialSettings.Parity} | Stop bits:{applicationSettings.SerialSettings.StopBits} | Flow control:{applicationSettings.SerialSettings.Handshake}");
-            Console.WriteLine($"Using local directory {applicationSettings.LocalDirectoryName} as a {applicationSettings.DiskSettings.DiskSizeMiB}MiB virtual disk");
-            Console.WriteLine($"Logging level: { applicationSettings.LoggingLevel} ");
+            logger.Log($"Baud rate:{applicationSettings.SerialSettings.BaudRate} | Data bits:{applicationSettings.SerialSettings.DataBits}" +
+                $" | Parity:{applicationSettings.SerialSettings.Parity} | Stop bits:{applicationSettings.SerialSettings.StopBits} | Flow control:{applicationSettings.SerialSettings.Handshake}", LoggingLevel.Info);
+            logger.Log($"Using local directory {applicationSettings.LocalDirectoryName} as a {applicationSettings.DiskSettings.DiskSizeMiB}MiB virtual disk", LoggingLevel.Info);
+            logger.Log($"Logging level: { applicationSettings.LoggingLevel} ", LoggingLevel.Info);
 
             Console.WriteLine("Press Ctrl-X to quit.");
 

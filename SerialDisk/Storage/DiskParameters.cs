@@ -1,3 +1,4 @@
+using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Utilities;
 using System;
@@ -11,18 +12,29 @@ namespace AtariST.SerialDisk.Storage
         private int _bytesPerSector;
         private byte[] _biosParameterBlock;
 
+        private ILogger _logger;
+
         public int DiskTotalBytes
         {
             get => _diskSizeTotalBytes;
             set
             {
-                if (value - (MaxSectorSize * 2) > FAT16Helper.MaxDiskSizeBytes(TOS)) // Allow for an extra cluster so max size can exactly match 32/512MiB despite 14/15 bit addressing limitation
-                    throw new ArgumentException($"{value / FAT16Helper.BytesPerMiB}MiB is larger than the maximum possible disk size " +
-                        $"({(FAT16Helper.MaxDiskSizeBytes(TOS) + (MaxSectorSize * 2)) / FAT16Helper.BytesPerMiB}MiB)");
-
-                else
+                try
                 {
-                    _diskSizeTotalBytes = value;
+                    if (value - (MaxSectorSize * 2) > FAT16Helper.MaxDiskSizeBytes(TOS)) // Allow for an extra cluster so max size can exactly match 32/512MiB despite 14/15 bit addressing limitation
+                        throw new ArgumentException($"{value / FAT16Helper.BytesPerMiB}MiB is larger than the maximum possible disk size " +
+                            $"({(FAT16Helper.MaxDiskSizeBytes(TOS) + (MaxSectorSize * 2)) / FAT16Helper.BytesPerMiB}MiB)");
+
+                    else
+                    {
+                        _diskSizeTotalBytes = value;
+                    }
+                }
+
+                catch(ArgumentException argEx)
+                {
+                    _logger.LogException(argEx);
+                    throw argEx;
                 }
             }
         }
@@ -127,8 +139,9 @@ namespace AtariST.SerialDisk.Storage
             }
         }
 
-        public DiskParameters(string localDirectoryPath, AtariDiskSettings diskSettings)
+        public DiskParameters(string localDirectoryPath, AtariDiskSettings diskSettings, ILogger logger)
         {
+            _logger = logger;
             LocalDirectoryPath = localDirectoryPath;
             TOS = diskSettings.DiskTOSCompatibility;
             DiskTotalBytes = diskSettings.DiskSizeMiB * FAT16Helper.BytesPerMiB;

@@ -52,7 +52,11 @@ namespace AtariST.SerialDisk.Utilities
         {
             if (!displayOnly && _fileStream != null) LogToFile(message);
 
-            if (messageLogLevel >= _logLevel) Console.WriteLine($"{DateTime.Now} {message}");
+            if (messageLogLevel <= _logLevel)
+            {
+                if(_logLevel == LoggingLevel.Verbose) Console.Write($"{DateTime.Now}\t");
+                Console.Write($"{message}\r\n");
+            }
         }
 
         public void LogException(Exception exception, string message = "")
@@ -63,7 +67,7 @@ namespace AtariST.SerialDisk.Utilities
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"{DateTime.Now}\t{message}");
             Console.ResetColor();
-            Console.WriteLine(exception);
+            if(_logLevel > LoggingLevel.Info) Console.WriteLine(exception);
         }
 
         public void LogToFile(string message)
