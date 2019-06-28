@@ -28,24 +28,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="atari\hello_l.txt" />
-    <None Remove="atari\hello_m.txt" />
-    <None Remove="atari\SERDISK.CFG" />
-    <None Remove="atari\SERDISK2.TOS" />
+    <None Remove="Atari\hello_l.txt" />
+    <None Remove="Atari\hello_m.txt" />
+    <None Remove="Atari\SERDISK.CFG" />
+    <None Remove="Atari\SERDISK2.TOS" />
     <None Remove="serialdisk.config" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="atari\hello_m.txt">
+    <Content Include="Atari\hello_m.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="atari\hello_l.txt">
+    <Content Include="Atari\hello_l.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="atari\SERDISK.CFG">
+    <Content Include="Atari\SERDISK.CFG">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="atari\SERDISK2.TOS">
+    <Content Include="Atari\SERDISK2.TOS">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <EmbeddedResource Include="Resources\default_config.json">
