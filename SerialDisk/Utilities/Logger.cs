@@ -17,8 +17,6 @@ namespace AtariST.SerialDisk.Utilities
         {
             _logLevel = loggingLevel;
 
-            Console.CursorVisible = false;
-
             if (logFileName != null)
             {
                 string folderPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
@@ -89,7 +87,6 @@ namespace AtariST.SerialDisk.Utilities
 
         public void Dispose()
         {
-            Console.CursorVisible = true;
             if (_fileStream != null) _fileStream.Dispose();
         }
     }

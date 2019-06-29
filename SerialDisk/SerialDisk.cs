@@ -1,19 +1,20 @@
+using System;
+using System.Text;
+using System.Collections.Generic;
+using System.IO.Ports;
+using System.IO;
+using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Serialization.Json;
+using Microsoft.Extensions.Configuration;
+
 using AtariST.SerialDisk.Comms;
 using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Common;
 using AtariST.SerialDisk.Storage;
 using AtariST.SerialDisk.Utilities;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Ports;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Runtime.Serialization.Json;
 using static AtariST.SerialDisk.Common.Constants;
 
 namespace AtariST.SerialDisk
@@ -107,7 +108,9 @@ namespace AtariST.SerialDisk
 
         public static void Main(string[] args)
         {
-            Console.WriteLine("\n\rSerial Disk v" + Assembly.GetExecutingAssembly().GetName().Version);
+            Console.CursorVisible = false;
+
+            Console.WriteLine("Serial Disk v" + Assembly.GetExecutingAssembly().GetName().Version);
 
             #region Dependency injection
 
@@ -123,7 +126,9 @@ namespace AtariST.SerialDisk
 
             try
             {
-                using (var defaultConfigStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("AtariST.SerialDisk.Resources.default_config.json"))
+                var defaultConfigResourceName = $"AtariST.SerialDisk.Resources.default_config_{OSHelper.OperatingSystemName.ToLower()}.json";
+
+                using (var defaultConfigStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(defaultConfigResourceName))
                 {
                     DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(ApplicationSettings));
                     applicationSettings = (ApplicationSettings)ser.ReadObject(defaultConfigStream);
@@ -147,6 +152,7 @@ namespace AtariST.SerialDisk
             catch (Exception parameterException)
             {
                 Console.WriteLine($"Error parsing parameters: {parameterException.Message}");
+                Console.CursorVisible = true;
                 return;
             }
 
@@ -176,9 +182,10 @@ namespace AtariST.SerialDisk
                 Serial serial = new Serial(applicationSettings.SerialSettings, disk, logger);
             }
 
-            catch (ArgumentException argEx)
+            catch (Exception)
             {
                 // If there was an initialization error, quit
+                Console.CursorVisible = true;
                 return;
             }
 
@@ -196,7 +203,9 @@ namespace AtariST.SerialDisk
             do
             {
                 keyInfo = Console.ReadKey(true);
-            } while ((keyInfo.Modifiers & ConsoleModifiers.Control) == 0 || keyInfo.Key != ConsoleKey.X);            
+            } while ((keyInfo.Modifiers & ConsoleModifiers.Control) == 0 || keyInfo.Key != ConsoleKey.X);
+
+            Console.CursorVisible = true;
         }
     }
 }

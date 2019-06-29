@@ -48,7 +48,10 @@
     <Content Include="Atari\SERDISK2.TOS">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <EmbeddedResource Include="Resources\default_config.json">
+    <EmbeddedResource Include="Resources\default_config_linux.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\default_config_windows.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
     <Content Include="serialdisk.config">

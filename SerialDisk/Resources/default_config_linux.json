@@ -1,0 +1,19 @@
+{
+  "LocalDirectoryName": ".",
+  "LoggingLevel": 1,
+
+  "SerialSettings": {
+    "PortName": "/dev/ttyS0",
+    "BaudRate": 9600,
+    "DataBits": 8,
+    "StopBits": 1,
+    "Parity": 0,
+    "Handshake": 0
+  },
+
+  "DiskSettings": {
+    "DiskSizeMiB": 32,
+    "DiskTOSCompatibility": 1,
+    "RootDirectorySectors": 8
+  }
+}
