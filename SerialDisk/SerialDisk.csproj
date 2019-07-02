@@ -71,7 +71,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="3.0.0-preview6.19304.6" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.0.0-preview6.19304.6" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.0.0-preview6.19304.6" />
-    <PackageReference Include="Microsoft.Net.Compilers" Version="3.2.0-beta1-final">
+    <PackageReference Include="Microsoft.Net.Compilers" Version="3.2.0-beta3-final">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
