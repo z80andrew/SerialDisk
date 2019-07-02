@@ -86,6 +86,15 @@ build_script:
 
     appveyor PushArtifact serialdisk_2.2_fde_linux-arm32.tar.gz
 
+
+
+test_script:
+- cmd: >-
+    dotnet test ./SerialDiskTests/SerialDiskTests.csproj
+
+- sh: >-
+    dotnet test ./SerialDiskTests/SerialDiskTests.csproj
+
 artifacts:
 - path: bin/Release/netcoreapp3.0/SCE/win-x64
   name: serialdisk_2.2_sce_win-x64
