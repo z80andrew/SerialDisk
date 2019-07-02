@@ -1,0 +1,78 @@
+version: 2.2.{build}
+
+image: 
+- Visual Studio 2019 Preview
+- Ubuntu1804
+
+dotnet_csproj:
+  patch: true
+  file: '**\*.csproj'
+  version: '{version}'
+  package_version: '{version}'
+  assembly_version: '{version}'
+  file_version: '{version}'
+  informational_version: '{version}'
+  
+build_script:
+- cmd: >-
+    dotnet --version
+    cinst dotnetcore-sdk --pre
+    dotnet --version
+
+    dotnet publish SerialDisk/Serialdisk.csproj -r win-x64 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/win-x64 /p:PublishTrimmed=true
+    dotnet publish SerialDisk/Serialdisk.csproj -r win-x86 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/win-x86 /p:PublishTrimmed=true
+    dotnet publish SerialDisk/Serialdisk.csproj -r win-x64 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/win-x64
+    dotnet publish SerialDisk/Serialdisk.csproj -r win-x86 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/win-x86
+	
+- sh: >-
+    # Install .NET Core 3.0
+
+    curl -SL -o dotnet.tar.gz https://download.visualstudio.microsoft.com/download/pr/72ce4d40-9063-4a2e-a962-0bf2574f75d1/5463bb92cff4f9c76935838d1efbc757/dotnet-sdk-3.0.100-preview6-012264-linux-x64.tar.gz
+
+    sudo mkdir -p /usr/share/dotnet
+
+    sudo tar -zxf dotnet.tar.gz -C /usr/share/dotnet
+
+    sudo ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
+
+    dotnet --info
+
+    # Publish and package Self Contained Executables
+
+    dotnet publish ./SerialDisk/SerialDisk.csproj -r linux-x64 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/serialdisk-linux-x64 /p:PublishTrimmed=true
+    tar -czf serialdisk_2.2_sce_linux-x64.tar.gz -C ./bin/Release/netcoreapp3.0/SCE serialdisk-linux-x64
+    appveyor PushArtifact serialdisk_2.2_sce_linux-x64.tar.gz
+
+    dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm64 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/serialdisk-linux-arm64 /p:PublishTrimmed=true
+    tar -czf serialdisk_2.2_sce_linux-arm64.tar.gz -C ./bin/Release/netcoreapp3.0/SCE serialdisk-linux-arm64
+    appveyor PushArtifact serialdisk_2.2_sce_linux-arm64.tar.gz
+
+    dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/serialdisk-linux-arm32 /p:PublishTrimmed=true
+    tar -czf serialdisk_2.2_sce_linux-arm32.tar.gz -C ./bin/Release/netcoreapp3.0/SCE serialdisk-linux-arm32
+    appveyor PushArtifact serialdisk_2.2_sce_linux-arm32.tar.gz
+
+    # Publish and package Framework Dependant Executables
+
+    dotnet publish SerialDisk/SerialDisk.csproj -r linux-x64 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/serialdisk-linux-x64
+    tar -czf serialdisk_2.2_fde_linux-x64.tar.gz -C ./bin/Release/netcoreapp3.0/FDE serialdisk-linux-x64
+    appveyor PushArtifact serialdisk_2.2_fde_linux-x64.tar.gz
+
+    dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm64 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/serialdisk-linux-arm64
+    tar -czf serialdisk_2.2_fde_linux-arm64.tar.gz -C ./bin/Release/netcoreapp3.0/FDE serialdisk-linux-arm64
+    appveyor PushArtifact serialdisk_2.2_fde_linux-arm64.tar.gz
+
+    dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/serialdisk-linux-arm32
+    tar -czf serialdisk_2.2_fde_linux-arm32.tar.gz -C ./bin/Release/netcoreapp3.0/FDE serialdisk-linux-arm32
+    appveyor PushArtifact serialdisk_2.2_fde_linux-arm32.tar.gz
+	
+artifacts:
+- path: bin/Release/netcoreapp3.0/SCE/win-x64
+  name: serialdisk_2.2_sce_win-x64
+- path: bin/Release/netcoreapp3.0/SCE/win-x86
+  name: serialdisk_2.2_sce_win-x86
+- path: bin/Release/netcoreapp3.0/FDE/win-x64
+  name: serialdisk_2.2_fde_win-x64
+- path: bin/Release/netcoreapp3.0/FDE/win-x86
+  name: serialdisk_2.2_fde_win-x86
+
+deploy: off
