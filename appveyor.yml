@@ -12,23 +12,14 @@ dotnet_csproj:
   assembly_version: '{version}'
   file_version: '{version}'
   informational_version: '{version}'
-  
-build_script:
-- cmd: >-
+
+install:
+- cmd: >- 
     dotnet --version
     
     cinst dotnetcore-sdk --pre
     
     dotnet --version
-    
-
-    dotnet publish SerialDisk/Serialdisk.csproj -r win-x64 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/win-x64 /p:PublishTrimmed=true
-    
-    dotnet publish SerialDisk/Serialdisk.csproj -r win-x86 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/win-x86 /p:PublishTrimmed=true
-    
-    dotnet publish SerialDisk/Serialdisk.csproj -r win-x64 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/win-x64
-    
-    dotnet publish SerialDisk/Serialdisk.csproj -r win-x86 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/win-x86
 
 - sh: >-
     # Install .NET Core 3.0
@@ -42,7 +33,18 @@ build_script:
     sudo ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
 
     dotnet --info
+  
+build_script:
+- cmd: >-
+    dotnet publish SerialDisk/Serialdisk.csproj -r win-x64 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/win-x64 /p:PublishTrimmed=true
+    
+    dotnet publish SerialDisk/Serialdisk.csproj -r win-x86 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/win-x86 /p:PublishTrimmed=true
+    
+    dotnet publish SerialDisk/Serialdisk.csproj -r win-x64 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/win-x64
+    
+    dotnet publish SerialDisk/Serialdisk.csproj -r win-x86 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/win-x86
 
+- sh: >-
     # Publish and package Self Contained Executables
 
     dotnet publish ./SerialDisk/SerialDisk.csproj -r linux-x64 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/serialdisk-linux-x64 /p:PublishTrimmed=true
@@ -86,14 +88,16 @@ build_script:
 
     appveyor PushArtifact serialdisk_2.2_fde_linux-arm32.tar.gz
 
-
-
 test_script:
 - cmd: >-
-    dotnet test ./SerialDiskTests/SerialDiskTests.csproj
+    dotnet clean
+
+    dotnet test --test-adapter-path:. --logger:Appveyor -nodereuse:false
 
 - sh: >-
-    dotnet test ./SerialDiskTests/SerialDiskTests.csproj
+    dotnet clean
+
+    dotnet test --test-adapter-path:. --logger:Appveyor -nodereuse:false
 
 artifacts:
 - path: bin/Release/netcoreapp3.0/SCE/win-x64
