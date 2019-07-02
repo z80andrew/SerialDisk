@@ -49,40 +49,57 @@ build_script:
 
     dotnet publish ./SerialDisk/SerialDisk.csproj -r linux-x64 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/serialdisk-linux-x64 /p:PublishTrimmed=true
 
-    tar -czf serialdisk_2.2_sce_linux-x64.tar.gz -C ./bin/Release/netcoreapp3.0/SCE serialdisk-linux-x64
-
-    appveyor PushArtifact serialdisk_2.2_sce_linux-x64.tar.gz
-
     dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm64 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/serialdisk-linux-arm64 /p:PublishTrimmed=true
 
-    tar -czf serialdisk_2.2_sce_linux-arm64.tar.gz -C ./bin/Release/netcoreapp3.0/SCE serialdisk-linux-arm64
-
-    appveyor PushArtifact serialdisk_2.2_sce_linux-arm64.tar.gz
-
     dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/serialdisk-linux-arm32 /p:PublishTrimmed=true
-
-    tar -czf serialdisk_2.2_sce_linux-arm32.tar.gz -C ./bin/Release/netcoreapp3.0/SCE serialdisk-linux-arm32
-
-    appveyor PushArtifact serialdisk_2.2_sce_linux-arm32.tar.gz
 
 
     # Publish and package Framework Dependant Executables
 
     dotnet publish SerialDisk/SerialDisk.csproj -r linux-x64 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/serialdisk-linux-x64
 
+    dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm64 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/serialdisk-linux-arm64
+
+    dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/serialdisk-linux-arm32
+
+on_success:
+- cmd: >-
+    7z a -mx=9 serialdisk_2.2_sce_win-x64.zip ./bin/Release/netcoreapp3.0/SCE/win-x64/*
+
+    appveyor PushArtifact serialdisk_2.2_sce_win-x64.zip
+
+    7z a -mx=9 serialdisk_2.2_sce_win-x86.zip ./bin/Release/netcoreapp3.0/SCE/win-x86/*
+
+    appveyor PushArtifact serialdisk_2.2_sce_win-x86.zip
+
+    7z a -mx=9 serialdisk_2.2_fde_win-x64.zip ./bin/Release/netcoreapp3.0/FDE/win-x64/*
+
+    appveyor PushArtifact serialdisk_2.2_fde_win-x64.zip
+
+    7z a -mx=9 serialdisk_2.2_fde_win-x86.zip ./bin/Release/netcoreapp3.0/FDE/win-x86/*
+
+    appveyor PushArtifact serialdisk_2.2_fde_win-x86.zip
+
+- sh: >-
+    tar -czf serialdisk_2.2_sce_linux-x64.tar.gz -C ./bin/Release/netcoreapp3.0/SCE serialdisk-linux-x64
+
+    appveyor PushArtifact serialdisk_2.2_sce_linux-x64.tar.gz
+
+    tar -czf serialdisk_2.2_sce_linux-arm64.tar.gz -C ./bin/Release/netcoreapp3.0/SCE serialdisk-linux-arm64
+
+    appveyor PushArtifact serialdisk_2.2_sce_linux-arm64.tar.gz
+
+    tar -czf serialdisk_2.2_sce_linux-arm32.tar.gz -C ./bin/Release/netcoreapp3.0/SCE serialdisk-linux-arm32
+
+    appveyor PushArtifact serialdisk_2.2_sce_linux-arm32.tar.gz
+
     tar -czf serialdisk_2.2_fde_linux-x64.tar.gz -C ./bin/Release/netcoreapp3.0/FDE serialdisk-linux-x64
 
     appveyor PushArtifact serialdisk_2.2_fde_linux-x64.tar.gz
 
-
-    dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm64 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/serialdisk-linux-arm64
-
     tar -czf serialdisk_2.2_fde_linux-arm64.tar.gz -C ./bin/Release/netcoreapp3.0/FDE serialdisk-linux-arm64
 
     appveyor PushArtifact serialdisk_2.2_fde_linux-arm64.tar.gz
-
-
-    dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/serialdisk-linux-arm32
 
     tar -czf serialdisk_2.2_fde_linux-arm32.tar.gz -C ./bin/Release/netcoreapp3.0/FDE serialdisk-linux-arm32
 
@@ -98,15 +115,5 @@ test_script:
     dotnet clean
 
     dotnet test --test-adapter-path:. --logger:Appveyor -nodereuse:false
-
-artifacts:
-- path: bin/Release/netcoreapp3.0/SCE/win-x64
-  name: serialdisk_2.2_sce_win-x64
-- path: bin/Release/netcoreapp3.0/SCE/win-x86
-  name: serialdisk_2.2_sce_win-x86
-- path: bin/Release/netcoreapp3.0/FDE/win-x64
-  name: serialdisk_2.2_fde_win-x64
-- path: bin/Release/netcoreapp3.0/FDE/win-x86
-  name: serialdisk_2.2_fde_win-x86
 
 deploy: off

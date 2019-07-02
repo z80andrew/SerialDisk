@@ -108,8 +108,6 @@ namespace AtariST.SerialDisk
 
         public static void Main(string[] args)
         {
-            Console.CursorVisible = false;
-
             Console.WriteLine("Serial Disk v" + Assembly.GetExecutingAssembly().GetName().Version);
 
             #region Dependency injection
@@ -152,7 +150,6 @@ namespace AtariST.SerialDisk
             catch (Exception parameterException)
             {
                 Console.WriteLine($"Error parsing parameters: {parameterException.Message}");
-                Console.CursorVisible = true;
                 return;
             }
 
@@ -185,7 +182,6 @@ namespace AtariST.SerialDisk
             catch (Exception)
             {
                 // If there was an initialization error, quit
-                Console.CursorVisible = true;
                 return;
             }
 
@@ -204,8 +200,6 @@ namespace AtariST.SerialDisk
             {
                 keyInfo = Console.ReadKey(true);
             } while ((keyInfo.Modifiers & ConsoleModifiers.Control) == 0 || keyInfo.Key != ConsoleKey.X);
-
-            Console.CursorVisible = true;
         }
     }
 }
