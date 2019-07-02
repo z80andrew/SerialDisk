@@ -16,12 +16,18 @@ dotnet_csproj:
 build_script:
 - cmd: >-
     dotnet --version
+    
     cinst dotnetcore-sdk --pre
+    
     dotnet --version
+    
 
     dotnet publish SerialDisk/Serialdisk.csproj -r win-x64 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/win-x64 /p:PublishTrimmed=true
+    
     dotnet publish SerialDisk/Serialdisk.csproj -r win-x86 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/win-x86 /p:PublishTrimmed=true
+    
     dotnet publish SerialDisk/Serialdisk.csproj -r win-x64 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/win-x64
+    
     dotnet publish SerialDisk/Serialdisk.csproj -r win-x86 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/win-x86
 
 - sh: >-
@@ -40,29 +46,44 @@ build_script:
     # Publish and package Self Contained Executables
 
     dotnet publish ./SerialDisk/SerialDisk.csproj -r linux-x64 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/serialdisk-linux-x64 /p:PublishTrimmed=true
+
     tar -czf serialdisk_2.2_sce_linux-x64.tar.gz -C ./bin/Release/netcoreapp3.0/SCE serialdisk-linux-x64
+
     appveyor PushArtifact serialdisk_2.2_sce_linux-x64.tar.gz
 
     dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm64 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/serialdisk-linux-arm64 /p:PublishTrimmed=true
+
     tar -czf serialdisk_2.2_sce_linux-arm64.tar.gz -C ./bin/Release/netcoreapp3.0/SCE serialdisk-linux-arm64
+
     appveyor PushArtifact serialdisk_2.2_sce_linux-arm64.tar.gz
 
     dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/serialdisk-linux-arm32 /p:PublishTrimmed=true
+
     tar -czf serialdisk_2.2_sce_linux-arm32.tar.gz -C ./bin/Release/netcoreapp3.0/SCE serialdisk-linux-arm32
+
     appveyor PushArtifact serialdisk_2.2_sce_linux-arm32.tar.gz
+
 
     # Publish and package Framework Dependant Executables
 
     dotnet publish SerialDisk/SerialDisk.csproj -r linux-x64 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/serialdisk-linux-x64
+
     tar -czf serialdisk_2.2_fde_linux-x64.tar.gz -C ./bin/Release/netcoreapp3.0/FDE serialdisk-linux-x64
+
     appveyor PushArtifact serialdisk_2.2_fde_linux-x64.tar.gz
 
+
     dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm64 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/serialdisk-linux-arm64
+
     tar -czf serialdisk_2.2_fde_linux-arm64.tar.gz -C ./bin/Release/netcoreapp3.0/FDE serialdisk-linux-arm64
+
     appveyor PushArtifact serialdisk_2.2_fde_linux-arm64.tar.gz
 
+
     dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/serialdisk-linux-arm32
+
     tar -czf serialdisk_2.2_fde_linux-arm32.tar.gz -C ./bin/Release/netcoreapp3.0/FDE serialdisk-linux-arm32
+
     appveyor PushArtifact serialdisk_2.2_fde_linux-arm32.tar.gz
 
 artifacts:
