@@ -17,7 +17,7 @@ install:
 - cmd: >- 
     dotnet --version
     
-    cinst dotnetcore-sdk --pre
+    cinst dotnetcore-sdk
     
     dotnet --version
 
