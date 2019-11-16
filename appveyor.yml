@@ -22,16 +22,6 @@ install:
     dotnet --version
 
 - sh: >-
-    # Install .NET Core 3.0
-
-    curl -SL -o dotnet.tar.gz https://download.visualstudio.microsoft.com/download/pr/72ce4d40-9063-4a2e-a962-0bf2574f75d1/5463bb92cff4f9c76935838d1efbc757/dotnet-sdk-3.0.100-preview6-012264-linux-x64.tar.gz
-
-    sudo mkdir -p /usr/share/dotnet
-
-    sudo tar -zxf dotnet.tar.gz -C /usr/share/dotnet
-
-    sudo ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
-
     dotnet --info
   
 build_script:
