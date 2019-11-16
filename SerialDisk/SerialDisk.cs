@@ -168,22 +168,13 @@ namespace AtariST.SerialDisk
             logger.Log($"Operating system: {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture} {System.Runtime.InteropServices.RuntimeInformation.OSDescription}", LoggingLevel.Verbose);
             logger.Log($"Framework version: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", LoggingLevel.Verbose);
 
-            try
-            {
-                DiskParameters diskParameters = new DiskParameters(applicationSettings.LocalDirectoryName, applicationSettings.DiskSettings, logger);
+            DiskParameters diskParameters = new DiskParameters(applicationSettings.LocalDirectoryName, applicationSettings.DiskSettings, logger);
 
-                logger.Log($"Importing local directory contents from {applicationSettings.LocalDirectoryName}", Constants.LoggingLevel.Verbose);
+            logger.Log($"Importing local directory contents from {applicationSettings.LocalDirectoryName}", Constants.LoggingLevel.Verbose);
 
-                Disk disk = new Disk(diskParameters, logger);
+            Disk disk = new Disk(diskParameters, logger);
 
-                Serial serial = new Serial(applicationSettings.SerialSettings, disk, logger);
-            }
-
-            catch (Exception)
-            {
-                // If there was an initialization error, quit
-                return;
-            }
+            using Serial serial = new Serial(applicationSettings.SerialSettings, disk, logger);
 
             logger.Log($"Listening on {applicationSettings.SerialSettings.PortName.ToUpperInvariant()}", LoggingLevel.Info);
 

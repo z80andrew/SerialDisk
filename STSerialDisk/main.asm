@@ -269,13 +269,6 @@ _rw:
 
 	dbf		d3,1b																| Decrement d3, jump backwards to label 1: if not zero
 
-	| Send the end communication magic.
-
-	Bconout	#1,#0x02
-	Bconout	#1,#0x02
-	Bconout	#1,#0x19
-	Bconout	#1,#0x61
-
 	| Calculate local CRC32 checksum.
 
 	move.l	a4,a0																| Move address of received data into a0
