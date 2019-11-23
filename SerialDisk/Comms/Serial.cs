@@ -127,6 +127,11 @@ namespace AtariST.SerialDisk.Comms
                         }
                     }
 
+                    catch(OperationCanceledException cancelEx)
+                    {
+                        _logger.Log($"Stopped listening on {_serialPort.PortName}", LoggingLevel.Verbose);
+                    }
+
                     catch(Exception ex)
                     {
                         _logger.LogException(ex, "Error reading from serial port");
