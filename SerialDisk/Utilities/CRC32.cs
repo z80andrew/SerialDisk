@@ -1,43 +1,63 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace AtariST.SerialDisk.Utilities
 {
     public static class CRC32
     {
-        private static UInt32[] _crc32Table;
+        private readonly static uint _polynomial = 0x04c11db7;
 
-        private static void CreateCrc32Table()
+        private static uint[] _crc32Table;
+
+        private static uint[] Crc32Table
         {
-            _crc32Table = new UInt32[256];
-
-            UInt32 Crc32Poly = 0x04c11db7; // matches main.asm
-
-            for (int ByteIndex = 0; ByteIndex < 256; ByteIndex++)
+            get
             {
-                UInt32 crc32Value = (UInt32)(ByteIndex << 24);
-
-                for (int BitIndex = 0; BitIndex < 8; BitIndex++)
+                if (_crc32Table == null)
                 {
-                    if ((crc32Value & (1 << 31)) != 0)
-                        crc32Value = (crc32Value << 1) ^ Crc32Poly;
-                    else
-                        crc32Value = (crc32Value << 1);
+                    _crc32Table = new uint[256];
+
+                    for (uint byteIndex = 0; byteIndex < _crc32Table.Length; byteIndex++)
+                    {
+                        uint crc32Value = byteIndex << 24;
+
+                        for (byte bitIndex = 0; bitIndex < 8; bitIndex++)
+                        {
+                            if ((crc32Value & 0x80000000) != 0)
+                                crc32Value = (crc32Value << 1) ^ _polynomial;
+                            else
+                                crc32Value <<= 1;
+                        }
+
+                        _crc32Table[byteIndex] = crc32Value;
+                    }
                 }
 
-                _crc32Table[ByteIndex] = crc32Value;
+                return _crc32Table;
             }
         }
 
-        public static UInt32 CalculateCRC32(byte[] buffer)
+        /// <summary>
+        /// Generates a CRC32/POSIX checksum
+        /// Polynomial: 0x04C11DB7	
+        /// Checksum initial value: 0x00000000	
+        /// Relect input: false	
+        /// Reflect output: false	
+        /// XOR result with: 0xFFFFFFFF
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <returns></returns>
+        public static uint CalculateCRC32(byte[] buffer)
         {
-            if (_crc32Table == null) CreateCrc32Table();
+            uint crc32 = 0;
 
-            UInt32 crc32Value = 0;
+            foreach(byte data in buffer)
+            {
+                crc32 = (crc32 << 8) ^ Crc32Table[data ^ ((crc32 >> 24) & 0xFF)];
+            }
 
-            for (int Index = 0; Index < buffer.Length; Index++)
-                crc32Value = (crc32Value << 8) ^ _crc32Table[buffer[Index] ^ ((crc32Value >> 24) & 0xff)];
-
-            return crc32Value;
+            return ~crc32;
         }
     }
 }

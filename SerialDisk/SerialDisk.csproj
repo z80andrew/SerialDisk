@@ -4,9 +4,9 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <RootNamespace>AtariST.SerialDisk</RootNamespace>
-    <AssemblyVersion>2.1.*</AssemblyVersion>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <FileVersion>2.0.0.0</FileVersion>
-    <Version>2.1</Version>
+    <Version>2.2</Version>
     <ApplicationIcon />
     <StartupObject></StartupObject>
     <Authors>z80andrew</Authors>
@@ -23,26 +23,35 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebugType>full</DebugType>
     <DebugSymbols>true</DebugSymbols>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors>1605</WarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="atari\hello_l.txt" />
-    <None Remove="atari\hello_m.txt" />
-    <None Remove="atari\SERDISK1.TOS" />
+    <None Remove="Atari\hello_l.txt" />
+    <None Remove="Atari\hello_m.txt" />
+    <None Remove="Atari\SERDISK.CFG" />
+    <None Remove="Atari\SERDISK2.TOS" />
     <None Remove="serialdisk.config" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="atari\bin\SERDISK1.TOS">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <Content Include="Atari\hello_m.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="atari\hello_m.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <Content Include="Atari\hello_l.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="atari\hello_l.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <Content Include="Atari\SERDISK.CFG">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <EmbeddedResource Include="Resources\default_config.json">
+    <Content Include="Atari\SERDISK2.TOS">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <EmbeddedResource Include="Resources\default_config_linux.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\default_config_windows.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
     <Content Include="serialdisk.config">
@@ -57,12 +66,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.0.0-preview4.19216.2" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.0.0-preview4.19216.2" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="3.0.0-preview4.19216.2" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.0.0-preview4.19216.2" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.0.0-preview4.19216.2" />
-    <PackageReference Include="System.IO.Ports" Version="4.6.0-preview4.19212.13" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="3.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.0.1" />
+    <PackageReference Include="Microsoft.Net.Compilers" Version="3.3.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="System.IO.Ports" Version="4.6.0" />
   </ItemGroup>
 
   <ItemGroup>

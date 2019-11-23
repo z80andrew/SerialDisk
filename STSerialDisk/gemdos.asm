@@ -42,24 +42,24 @@
 .endm
 
 .macro	Cconout c
-	move	\c,-(sp)
-	move	#2,-(sp)
+	move.w	\c,-(sp)
+	move.w	#2,-(sp)
 	trap	#1
-	addq	#4,sp
+	addq.l	#4,sp
 .endm
 
 .macro	Cconws str
 	pea		\str
-	move	#9,-(sp)
+	move.w	#9,-(sp)
 	trap	#1
-	addq	#6,sp
+	addq.l	#6,sp
 .endm
 
 .macro	Fclose handle
-	move	\handle,-(sp)
-	move	#62,-(sp)
+	move.w	\handle,-(sp)
+	move.w	#62,-(sp)
 	trap	#1
-	addq	#4,sp
+	addq.l	#4,sp
 .endm
 
 .macro	Fcreate fname, attribs
@@ -71,18 +71,18 @@
 .endm
 
 .macro	Fopen fname, mode
-	move	\mode,-(sp)
+	move.w	\mode,-(sp)
 	pea		\fname
-	move	#61,-(sp)
+	move.w	#61,-(sp)
 	trap	#1
-	addq	#8,sp
+	addq.l	#8,sp
 .endm
 
 .macro	Fread handle, count, buffer
 	pea		\buffer
 	move.l	\count,-(sp)
-	move	\handle,-(sp)
-	move	#63,-(sp)
+	move.w	\handle,-(sp)
+	move.w	#63,-(sp)
 	trap	#1
 	lea		12(sp),sp
 .endm
@@ -113,6 +113,7 @@
 	addq	#8,sp
 .endm
 
+| amount: number of bytes to allocate
 .macro	Malloc amount
 	move.l	\amount,-(sp)
 	move	#72,-(sp)
@@ -120,6 +121,7 @@
 	addq	#6,sp
 .endm
 
+| block: address of block to release
 .macro	Mfree saddr
 	pea		\saddr
 	move	#73,-(sp)
@@ -152,12 +154,12 @@
 	move.l	\keep,-(sp)
 	move	#49,-(sp)
 	trap	#1
+	addq.l	#8,sp
 .endm
 
 .macro Super stack
 	pea		\stack
-	move	#32,-(sp)
+	move.w	#32,-(sp)
 	trap	#1
-	addq	#6,sp
+	addq.l	#6,sp
 .endm
-

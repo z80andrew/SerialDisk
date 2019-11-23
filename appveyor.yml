@@ -1,0 +1,109 @@
+version: 2.2.{build}
+
+image: 
+- Visual Studio 2019
+- Ubuntu1804
+
+dotnet_csproj:
+  patch: true
+  file: '**\*.csproj'
+  version: '{version}'
+  package_version: '{version}'
+  assembly_version: '{version}'
+  file_version: '{version}'
+  informational_version: '{version}'
+
+install:
+- cmd: >- 
+    dotnet --version
+    
+    cinst dotnetcore-sdk
+    
+    dotnet --version
+
+- sh: >-
+    dotnet --info
+  
+build_script:
+- cmd: >-
+    dotnet publish SerialDisk/Serialdisk.csproj -r win-x64 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/win-x64 /p:PublishTrimmed=true
+    
+    dotnet publish SerialDisk/Serialdisk.csproj -r win-x86 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/win-x86 /p:PublishTrimmed=true
+    
+    dotnet publish SerialDisk/Serialdisk.csproj -r win-x64 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/win-x64
+    
+    dotnet publish SerialDisk/Serialdisk.csproj -r win-x86 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/win-x86
+
+- sh: >-
+    # Publish and package Self Contained Executables
+
+    dotnet publish ./SerialDisk/SerialDisk.csproj -r linux-x64 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/serialdisk-linux-x64 /p:PublishTrimmed=true
+
+    dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm64 -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/serialdisk-linux-arm64 /p:PublishTrimmed=true
+
+    dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm -c Release --self-contained true --output ./bin/Release/netcoreapp3.0/SCE/serialdisk-linux-arm32 /p:PublishTrimmed=true
+
+
+    # Publish and package Framework Dependant Executables
+
+    dotnet publish SerialDisk/SerialDisk.csproj -r linux-x64 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/serialdisk-linux-x64
+
+    dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm64 -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/serialdisk-linux-arm64
+
+    dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm -c Release --self-contained false --output ./bin/Release/netcoreapp3.0/FDE/serialdisk-linux-arm32
+
+on_success:
+- cmd: >-
+    7z a -mx=9 serialdisk_2.2_sce_win-x64.zip ./bin/Release/netcoreapp3.0/SCE/win-x64/*
+
+    appveyor PushArtifact serialdisk_2.2_sce_win-x64.zip
+
+    7z a -mx=9 serialdisk_2.2_sce_win-x86.zip ./bin/Release/netcoreapp3.0/SCE/win-x86/*
+
+    appveyor PushArtifact serialdisk_2.2_sce_win-x86.zip
+
+    7z a -mx=9 serialdisk_2.2_fde_win-x64.zip ./bin/Release/netcoreapp3.0/FDE/win-x64/*
+
+    appveyor PushArtifact serialdisk_2.2_fde_win-x64.zip
+
+    7z a -mx=9 serialdisk_2.2_fde_win-x86.zip ./bin/Release/netcoreapp3.0/FDE/win-x86/*
+
+    appveyor PushArtifact serialdisk_2.2_fde_win-x86.zip
+
+- sh: >-
+    tar -czf serialdisk_2.2_sce_linux-x64.tar.gz -C ./bin/Release/netcoreapp3.0/SCE serialdisk-linux-x64
+
+    appveyor PushArtifact serialdisk_2.2_sce_linux-x64.tar.gz
+
+    tar -czf serialdisk_2.2_sce_linux-arm64.tar.gz -C ./bin/Release/netcoreapp3.0/SCE serialdisk-linux-arm64
+
+    appveyor PushArtifact serialdisk_2.2_sce_linux-arm64.tar.gz
+
+    tar -czf serialdisk_2.2_sce_linux-arm32.tar.gz -C ./bin/Release/netcoreapp3.0/SCE serialdisk-linux-arm32
+
+    appveyor PushArtifact serialdisk_2.2_sce_linux-arm32.tar.gz
+
+    tar -czf serialdisk_2.2_fde_linux-x64.tar.gz -C ./bin/Release/netcoreapp3.0/FDE serialdisk-linux-x64
+
+    appveyor PushArtifact serialdisk_2.2_fde_linux-x64.tar.gz
+
+    tar -czf serialdisk_2.2_fde_linux-arm64.tar.gz -C ./bin/Release/netcoreapp3.0/FDE serialdisk-linux-arm64
+
+    appveyor PushArtifact serialdisk_2.2_fde_linux-arm64.tar.gz
+
+    tar -czf serialdisk_2.2_fde_linux-arm32.tar.gz -C ./bin/Release/netcoreapp3.0/FDE serialdisk-linux-arm32
+
+    appveyor PushArtifact serialdisk_2.2_fde_linux-arm32.tar.gz
+
+test_script:
+- cmd: >-
+    dotnet clean
+
+    dotnet test --test-adapter-path:. --logger:Appveyor -nodereuse:false
+
+- sh: >-
+    dotnet clean
+
+    dotnet test --test-adapter-path:. --logger:Appveyor -nodereuse:false
+
+deploy: off

@@ -2,19 +2,20 @@ using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Utilities;
 using System;
+using System.IO;
 using System.IO.Ports;
+using System.Threading;
+using System.Threading.Tasks;
 using static AtariST.SerialDisk.Common.Constants;
 
 namespace AtariST.SerialDisk.Comms
 {
-    public class Serial : IDisposable, ISerial
+    public class Serial : ISerial, IDisposable
     {
         private SerialPort _serialPort;
 
         private ILogger _logger;
         private IDisk _localDisk;
-
-        private int _readTimeout = 100;
 
         private int _receivedDataCounter = 0;
 
@@ -23,56 +24,120 @@ namespace AtariST.SerialDisk.Comms
         private byte[] _receiverDataBuffer;
         private int _receiverDataIndex = 0;
 
-        private byte[] _buffer = new byte[4096];
-
-        private DateTime _transferEndDateTime = DateTime.Now;
         private DateTime _transferStartDateTime = DateTime.Now;
         private long _transferSize = 0;
 
         private ReceiverState _state = ReceiverState.ReceiveStartMagic;
+
+        private CancellationTokenSource _tokenSource;
 
         public Serial(SerialPortSettings serialPortSettings, IDisk disk, ILogger log)
         {
             _localDisk = disk;
             _logger = log;
 
-            _serialPort = InitializeSerialPort(serialPortSettings);
-            _serialPort.Open();
+            try
+            {
+                _serialPort = InitializeSerialPort(serialPortSettings);
+                _serialPort.Open();
+                _serialPort.DiscardOutBuffer();
+                _serialPort.DiscardInBuffer();
 
-            _logger.Log($"Serial port {serialPortSettings.PortName} opened successfully.", LoggingLevel.Verbose);
+                _tokenSource = new CancellationTokenSource();
+            }
 
-            _serialPort.DiscardOutBuffer();
-            _serialPort.DiscardInBuffer();
+            catch (Exception portException) when (portException is IOException || portException is UnauthorizedAccessException)
+            {
+                _logger.LogException(portException, $"Error opening serial port {serialPortSettings.PortName}");
+                throw portException;
+            }
 
-            _serialPort.DataReceived += SerialPort_DataReceived;
+            StartListening();
         }
 
         private SerialPort InitializeSerialPort(SerialPortSettings serialSettings)
         {
-            SerialPort serialPort = new SerialPort(serialSettings.PortName);
-            serialPort.Handshake = serialSettings.Handshake;
-            serialPort.BaudRate = serialSettings.BaudRate;
-            serialPort.DataBits = serialSettings.DataBits;
-            serialPort.StopBits = serialSettings.StopBits;
-            serialPort.Parity = serialSettings.Parity;
-            serialPort.ReceivedBytesThreshold = 1;
-            serialPort.ReadTimeout = 100;
-            serialPort.WriteTimeout = -1;
-            serialPort.ReadBufferSize = 64 * 1024;
-            serialPort.WriteBufferSize = 64 * 1024;
-            serialPort.ReceivedBytesThreshold = 1;
+            SerialPort serialPort = new SerialPort()
+            {
+                PortName = serialSettings.PortName,
+                Handshake = serialSettings.Handshake,
+                BaudRate = serialSettings.BaudRate,
+                DataBits = serialSettings.DataBits,
+                StopBits = serialSettings.StopBits,
+                Parity = serialSettings.Parity
+            };
+
+
+            bool useRts = serialSettings.Handshake == Handshake.RequestToSend || serialSettings.Handshake == Handshake.RequestToSendXOnXOff;
+
+            try
+            {
+                serialPort.RtsEnable = useRts;
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogException(ex, "Serial error setting RTS");
+            }
+
+            try
+            {
+                serialPort.DtrEnable = useRts;
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogException(ex, "Serial error setting DTR");
+            }
+
+            _logger.Log($"Serial port {serialPort.PortName} opened successfully", LoggingLevel.Verbose);
 
             return serialPort;
         }
 
-        private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        public void StartListening()
         {
-            var port = (SerialPort)sender;
+            Task serialTask = Listen(_tokenSource.Token);
+            _logger.Log($"Listening for data on {_serialPort.PortName}", LoggingLevel.Info);
+        }
 
-            while (port.BytesToRead > 0)
+        public void StopListening()
+        {
+            if (_tokenSource != null) _tokenSource.Cancel();
+        }
+
+        private Task Listen(CancellationToken token)
+        {
+            return Task.Factory.StartNew(async () =>
             {
-                ProcessReceivedByte(Convert.ToByte(port.ReadByte()));
-            }
+                int bytesRead = 0;
+                int bufferLength = 4096;
+                byte[] buffer = new byte[bufferLength];
+
+                while (!token.IsCancellationRequested)
+                {
+                    try
+                    {
+                        // No point using cancellationtoken for BaseStream.ReadAsync as it is only checked at the beginning of the method (on Windows)
+                        bytesRead = await _serialPort.BaseStream.ReadAsync(buffer, 0, bufferLength);
+
+                        if (bytesRead != 0)
+                        {
+                            for(int i=0;i < bytesRead;i++) ProcessReceivedByte(Convert.ToByte(buffer[i]));
+                        }
+                    }
+
+                    catch(OperationCanceledException)
+                    {
+                        _logger.Log($"Stopped listening on {_serialPort.PortName}", LoggingLevel.Verbose);
+                    }
+
+                    catch(Exception ex)
+                    {
+                        _logger.LogException(ex, "Error reading from serial port");
+                    }
+                }
+            }, token);
         }
 
         private void ProcessReceivedByte(byte Data)
@@ -84,7 +149,7 @@ namespace AtariST.SerialDisk.Comms
                 switch (_state)
                 {
                     case ReceiverState.ReceiveStartMagic:
-                        
+
                         switch (_receivedDataCounter)
                         {
                             case 0:
@@ -133,6 +198,8 @@ namespace AtariST.SerialDisk.Comms
                                         break;
                                 }
 
+                                _logger.Log($"Receiver state: {_state.ToString()}", LoggingLevel.Verbose);
+
                                 _receivedDataCounter = -1;
                                 break;
                         }
@@ -149,8 +216,8 @@ namespace AtariST.SerialDisk.Comms
                                 break;
 
                             case 3:
-                                _logger.Log($"Received read sector index command.", LoggingLevel.Verbose);
                                 _receivedSectorIndex = (_receivedSectorIndex << 8) + Data;
+                                _logger.Log($"Received read sector index command - sector {_receivedSectorIndex}", LoggingLevel.Verbose);
                                 _state = ReceiverState.ReceiveReadSectorCount;
                                 _receivedSectorCount = 0;
                                 _receivedDataCounter = -1;
@@ -169,8 +236,8 @@ namespace AtariST.SerialDisk.Comms
                                 break;
 
                             case 3:
-                                _logger.Log($"Received read sector count command.", LoggingLevel.Verbose);
                                 _receivedSectorCount = (_receivedSectorCount << 8) + Data;
+                                _logger.Log($"Received read sector count command - {_receivedSectorCount} sector(s)", LoggingLevel.Verbose);
                                 _state = ReceiverState.SendReadData;
                                 _receivedDataCounter = -1;
                                 break;
@@ -188,8 +255,8 @@ namespace AtariST.SerialDisk.Comms
                                 break;
 
                             case 3:
-                                _logger.Log($"Received write sector index command.", LoggingLevel.Verbose);
                                 _receivedSectorIndex = (_receivedSectorIndex << 8) + Data;
+                                _logger.Log($"Received write sector index command - sector {_receivedSectorIndex}", LoggingLevel.Verbose);
                                 _state = ReceiverState.ReceiveWriteSectorCount;
                                 _receivedSectorCount = 0;
                                 _receivedDataCounter = -1;
@@ -208,7 +275,7 @@ namespace AtariST.SerialDisk.Comms
                                 break;
 
                             case 3:
-                                _logger.Log($"Received write sector count command.", LoggingLevel.Verbose);
+                                _logger.Log($"Received write sector count command  - {_receivedSectorCount} sector(s)", LoggingLevel.Verbose);
                                 _receivedSectorCount = (_receivedSectorCount << 8) + Data;
                                 _state = ReceiverState.ReceiveWriteData;
                                 _receivedDataCounter = -1;
@@ -251,39 +318,6 @@ namespace AtariST.SerialDisk.Comms
                         }
 
                         break;
-
-                    case ReceiverState.ReceiveEndMagic:
-                        _serialPort.ReadTimeout = _readTimeout;
-
-                        switch (_receivedDataCounter)
-                        {
-                            case 0:
-                                _logger.Log("Transfer done (" + (_transferSize * 10000000 / (DateTime.Now.Ticks - _transferStartDateTime.Ticks)) + " Bytes/s).", LoggingLevel.Info);
-
-                                if (Data != 0x02)
-                                    _receivedDataCounter = -1;
-                                break;
-
-                            case 1:
-                                if (Data != 0x02)
-                                    _receivedDataCounter = -1;
-                                break;
-
-                            case 2:
-                                if (Data != 0x19)
-                                    _receivedDataCounter = -1;
-                                break;
-
-                            case 3:
-                                if (Data == 0x61)
-                                    _state = ReceiverState.ReceiveStartMagic;
-
-                                _receivedDataCounter = -1;
-
-                                break;
-                        }
-
-                        break;
                 }
 
                 _receivedDataCounter++;
@@ -298,10 +332,7 @@ namespace AtariST.SerialDisk.Comms
                             _localDisk.FatImportLocalDirectoryContents(_localDisk.Parameters.LocalDirectoryPath, 0);
                         }
 
-                        byte[] MediaChangedBuffer = new byte[1];
-
-                        MediaChangedBuffer[0] = _localDisk.MediaChanged ? (byte)2 : (byte)0;
-                        _serialPort.Write(MediaChangedBuffer, 0, 1);
+                        _serialPort.BaseStream.WriteByte(_localDisk.MediaChanged ? (byte)2 : (byte)0);
 
                         _localDisk.MediaChanged = false;
 
@@ -312,7 +343,7 @@ namespace AtariST.SerialDisk.Comms
                     case ReceiverState.SendBiosParameterBlock:
                         _logger.Log($"Sending BIOS parameter block.", LoggingLevel.Verbose);
 
-                        _serialPort.Write(_localDisk.Parameters.BIOSParameterBlock, 0, _localDisk.Parameters.BIOSParameterBlock.Length);
+                        _serialPort.BaseStream.Write(_localDisk.Parameters.BIOSParameterBlock, 0, _localDisk.Parameters.BIOSParameterBlock.Length);
 
                         _state = ReceiverState.ReceiveStartMagic;
 
@@ -350,48 +381,36 @@ namespace AtariST.SerialDisk.Comms
 
                         _logger.Log("Sending CRC32...", LoggingLevel.Verbose);
 
-                        for (int i = 0; i < crc32Buffer.Length; i++)
-                        {
-                            _serialPort.BaseStream.WriteByte(crc32Buffer[i]);
-                            string percentSent = ((Convert.ToDecimal(i + 1) / crc32Buffer.Length) * 100).ToString("00.0");
-                            Console.Write($"\rSent [{(i + 1).ToString("D" + crc32Buffer.Length.ToString().Length)} / {crc32Buffer.Length} Bytes] {percentSent}% ");
-                        }
-                        Console.WriteLine();
+                        _serialPort.BaseStream.Write(crc32Buffer, 0, crc32Buffer.Length);
 
-                        _transferEndDateTime = DateTime.Now;
+                        _state = ReceiverState.ReceiveStartMagic;
 
-                        _state = ReceiverState.ReceiveEndMagic;
+                        _logger.Log($"Receiver state: {_state.ToString()}", LoggingLevel.Verbose);
 
                         break;
                 }
             }
 
-            catch (TimeoutException timeoutEx)
+            catch (Exception ex)
             {
-                if (_state == ReceiverState.ReceiveEndMagic)
-                {
-                    _serialPort.ReadTimeout = _readTimeout;
-
-                    _logger.LogException(timeoutEx, "Serial port read timeout");
-
-                    _logger.Log("Transfer timeout. Retrying...", LoggingLevel.Info);
-
-                    byte[] DummyBuffer = new byte[1];
-
-                    _serialPort.Write(DummyBuffer, 0, 1);
-                }
+                _logger.LogException(ex, "Serial port error");
             }
 
             if (_state == ReceiverState.ReceiveStartMagic)
             {
-                // _localDisk.FatImportLocalDirectoryContents(_localDisk.Parameters.LocalDirectoryPath, 0);
                 _localDisk.FileSystemWatcherEnabled = true;
             }
         }
 
         public void Dispose()
         {
-            _serialPort.Dispose();
+            StopListening();
+
+            if (_serialPort != null)
+            {
+                if (_serialPort.IsOpen) _serialPort.Close();
+                _serialPort.Dispose();
+            }
         }
     }
 }

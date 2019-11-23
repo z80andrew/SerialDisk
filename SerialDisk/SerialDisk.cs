@@ -1,25 +1,32 @@
+using System;
+using System.Text;
+using System.Collections.Generic;
+using System.IO.Ports;
+using System.IO;
+using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Serialization.Json;
+using Microsoft.Extensions.Configuration;
+
 using AtariST.SerialDisk.Comms;
 using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Common;
 using AtariST.SerialDisk.Storage;
 using AtariST.SerialDisk.Utilities;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Ports;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Runtime.Serialization.Json;
 using static AtariST.SerialDisk.Common.Constants;
 
 namespace AtariST.SerialDisk
 {
     public class SerialDisk
     {
+        private static ApplicationSettings _applicationSettings;
+        private static Logger _logger;
+        private static DiskParameters _diskParameters;
+        private static Disk _disk;
+        private static Serial _serial;
+
         private static string FormatEnumParams(Type enumerationType)
         {
             StringBuilder enumString = new StringBuilder();
@@ -35,7 +42,7 @@ namespace AtariST.SerialDisk
             return enumString.ToString();
         }
 
-        private static void PrintUsage(ApplicationSettings applicationSettings)
+        private static void PrintUsage(ApplicationSettings _applicationSettings)
         {
             Console.WriteLine();
 
@@ -46,18 +53,18 @@ namespace AtariST.SerialDisk
             List<String> parameters = Constants.ConsoleParameterMappings.Keys.ToList();
 
             Console.WriteLine("Options (default):");
-            Console.WriteLine($"{parameters[0]} <disk_size_in_MiB> ({applicationSettings.DiskSettings.DiskSizeMiB})");
-            Console.WriteLine($"{parameters[1]} [{FormatEnumParams(typeof(PartitionType))}] ({applicationSettings.DiskSettings.DiskPartitionType})");
-            Console.WriteLine($"{parameters[2]} <sectors> ({applicationSettings.DiskSettings.RootDirectorySectors})");
+            Console.WriteLine($"{parameters[0]} <disk_size_in_MiB> ({_applicationSettings.DiskSettings.DiskSizeMiB})");
+            Console.WriteLine($"{parameters[1]} [{FormatEnumParams(typeof(TOSVersion))}] ({_applicationSettings.DiskSettings.DiskTOSCompatibility})");
+            Console.WriteLine($"{parameters[2]} <sectors> ({_applicationSettings.DiskSettings.RootDirectorySectors})");
 
-            Console.WriteLine($"{parameters[3]} [port_name] ({applicationSettings.SerialSettings.PortName})");
-            Console.WriteLine($"{parameters[4]} <baud_rate> ({applicationSettings.SerialSettings.BaudRate})");
-            Console.WriteLine($"{parameters[5]} <data_bits> ({applicationSettings.SerialSettings.DataBits})");
-            Console.WriteLine($"{parameters[6]} [{FormatEnumParams(typeof(StopBits))}] ({applicationSettings.SerialSettings.StopBits})");
-            Console.WriteLine($"{parameters[7]} [{FormatEnumParams(typeof(Parity))}] ({applicationSettings.SerialSettings.Parity})");
-            Console.WriteLine($"{parameters[8]} [{FormatEnumParams(typeof(Handshake))}] ({applicationSettings.SerialSettings.Handshake})");
+            Console.WriteLine($"{parameters[3]} [port_name] ({_applicationSettings.SerialSettings.PortName})");
+            Console.WriteLine($"{parameters[4]} <baud_rate> ({_applicationSettings.SerialSettings.BaudRate})");
+            Console.WriteLine($"{parameters[5]} <data_bits> ({_applicationSettings.SerialSettings.DataBits})");
+            Console.WriteLine($"{parameters[6]} [{FormatEnumParams(typeof(StopBits))}] ({_applicationSettings.SerialSettings.StopBits})");
+            Console.WriteLine($"{parameters[7]} [{FormatEnumParams(typeof(Parity))}] ({_applicationSettings.SerialSettings.Parity})");
+            Console.WriteLine($"{parameters[8]} [{FormatEnumParams(typeof(Handshake))}] ({_applicationSettings.SerialSettings.Handshake})");
 
-            Console.WriteLine($"{parameters[9]} [{FormatEnumParams(typeof(Constants.LoggingLevel))}] ({applicationSettings.LoggingLevel})");
+            Console.WriteLine($"{parameters[9]} [{FormatEnumParams(typeof(Constants.LoggingLevel))}] ({_applicationSettings.LoggingLevel})");
             Console.WriteLine($"{parameters[10]} [log_file_name]");
             Console.WriteLine();
 
@@ -70,7 +77,7 @@ namespace AtariST.SerialDisk
             Console.WriteLine();
         }
 
-        private static string ParseLocalDirectoryPath(string applicationSettingsPath, string[] args)
+        private static string ParseLocalDirectoryPath(string _applicationSettingsPath, string[] args)
         {
             string localDirectoryPath = ".";
 
@@ -86,11 +93,11 @@ namespace AtariST.SerialDisk
 
             else
             {
-                if (Directory.Exists(applicationSettingsPath))
-                    localDirectoryPath = applicationSettingsPath;
+                if (Directory.Exists(_applicationSettingsPath))
+                    localDirectoryPath = _applicationSettingsPath;
 
                 else
-                    throw new Exception($"Could not find path {applicationSettingsPath}");
+                    throw new Exception($"Could not find path {_applicationSettingsPath}");
             }
 
 
@@ -119,19 +126,19 @@ namespace AtariST.SerialDisk
 
             #region Application settings
 
-            ApplicationSettings applicationSettings;
-
             try
             {
-                using (var defaultConfigStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("AtariST.SerialDisk.Resources.default_config.json"))
+                var defaultConfigResourceName = $"AtariST.SerialDisk.Resources.default_config_{OSHelper.OperatingSystemName.ToLower()}.json";
+
+                using (var defaultConfigStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(defaultConfigResourceName))
                 {
-                        DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(ApplicationSettings));
-                        applicationSettings = (ApplicationSettings)ser.ReadObject(defaultConfigStream);
+                    DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(ApplicationSettings));
+                    _applicationSettings = (ApplicationSettings)ser.ReadObject(defaultConfigStream);
                 }
 
                 if (args.Any() && args.Where(arg => arg.ToLowerInvariant().StartsWith("--help")).Any())
                 {
-                    PrintUsage(applicationSettings);
+                    PrintUsage(_applicationSettings);
                     return;
                 }
 
@@ -139,12 +146,9 @@ namespace AtariST.SerialDisk
                     .AddJsonFile("serialdisk.config", true, false)
                     .AddCommandLine(args, Constants.ConsoleParameterMappings)
                     .Build()
-                    .Bind(applicationSettings);
+                    .Bind(_applicationSettings);
 
-                if (args.Any())
-                {
-                    applicationSettings.LocalDirectoryName = ParseLocalDirectoryPath(applicationSettings.LocalDirectoryName, args);
-                }
+                _applicationSettings.LocalDirectoryName = ParseLocalDirectoryPath(_applicationSettings.LocalDirectoryName, args);
             }
 
             catch (Exception parameterException)
@@ -154,39 +158,44 @@ namespace AtariST.SerialDisk
             }
 
 
-            if (String.IsNullOrEmpty(applicationSettings.LocalDirectoryName)
-                || !Directory.Exists(applicationSettings.LocalDirectoryName))
+            if (String.IsNullOrEmpty(_applicationSettings.LocalDirectoryName)
+                || !Directory.Exists(_applicationSettings.LocalDirectoryName))
             {
-                Console.WriteLine($"Local directory path {applicationSettings.LocalDirectoryName} not found.");
+                Console.WriteLine($"Local directory path {_applicationSettings.LocalDirectoryName} not found.");
                 return;
             }
 
             #endregion
 
-            Logger logger = new Logger(applicationSettings.LoggingLevel, applicationSettings.LogFileName);
+            _logger = new Logger(_applicationSettings.LoggingLevel, _applicationSettings.LogFileName);
 
-            DiskParameters diskParameters = new DiskParameters(applicationSettings.LocalDirectoryName, applicationSettings.DiskSettings);
+            _logger.Log($"Operating system: {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture} {System.Runtime.InteropServices.RuntimeInformation.OSDescription}", LoggingLevel.Verbose);
+            _logger.Log($"Framework version: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", LoggingLevel.Verbose);
 
-            logger.Log($"Importing local directory contents from {applicationSettings.LocalDirectoryName}", Constants.LoggingLevel.Verbose);
+            _diskParameters = new DiskParameters(_applicationSettings.LocalDirectoryName, _applicationSettings.DiskSettings, _logger);
 
-            Disk disk = new Disk(diskParameters, logger);
+            _logger.Log($"Importing local directory contents from {_applicationSettings.LocalDirectoryName}", Constants.LoggingLevel.Verbose);
 
-            Serial serial = new Serial(applicationSettings.SerialSettings, disk, logger);
+            _disk = new Disk(_diskParameters, _logger);
 
-            Console.WriteLine($"Listening on {applicationSettings.SerialSettings.PortName.ToUpperInvariant()}");
+            _serial = new Serial(_applicationSettings.SerialSettings, _disk, _logger);
 
-            Console.WriteLine($"Baud rate:{applicationSettings.SerialSettings.BaudRate} | Data bits:{applicationSettings.SerialSettings.DataBits}" +
-                $" | Parity:{applicationSettings.SerialSettings.Parity} | Stop bits:{applicationSettings.SerialSettings.StopBits} | Flow control:{applicationSettings.SerialSettings.Handshake}");
-            Console.WriteLine($"Using local directory {applicationSettings.LocalDirectoryName} as a {applicationSettings.DiskSettings.DiskSizeMiB}MiB virtual disk");
-            Console.WriteLine($"Logging level: { applicationSettings.LoggingLevel} ");
+            _logger.Log($"Baud rate:{_applicationSettings.SerialSettings.BaudRate} | Data bits:{_applicationSettings.SerialSettings.DataBits}" +
+                $" | Parity:{_applicationSettings.SerialSettings.Parity} | Stop bits:{_applicationSettings.SerialSettings.StopBits} | Flow control:{_applicationSettings.SerialSettings.Handshake}", LoggingLevel.Info);
+            _logger.Log($"Using local directory {_applicationSettings.LocalDirectoryName} as a {_applicationSettings.DiskSettings.DiskSizeMiB}MiB virtual disk", LoggingLevel.Info);
+            _logger.Log($"Logging level: { _applicationSettings.LoggingLevel} ", LoggingLevel.Info);
 
-            Console.WriteLine("Press any key to quit.");
-            Console.ReadKey();
+            Console.WriteLine("Press Ctrl-X to quit.");
 
-            Console.WriteLine("Stopping receiver...");
+            var keyInfo = new ConsoleKeyInfo();
 
-            serial.Dispose();
-            logger.Dispose();
+            do
+            {
+                keyInfo = Console.ReadKey(true);
+            } while ((keyInfo.Modifiers & ConsoleModifiers.Control) == 0 || keyInfo.Key != ConsoleKey.X);
+
+            _serial.Dispose();
+            _logger.Dispose();
         }
     }
 }
