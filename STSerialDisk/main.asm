@@ -11,6 +11,7 @@
 .equ _drvbits, 		0x4c2														| Bit-table for the mounted drives of the BIOS.
 .equ _dskbufp, 		0x4c6														| Pointer to a 1024-byte buffer for reading and writing to floppy disks or hard drives. (Unused)
 .equ _hz_200,		0x4ba														| Number of elapsed 200Hz interrupts since boot (timer C)
+.equ _bufl,			0x4b2														| Two (GEMDOS) buffer-list  headers.
 
 | SerialDisk commands
 .equ cmd_read, 		0x00
@@ -81,6 +82,8 @@ start:
 	Pterm 	#0
 2:
 	| Drive mounted successfully
+
+	Supexec allocate_buffers
 
 	Cconws	drive_mounted_string
 	move.w	disk_identifier,d0													| Move disk_id into d0
@@ -477,6 +480,37 @@ read_config_file:
 
 |-------------------------------------------------------------------------------
 
+allocate_buffers:
+	| Data buffers
+
+	lea		disk_buffer,a6
+
+	move.l	(_bufl),a4															| Move first data BCB pointer into a4
+	move.l	(a4),a5																| Move next BCB pointer into a5
+	add.l	#0x10,a4															| Offset to buffer pointer
+	move.l	a6,(a4)																| Set buffer address to new allocated area of RAM
+
+	add.l	#0x2000,a6															| Offset to next sector area in buffer
+
+	add.l	#0x10,a5															| Offset to buffer pointer
+	move.l	a6,(a5)																| Set buffer address to new allocated area of RAM
+
+	add.l	#0x2000,a6															| Offset to next sector area in buffer
+
+	| FAT buffers
+
+	move.l	(_bufl+0x04),a4														| Move first FAT BCB pointer into a4
+	move.l	(a4),a5																| Move next BCB pointer into a5
+	add.l	#0x10,a4															| Offset to buffer pointer
+	move.l	a6,(a4)																| Set buffer address to new allocated area of RAM
+
+	add.l	#0x2000,a6															| Offset to next sector area in buffer
+
+	add.l	#0x10,a5															| Offset to buffer pointer
+	move.l	a6,(a5)																| Set buffer address to new allocated area of RAM
+rts
+|-------------------------------------------------------------------------------
+
 .data
 
 |-------------------------------------------------------------------------------
@@ -528,6 +562,9 @@ crc32_table:
 
 received_crc32:
 	ds.l	1
+
+disk_buffer:
+	ds.b	32768
 
 |-------------------------------------------------------------------------------
 
