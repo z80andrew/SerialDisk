@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.28809.33
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SerialDisk", "SerialDisk\SerialDisk.csproj", "{CB3C3328-28E0-4245-87DC-19D066AA33ED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SerialDiskTests", "SerialDiskTests\SerialDiskTests.csproj", "{091DC9EC-8E5C-4583-A681-D32C1502D3FB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SerialDiskTests", "SerialDiskTests\SerialDiskTests.csproj", "{091DC9EC-8E5C-4583-A681-D32C1502D3FB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

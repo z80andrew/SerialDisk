@@ -9,7 +9,7 @@ namespace AtariST.SerialDisk.Common
 
         public static int MaxSectorSize
         {
-            get => 512;
+            get => 8192;
         }
 
         public static Dictionary<string, string> ConsoleParameterMappings
@@ -44,18 +44,14 @@ namespace AtariST.SerialDisk.Common
         public enum ReceiverState
         {
             ReceiveStartMagic = 0,
-            ReceiveCommand,
             ReceiveReadSectorIndex,
             ReceiveReadSectorCount,
             SendReadData,
-            SendReadCrc32,
             ReceiveWriteSectorIndex,
             ReceiveWriteSectorCount,
             ReceiveWriteData,
-            SendWriteCrc32,
             SendMediaChangeStatus,
-            SendBiosParameterBlock,
-            ReceiveEndMagic
+            SendBiosParameterBlock
         };
 
         public enum LoggingLevel

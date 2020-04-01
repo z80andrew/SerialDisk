@@ -25,7 +25,6 @@ namespace AtariST.SerialDisk.Comms
         private int _receiverDataIndex = 0;
 
         private DateTime _transferStartDateTime = DateTime.Now;
-        private long _transferSize = 0;
 
         private ReceiverState _state = ReceiverState.ReceiveStartMagic;
 
@@ -361,7 +360,6 @@ namespace AtariST.SerialDisk.Comms
                         byte[] sendDataBuffer = _localDisk.ReadSectors((int)_receivedSectorIndex, (int)_receivedSectorCount);
 
                         _transferStartDateTime = DateTime.Now;
-                        _transferSize = sendDataBuffer.LongLength;
 
                         for (int i = 0; i < sendDataBuffer.Length; i++)
                         {
@@ -405,6 +403,8 @@ namespace AtariST.SerialDisk.Comms
         public void Dispose()
         {
             StopListening();
+
+            if (_tokenSource != null) _tokenSource.Dispose();
 
             if (_serialPort != null)
             {
