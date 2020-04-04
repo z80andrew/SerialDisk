@@ -132,7 +132,7 @@
 .macro	Mshrink block, newsize
 	move.l	\newsize,-(sp)
 	pea		\block
-	clr.w		-(sp)
+	clr.w	-(sp)
 	move	#74,-(sp)
 	trap	#1
 	lea		12(sp),sp

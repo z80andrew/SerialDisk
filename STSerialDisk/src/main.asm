@@ -57,9 +57,10 @@ start:
 
 	| Config file is invalid
 
+	Cconws	err_prefix
 	Cconws	err_config_invalid
-
-	Supexec	wait
+	Cconws	msg_press_any_key
+	Cconin
 
 	Pterm 	#0
 
@@ -70,18 +71,32 @@ start:
 
 	| Drive is already mounted
 
+	Cconws	err_prefix
 	move.w	disk_identifier,d0													| Move disk_id into d0
 	addi.w	#ascii_offset,d0													| Convert to ASCII representation
 	Cconout	d0
 	Cconws	err_drive_already_mounted
-
-	Supexec	wait
+	Cconws	msg_press_any_key
+	Cconin
 
 	Pterm 	#0
 2:
-	| Drive mounted successfully
+	| Allocate disk buffers
 
 	Supexec allocate_buffers
+
+	tst.w	d0																	| Test buffer allocated successfully
+	jpl		3f																	| Result positive = buffer allocated successfully
+
+	Cconws	err_prefix
+	Cconws	err_buffer_allocation
+	Cconws	msg_press_any_key
+	Cconin
+
+	Pterm 	#0
+
+3:
+	| Drive mounted successfully
 
 	Cconws	msg_drive_mounted
 	move.w	disk_identifier,d0													| Move disk_id into d0
@@ -516,7 +531,7 @@ allocate_buffers:
 	tst     d0           														| Test for null buffer pointer
 	jne     1f     		 														| Buffer is allocated, continue
 	moveq	#-1,d0																| Put failure return value in d0
-	jmp 	99f
+	jmp 	99f																	| Jump to end
 
 1:
 	move.l	d0,a6
@@ -568,7 +583,12 @@ msg_config_found:
 msg_drive_mounted:
 	.asciz	"Configured on drive "
 
+msg_press_any_key:
+	.asciz	"\r\n\r\nPress any key to continue"
+
 | Errors
+err_prefix:
+	.asciz	"Error: "
 
 err_drive_already_mounted:
 	.asciz	" drive is already mounted"
