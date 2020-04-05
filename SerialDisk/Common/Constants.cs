@@ -46,10 +46,10 @@ namespace AtariST.SerialDisk.Common
             ReceiveStartMagic = 0,
             ReceiveReadSectorIndex,
             ReceiveReadSectorCount,
-            SendReadData,
+            SendData,
             ReceiveWriteSectorIndex,
             ReceiveWriteSectorCount,
-            ReceiveWriteData,
+            ReceiveData,
             SendMediaChangeStatus,
             SendBiosParameterBlock
         };
