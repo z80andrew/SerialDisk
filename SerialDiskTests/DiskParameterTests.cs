@@ -92,8 +92,6 @@ namespace Tests
             Assert.AreEqual(expectedClusters, diskClusters);
         }
 
-        //[TestCase(17, TOSVersion.TOS100)]
-        //[TestCase(33, TOSVersion.TOS104)]
         [TestCase(512, TOSVersion.TOS100)]
         [TestCase(1024, TOSVersion.TOS104)]
         public void InvalidDiskSize(int diskSizeMiB, TOSVersion tosVersion)
