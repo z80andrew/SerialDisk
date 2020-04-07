@@ -51,6 +51,8 @@ start:
 	Cconws	msg_welcome
 	jbsr	create_crc32_table
 
+	| Read config file
+
 	jbsr	read_config_file
 	tst.w	d0																	| Test config file valid
 	jpl		1f																	| Result positive = config file valid
@@ -65,6 +67,8 @@ start:
 	Pterm 	#0
 
 1:
+	| Mount drive
+
 	Supexec	mount_drive
 	tst.w	d0																	| Test drive mounted successfully
 	jpl		2f																	| Result positive = drive mounted successfully
@@ -88,6 +92,8 @@ start:
 	tst.w	d0																	| Test buffer allocated successfully
 	jpl		3f																	| Result positive = buffer allocated successfully
 
+	| Buffers could not be allocated
+
 	Cconws	err_prefix
 	Cconws	err_buffer_allocation
 	Cconws	msg_press_any_key
@@ -110,6 +116,16 @@ start:
 	Ptermres d7,#0
 
 |-------------------------------------------------------------------------------
+| Replace pointers for default disk routines with pointers
+| to custom routines
+|
+| Input
+|
+| Output
+|
+| Corrupts
+|
+
 config_drive_rw:
 	move.l	hdv_bpb.w,old_hdv_bpb												| Move a word of hdv_bpb to old_hdv_bpb so we can call the stock method when needed
 	move.l	hdv_rw.w,old_hdv_rw													| Move a word of hdv_rw to old_hdv_rw so we can call the stock method when needed
@@ -121,6 +137,15 @@ config_drive_rw:
 rts
 
 |-------------------------------------------------------------------------------
+| Modified _hdv_bpb, _hdv_rw and _hdv_mediach
+| Jumps to default or custom routine address depending on drive ID
+|
+| Input
+|
+| Output
+|
+| Corrupts
+| a0, a1
 
 _hdv_bpb:
 	move	4(sp),d0															| BIOS (disk) device number. Move word from offset 4 of SP address value into d0.
@@ -140,9 +165,8 @@ _hdv_mediach:
 	move	4(sp),d0															| "dev" (BIOS (disk) device number). Move word from offset 4 of SP address value into d0.
 	move.l	old_hdv_mediach,a0													| Move address of stock hdv_mediach into a0
 	lea		_mediach,a1															| Load the address of custom _mediach into a1
-
 1:
-	cmp.w	disk_identifier,d0													| Comapre drive id with device number in d0
+	cmp.w	disk_identifier,d0													| Compare drive id with device number in d0
 	jne		1f																	| Drive ids don't match, jump forward to label 1:
 
 	move.l	a1,a0																| Drive ids match, move a1 to a0 (use custom method)
@@ -150,6 +174,17 @@ _hdv_mediach:
 	jmp		(a0)																| Jump to address pointed by a0
 
 |-------------------------------------------------------------------------------
+| Sends the Get BIOS Parameter Block command over serial and
+| reads the result
+|
+| Input
+|
+| Output
+| Address of received BPB
+|
+| Corrupts
+| d1, d3
+| a3
 
 _bpb:
 	jbsr send_start_magic
@@ -161,7 +196,7 @@ _bpb:
 	| Get the BPB.
 
 	lea		disk_bpb,a3															| Load the address of label disk_bpb into a3
-	move	#9*2-1,d3															| Move the length of bpb into d3 (9 parameters of 2 bytes each, -1 for 0-based index)
+	move	#9*2-1,d3															| Move the length of bpb into d3 (9 parameters, 2 bytes each, -1 for 0-based index)
 1:
 	move.l	#serial_timeout,d0
 	jbsr 	await_serial
@@ -191,6 +226,17 @@ _bpb:
 	rts																			| Return to caller
 
 |-------------------------------------------------------------------------------
+| Sends the Read/Write command over serial and reads the result
+|
+| Input
+|
+| Output
+| 0 on success
+| -1 on error
+|
+| Corrupts
+| d3, d4
+| a3, a4
 
 _rw:
 	jbsr send_start_magic
@@ -299,6 +345,16 @@ _rw:
 	rts																			| Return to caller
 
 |-------------------------------------------------------------------------------
+| Sends the Media Changed command over serial and reads the result
+|
+| Input
+|
+| Output
+| 2 if media changed
+| 0 if media not changed
+|
+| Corrupts
+|
 
 _mediach:
 	jbsr send_start_magic
@@ -322,10 +378,16 @@ _mediach:
 	rts
 
 |-------------------------------------------------------------------------------
-| Output
-| d0.w = Id of mounted drive. Negative if drive already mounted.
+| Mounts a disk drive
 |
-| Corrupts d0,d1
+| Input
+|
+| Output
+| ID of mounted drive
+| -1 if drive already mounted
+|
+| Corrupts
+| d1
 
 mount_drive:
 	clr.l	d0																	| Clear d0
@@ -344,8 +406,14 @@ mount_drive:
 	rts
 
 |-------------------------------------------------------------------------------
-
-| Sends the start communication "magic numbers" to SerialDisk
+| Sends the start communication command to SerialDisk
+|
+| Input
+|
+| Output
+|
+| Corrupts
+|
 
 send_start_magic:
 	Bconout	#1,#0x18
@@ -356,8 +424,15 @@ send_start_magic:
 	rts
 
 |-------------------------------------------------------------------------------
+| Creates a CRC32/POSIX checksum lookup table in memory
+|
+| Input
+|
+| Output
+|
 | Corrupts
-| a0, d0, d1, d2
+| d0, d1, d2
+| a0
 
 create_crc32_table:
 	lea		crc32_table,a0
@@ -383,15 +458,18 @@ create_crc32_table:
 	rts
 
 |-------------------------------------------------------------------------------
+| Calculates a CRC32/POSIX checksum
+|
 | Input
-| a0.l = buffer address.
-| d0.l = buffer size.
+| a0.l = data address
+| d0.l = data length
 |
 | Output
-| d0.l = CRC32/POSIX checksum.
+| CRC32/POSIX checksum.
 |
 | Corrupts
-| a0, a1, d1, d7
+| d1, d7
+| a0, a1
 
 calculate_crc32:
 	move.l	d0,d7																| Move long d0 into d7 (data length)
@@ -416,6 +494,15 @@ calculate_crc32:
 	rts
 
 |-------------------------------------------------------------------------------
+| Pauses application for a set period
+|
+| Input
+|
+| Output
+|
+| Corrupts
+| d5, d6
+| a5
 
 wait:
     lea     _hz_200,a5
@@ -434,11 +521,17 @@ wait:
 	rts
 
 |-------------------------------------------------------------------------------
-| Output:
-| d0 = 0 if no data received
+| Checks for availability of serial data in buffer for a set period
 |
-| Destroys:
-| a5, d0, d6
+| Input
+|
+| Output
+| 0 if data in buffer
+| -1 if no data found in buffer within period
+|
+| Corrupts
+| d5, d6
+| a5
 
 await_serial:
     lea     _hz_200,a5
@@ -461,11 +554,16 @@ await_serial:
 	rts
 
 |-------------------------------------------------------------------------------
-| Output:
-| d0 = positive if config file valid or not present
-|		-1	Invalid drive ID
-|		-2	Invalid disk size
+| Reads configuration file if available and sets variables
 |
+| Input
+|
+| Output
+| 0 on success
+| -1 on error
+|
+| Corrupts
+| d1
 
 read_config_file:
 	move	#0x4d,disk_identifier												| Set default disk id as ASCII 'M'
@@ -480,6 +578,7 @@ read_config_file:
 	Cconws	msg_config_found													| Display the config file found message
 
 	| Read disk ID
+
 	move.b	disk_bpb,disk_identifier+1
 
 	cmp.w	#0x50,disk_identifier												| Compare read byte with ASCII 'P'
@@ -489,6 +588,7 @@ read_config_file:
 	jlt		2f																	| Read character is < ASCII 'C' so it is invalid
 
 	| Read max disk size
+
 	clr		d1
 	move.b	disk_bpb+1,d1
 
@@ -512,6 +612,17 @@ read_config_file:
 	rts
 
 |-------------------------------------------------------------------------------
+| Allocates and assigns new disk buffers to enable disks >32MiB
+|
+| Input
+|
+| Output
+| 0 on success
+| -1 on error
+|
+| Corrupts
+| d1, d2
+| a1, a4, a5, a6
 
 allocate_buffers:
 	move	sector_size_shift_value,d0											| Move sector shift (bits) to d0
@@ -543,15 +654,7 @@ allocate_buffers:
 	move.l	(a4),a1																| Store original buffer address in a1
 	move.l	a6,(a4)																| Set buffer address to new allocated area of RAM
 
-	| Copy old buffer contents into new buffer
-
-	move	#0x200,d3															| Put byte counter in d2 (512)
-1:
-	move.b	(a1)+,(a6)+															| Copy old buffer byte to new buffer
-	dbf		d3,1b																| Decrement and loop until no more bytes
-
-	sub.l	#0x201,a6															| Move back to beginning of sector in buffer
-	add.l	d2,a6																| Offset to next sector area in buffer
+	jbsr copy_buffer
 
 	| Data buffer 2
 
@@ -559,15 +662,7 @@ allocate_buffers:
 	move.l	(a5),a1																| Store original buffer address in a1
 	move.l	a6,(a5)																| Set buffer address to new allocated area of RAM
 
-	| Copy old buffer contents into new buffer
-
-	move	#0x200,d3															| Put byte counter in d2 (512)
-1:
-	move.b	(a1)+,(a6)+
-	dbf		d3,1b
-
-	sub.l	#0x201,a6															| Move back to beginning of sector in buffer
-	add.l	d2,a6																| Offset to next sector area in buffer
+	jbsr copy_buffer															| Offset to next sector area in buffer
 
 	| FAT buffer 1
 
@@ -577,15 +672,7 @@ allocate_buffers:
 	move.l	(a4),a1																| Store original buffer address in a1
 	move.l	a6,(a4)																| Set buffer address to new allocated area of RAM
 
-	| Copy old buffer contents into new buffer
-
-	move	#0x200,d3															| Put byte counter in d2 (512)
-1:
-	move.b	(a1)+,(a6)+
-	dbf		d3,1b
-
-	sub.l	#0x201,a6															| Move back to beginning of sector in buffer
-	add.l	d2,a6																| Offset to next sector area in buffer
+	jbsr	copy_buffer
 
 	| FAT buffer 2
 
@@ -593,13 +680,35 @@ allocate_buffers:
 	move.l	(a5),a1																| Store original buffer address in a1
 	move.l	a6,(a5)																| Set buffer address to new allocated area of RAM
 
-	move	#0x201,d3															| Put byte counter in d2 (512)
+	jbsr copy_buffer
+
+	clr.l	d0																	| Set success return value
+99:
+rts
+
+|-------------------------------------------------------------------------------
+| Copies 0x200 bytes from input buffer to output buffer and returns output buffer
+| at defined offset from input address
+|
+| Input
+| a1.l = source buffer address
+| a6.l = destination buffer address
+| d2.w = output offset for destination buffer
+|
+| Output
+| a6.l = a6 + d2
+|
+| Corrupts
+| d3
+
+copy_buffer:
+	move	#0x200,d3															| Put byte counter in d3 (512)
 1:
 	move.b	(a1)+,(a6)+
 	dbf		d3,1b
 
-	clr.l	d0																	| Set success return value
-99:
+	sub.l	#0x201,a6															| Move back to beginning of sector in buffer
+	add.l	d2,a6																| Offset to next sector area in buffer
 rts
 |-------------------------------------------------------------------------------
 
@@ -625,6 +734,7 @@ msg_press_any_key:
 	.asciz	"\r\n\r\nPress any key to continue"
 
 | Errors
+
 err_prefix:
 	.asciz	"Error: "
 
