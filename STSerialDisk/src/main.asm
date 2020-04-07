@@ -524,8 +524,6 @@ allocate_buffers:
 	move.w	d1,d2																| Store resultant size of 1 sector in d2
 	lsl.w 	#0x02,d1															| Shift sector bytes value 2 bits left (i.e. multiply by 4) to get final buffer size
 
-	| Data buffers
-
 	Malloc 	d1
 
 	tst     d0           														| Test for null buffer pointer
@@ -534,31 +532,71 @@ allocate_buffers:
 	jmp 	99f																	| Jump to end
 
 1:
-	move.l	d0,a6
+	| Data buffer 1
+
+	move.l	d0,a6																| Move address of new buffer into a6
 
 	move.l	(_bufl),a4															| Move first data BCB pointer into a4
 	move.l	(a4),a5																| Move next BCB pointer into a5
 	add.l	#0x10,a4															| Offset to buffer pointer
+
+	move.l	(a4),a1																| Store original buffer address in a1
 	move.l	a6,(a4)																| Set buffer address to new allocated area of RAM
 
+	| Copy old buffer contents into new buffer
+
+	move	#0x200,d3															| Put byte counter in d2 (512)
+1:
+	move.b	(a1)+,(a6)+															| Copy old buffer byte to new buffer
+	dbf		d3,1b																| Decrement and loop until no more bytes
+
+	sub.l	#0x201,a6															| Move back to beginning of sector in buffer
 	add.l	d2,a6																| Offset to next sector area in buffer
+
+	| Data buffer 2
 
 	add.l	#0x10,a5															| Offset to buffer pointer
+	move.l	(a5),a1																| Store original buffer address in a1
 	move.l	a6,(a5)																| Set buffer address to new allocated area of RAM
 
+	| Copy old buffer contents into new buffer
+
+	move	#0x200,d3															| Put byte counter in d2 (512)
+1:
+	move.b	(a1)+,(a6)+
+	dbf		d3,1b
+
+	sub.l	#0x201,a6															| Move back to beginning of sector in buffer
 	add.l	d2,a6																| Offset to next sector area in buffer
 
-	| FAT buffers
+	| FAT buffer 1
 
 	move.l	(_bufl+0x04),a4														| Move first FAT BCB pointer into a4
 	move.l	(a4),a5																| Move next BCB pointer into a5
 	add.l	#0x10,a4															| Offset to buffer pointer
+	move.l	(a4),a1																| Store original buffer address in a1
 	move.l	a6,(a4)																| Set buffer address to new allocated area of RAM
 
+	| Copy old buffer contents into new buffer
+
+	move	#0x200,d3															| Put byte counter in d2 (512)
+1:
+	move.b	(a1)+,(a6)+
+	dbf		d3,1b
+
+	sub.l	#0x201,a6															| Move back to beginning of sector in buffer
 	add.l	d2,a6																| Offset to next sector area in buffer
 
+	| FAT buffer 2
+
 	add.l	#0x10,a5															| Offset to buffer pointer
+	move.l	(a5),a1																| Store original buffer address in a1
 	move.l	a6,(a5)																| Set buffer address to new allocated area of RAM
+
+	move	#0x201,d3															| Put byte counter in d2 (512)
+1:
+	move.b	(a1)+,(a6)+
+	dbf		d3,1b
 
 	clr.l	d0																	| Set success return value
 99:
