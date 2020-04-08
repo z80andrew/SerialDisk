@@ -122,6 +122,7 @@ start:
 | Input
 |
 | Output
+| variables: old_hdv_bpb, old_hdv_rw, old_hdv_mediach
 |
 | Corrupts
 |
@@ -141,6 +142,7 @@ rts
 | Jumps to default or custom routine address depending on drive ID
 |
 | Input
+| variables: old_hdv_bpb, old_hdv_rw, old_hdv_mediach, disk_identifier
 |
 | Output
 |
@@ -180,6 +182,7 @@ _hdv_mediach:
 | Input
 |
 | Output
+| variables: disk_bpb, sector_size_shift_value
 | Address of received BPB
 |
 | Corrupts
@@ -229,12 +232,14 @@ _bpb:
 | Sends the Read/Write command over serial and reads the result
 |
 | Input
+| variables: sector_size_shift_value
 |
 | Output
 | 0 on success
 | -1 on error
 |
 | Corrupts
+| variables: received_crc32
 | d3, d4
 | a3, a4
 
@@ -381,6 +386,7 @@ _mediach:
 | Mounts a disk drive
 |
 | Input
+| variables: disk_identifier
 |
 | Output
 | ID of mounted drive
@@ -429,6 +435,7 @@ send_start_magic:
 | Input
 |
 | Output
+| variables: crc32_table
 |
 | Corrupts
 | d0, d1, d2
@@ -461,6 +468,7 @@ create_crc32_table:
 | Calculates a CRC32/POSIX checksum
 |
 | Input
+| variables: crc32_table
 | a0.l = data address
 | d0.l = data length
 |
@@ -559,10 +567,12 @@ await_serial:
 | Input
 |
 | Output
+| variables: sector_size_shift_value, disk_identifier
 | 0 on success
 | -1 on error
 |
 | Corrupts
+| variables: disk_bpb
 | d1
 
 read_config_file:
@@ -615,6 +625,7 @@ read_config_file:
 | Allocates and assigns new disk buffers to enable disks >32MiB
 |
 | Input
+| variables: sector_size_shift_value
 |
 | Output
 | 0 on success
