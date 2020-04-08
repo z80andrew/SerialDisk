@@ -15,7 +15,7 @@ namespace AtariST.SerialDisk.Storage
         private int _rootDirectoryClusterIndex = 0;
         private byte[] _rootDirectoryBuffer;
         private byte[] _fatBuffer;
-        private int _previousFreeClusterIndex = 1;
+        private int _previousFreeClusterIndex;
 
         private ClusterInfo[] _clusterInfos;
         private List<LocalDirectoryContentInfo> _localDirectoryContentInfos;
@@ -695,6 +695,8 @@ namespace AtariST.SerialDisk.Storage
 
         public void FatImportLocalDirectoryContents(string directoryName, int directoryClusterIndex)
         {
+            _previousFreeClusterIndex = 1;
+
             if (directoryClusterIndex == _rootDirectoryClusterIndex)
             {
                 _rootDirectoryBuffer = new byte[Parameters.RootDirectorySectors * Parameters.BytesPerSector];
