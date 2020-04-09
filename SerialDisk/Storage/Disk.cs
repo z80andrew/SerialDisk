@@ -347,6 +347,7 @@ namespace AtariST.SerialDisk.Storage
 
         public byte[] ReadSectors(int sector, int numberOfSectors)
         {
+            int firstSector = sector;
             byte[] dataBuffer = new byte[numberOfSectors * Parameters.BytesPerSector];
             int dataOffset = 0;
 
@@ -380,11 +381,15 @@ namespace AtariST.SerialDisk.Storage
                         {
                             if (_clusterInfos[clusterIndex].ContentName != null)
                             {
+                                string contentName = _clusterInfos[clusterIndex].ContentName;
+
+                                if(firstSector == sector) _logger.Log($"Reading local file {contentName}", Constants.LoggingLevel.Info);
+
                                 byte[] fileClusterDataBuffer = new byte[Parameters.BytesPerCluster];
 
                                 try
                                 {
-                                    using (FileStream fileStream = File.OpenRead(_clusterInfos[clusterIndex].ContentName))
+                                    using (FileStream fileStream = File.OpenRead(contentName))
                                     {
                                         int bytesToRead = Math.Min(Parameters.BytesPerCluster, (int)(fileStream.Length - _clusterInfos[clusterIndex].FileOffset));
 
