@@ -274,8 +274,8 @@ namespace AtariST.SerialDisk.Comms
                                 break;
 
                             case 3:
-                                _logger.Log($"Received write sector count command  - {_receivedSectorCount} sector(s)", LoggingLevel.Verbose);
                                 _receivedSectorCount = (_receivedSectorCount << 8) + Data;
+                                _logger.Log($"Received write sector count command  - {_receivedSectorCount} sector(s)", LoggingLevel.Verbose);
                                 _state = ReceiverState.ReceiveData;
                                 _receivedDataCounter = -1;
                                 break;
