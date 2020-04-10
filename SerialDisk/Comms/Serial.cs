@@ -28,12 +28,13 @@ namespace AtariST.SerialDisk.Comms
 
         private ReceiverState _state = ReceiverState.ReceiveStartMagic;
 
-        private CancellationTokenSource _tokenSource;
+        private CancellationTokenSource _listenTokenSource;
 
-        public Serial(SerialPortSettings serialPortSettings, IDisk disk, ILogger log)
+        public Serial(SerialPortSettings serialPortSettings, IDisk disk, ILogger log, CancellationTokenSource cancelTokenSource)
         {
             _localDisk = disk;
             _logger = log;
+            _listenTokenSource = cancelTokenSource;
 
             try
             {
@@ -41,8 +42,6 @@ namespace AtariST.SerialDisk.Comms
                 _serialPort.Open();
                 _serialPort.DiscardOutBuffer();
                 _serialPort.DiscardInBuffer();
-
-                _tokenSource = new CancellationTokenSource();
             }
 
             catch (Exception portException) when (portException is IOException || portException is UnauthorizedAccessException)
@@ -96,16 +95,16 @@ namespace AtariST.SerialDisk.Comms
 
         public void StartListening()
         {
-            Task serialTask = Listen(_tokenSource.Token);
+            Task serialTask = Listen();
             _logger.Log($"Listening for data on {_serialPort.PortName}", LoggingLevel.Info);
         }
 
         public void StopListening()
         {
-            if (_tokenSource != null) _tokenSource.Cancel();
+            if (_listenTokenSource != null) _listenTokenSource.Cancel();
         }
 
-        private Task Listen(CancellationToken token)
+        private Task Listen()
         {
             return Task.Factory.StartNew(async () =>
             {
@@ -113,7 +112,7 @@ namespace AtariST.SerialDisk.Comms
                 int bufferLength = 4096;
                 byte[] buffer = new byte[bufferLength];
 
-                while (!token.IsCancellationRequested)
+                while (!_listenTokenSource.Token.IsCancellationRequested)
                 {
                     try
                     {
@@ -131,12 +130,19 @@ namespace AtariST.SerialDisk.Comms
                         _logger.Log($"Stopped listening on {_serialPort.PortName}", LoggingLevel.Verbose);
                     }
 
+                    catch(ObjectDisposedException)
+                    {
+                        _logger.Log("Serial object was disposed", LoggingLevel.Verbose);
+                        _listenTokenSource.Cancel();
+                    }
+
                     catch(Exception ex)
                     {
                         _logger.LogException(ex, "Error reading from serial port");
+                        _listenTokenSource.Cancel();
                     }
                 }
-            }, token);
+            }, _listenTokenSource.Token);
         }
 
         private void ProcessReceivedByte(byte Data)
@@ -418,8 +424,6 @@ namespace AtariST.SerialDisk.Comms
         public void Dispose()
         {
             StopListening();
-
-            if (_tokenSource != null) _tokenSource.Dispose();
 
             if (_serialPort != null)
             {

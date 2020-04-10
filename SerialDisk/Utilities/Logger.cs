@@ -65,7 +65,11 @@ namespace AtariST.SerialDisk.Utilities
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"{DateTime.Now}\t{message}");
             Console.ResetColor();
-            if(_logLevel > LoggingLevel.Info) Console.WriteLine(exception);
+            if (_logLevel > LoggingLevel.Info)
+            {
+                Console.WriteLine(exception); 
+                Console.WriteLine(exception.StackTrace);
+            }
         }
 
         public void LogToFile(string message)
