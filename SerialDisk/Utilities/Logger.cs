@@ -1,8 +1,8 @@
-﻿using System;
+﻿using AtariST.SerialDisk.Common;
+using AtariST.SerialDisk.Interfaces;
+using System;
 using System.IO;
 using System.Text;
-using AtariST.SerialDisk.Common;
-using AtariST.SerialDisk.Interfaces;
 using static AtariST.SerialDisk.Common.Constants;
 
 namespace AtariST.SerialDisk.Utilities
@@ -11,7 +11,7 @@ namespace AtariST.SerialDisk.Utilities
     {
         private FileStream _fileStream;
         private string _logFilePath;
-        private LoggingLevel _logLevel;
+        private readonly LoggingLevel _logLevel;
 
         public Logger(LoggingLevel loggingLevel, string logFileName = null)
         {
@@ -52,7 +52,7 @@ namespace AtariST.SerialDisk.Utilities
 
             if (messageLogLevel <= _logLevel)
             {
-                if(_logLevel == LoggingLevel.Verbose) Console.Write($"{DateTime.Now}\t");
+                if (_logLevel == LoggingLevel.Verbose) Console.Write($"{DateTime.Now}\t");
                 Console.Write($"{message}\r\n");
             }
         }
@@ -67,7 +67,7 @@ namespace AtariST.SerialDisk.Utilities
             Console.ResetColor();
             if (_logLevel > LoggingLevel.Info)
             {
-                Console.WriteLine(exception); 
+                Console.WriteLine(exception);
                 Console.WriteLine(exception.StackTrace);
             }
         }
@@ -76,10 +76,9 @@ namespace AtariST.SerialDisk.Utilities
         {
             try
             {
-                using (StreamWriter fileWriter = new StreamWriter(_fileStream, Encoding.UTF8, 1024, true))
-                {
-                    fileWriter.WriteLineAsync($"{DateTime.Now.ToString(Constants.DATE_FORMAT)}\t{DateTime.Now.ToString(Constants.TIME_FORMAT)}\t{message}");
-                }
+                using StreamWriter fileWriter = new StreamWriter(_fileStream, Encoding.UTF8, 1024, true);
+
+                fileWriter.WriteLineAsync($"{DateTime.Now.ToString(Constants.DATE_FORMAT)}\t{DateTime.Now.ToString(Constants.TIME_FORMAT)}\t{message}");
             }
 
             catch (Exception logException)

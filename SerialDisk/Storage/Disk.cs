@@ -1,26 +1,26 @@
+using AtariST.SerialDisk.Common;
 using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
-using AtariST.SerialDisk.Common;
+using AtariST.SerialDisk.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using AtariST.SerialDisk.Utilities;
 
 namespace AtariST.SerialDisk.Storage
 {
     public class Disk : IDisk
     {
-        private int _rootDirectoryClusterIndex = 0;
+        private readonly int _rootDirectoryClusterIndex = 0;
         private byte[] _rootDirectoryBuffer;
         private byte[] _fatBuffer;
         private int _previousFreeClusterIndex;
 
         private ClusterInfo[] _clusterInfos;
         private List<LocalDirectoryContentInfo> _localDirectoryContentInfos;
-        private FileSystemWatcher _fileSystemWatcher { get; set; }
-        private ILogger _logger;
+        private FileSystemWatcher _fileSystemWatcher;
+        private readonly ILogger _logger;
 
         public DiskParameters Parameters { get; set; }
         public bool FileSystemWatcherEnabled
@@ -383,23 +383,22 @@ namespace AtariST.SerialDisk.Storage
                             {
                                 string contentName = _clusterInfos[clusterIndex].ContentName;
 
-                                if(firstSector == sector) _logger.Log($"Reading local file {contentName}", Constants.LoggingLevel.Info);
+                                if (firstSector == sector) _logger.Log($"Reading local file {contentName}", Constants.LoggingLevel.Info);
 
                                 byte[] fileClusterDataBuffer = new byte[Parameters.BytesPerCluster];
 
                                 try
                                 {
-                                    using (FileStream fileStream = File.OpenRead(contentName))
-                                    {
-                                        int bytesToRead = Math.Min(Parameters.BytesPerCluster, (int)(fileStream.Length - _clusterInfos[clusterIndex].FileOffset));
+                                    using FileStream fileStream = File.OpenRead(contentName);
 
-                                        fileStream.Seek(_clusterInfos[clusterIndex].FileOffset, SeekOrigin.Begin);
+                                    int bytesToRead = Math.Min(Parameters.BytesPerCluster, (int)(fileStream.Length - _clusterInfos[clusterIndex].FileOffset));
 
-                                        for (int Index = 0; Index < bytesToRead; Index++)
-                                            fileClusterDataBuffer[Index] = (byte)fileStream.ReadByte();
+                                    fileStream.Seek(_clusterInfos[clusterIndex].FileOffset, SeekOrigin.Begin);
 
-                                        Array.Copy(fileClusterDataBuffer, (readSector - clusterIndex * Parameters.SectorsPerCluster) * Parameters.BytesPerSector, dataBuffer, dataOffset, Parameters.BytesPerSector);
-                                    }
+                                    for (int Index = 0; Index < bytesToRead; Index++)
+                                        fileClusterDataBuffer[Index] = (byte)fileStream.ReadByte();
+
+                                    Array.Copy(fileClusterDataBuffer, (readSector - clusterIndex * Parameters.SectorsPerCluster) * Parameters.BytesPerSector, dataBuffer, dataOffset, Parameters.BytesPerSector);
                                 }
 
                                 catch (Exception ex)

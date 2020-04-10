@@ -12,10 +12,10 @@ namespace AtariST.SerialDisk.Comms
 {
     public class Serial : ISerial, IDisposable
     {
-        private SerialPort _serialPort;
+        private readonly SerialPort _serialPort;
 
-        private ILogger _logger;
-        private IDisk _localDisk;
+        private readonly ILogger _logger;
+        private readonly IDisk _localDisk;
 
         private int _receivedDataCounter = 0;
 
@@ -28,7 +28,7 @@ namespace AtariST.SerialDisk.Comms
 
         private ReceiverState _state = ReceiverState.ReceiveStartMagic;
 
-        private CancellationTokenSource _listenTokenSource;
+        private readonly CancellationTokenSource _listenTokenSource;
 
         public Serial(SerialPortSettings serialPortSettings, IDisk disk, ILogger log, CancellationTokenSource cancelTokenSource)
         {
@@ -95,7 +95,7 @@ namespace AtariST.SerialDisk.Comms
 
         public void StartListening()
         {
-            Task serialTask = Listen();
+            _ = Listen();
             _logger.Log($"Listening for data on {_serialPort.PortName}", LoggingLevel.Info);
         }
 
@@ -121,22 +121,22 @@ namespace AtariST.SerialDisk.Comms
 
                         if (bytesRead != 0)
                         {
-                            for(int i=0;i < bytesRead;i++) ProcessReceivedByte(Convert.ToByte(buffer[i]));
+                            for (int i = 0; i < bytesRead; i++) ProcessReceivedByte(Convert.ToByte(buffer[i]));
                         }
                     }
 
-                    catch(OperationCanceledException)
+                    catch (OperationCanceledException)
                     {
                         _logger.Log($"Stopped listening on {_serialPort.PortName}", LoggingLevel.Verbose);
                     }
 
-                    catch(ObjectDisposedException)
+                    catch (ObjectDisposedException)
                     {
                         _logger.Log("Serial object was disposed", LoggingLevel.Verbose);
                         _listenTokenSource.Cancel();
                     }
 
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         _logger.LogException(ex, "Error reading from serial port");
                         _listenTokenSource.Cancel();
@@ -203,7 +203,7 @@ namespace AtariST.SerialDisk.Comms
                                         break;
                                 }
 
-                                _logger.Log($"Receiver state: {_state.ToString()}", LoggingLevel.Verbose);
+                                _logger.Log($"Receiver state: {_state}", LoggingLevel.Verbose);
 
                                 _receivedDataCounter = -1;
                                 break;
@@ -393,7 +393,7 @@ namespace AtariST.SerialDisk.Comms
 
             _state = ReceiverState.ReceiveStartMagic;
 
-            _logger.Log($"Receiver state: {_state.ToString()}", LoggingLevel.Verbose);
+            _logger.Log($"Receiver state: {_state}", LoggingLevel.Verbose);
         }
 
         private void SendBIOSParameterBlock()

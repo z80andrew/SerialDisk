@@ -1,5 +1,5 @@
-﻿using NUnit.Framework;
-using AtariST.SerialDisk.Utilities;
+﻿using AtariST.SerialDisk.Utilities;
+using NUnit.Framework;
 using static AtariST.SerialDisk.Common.Constants;
 
 namespace Tests
@@ -16,8 +16,8 @@ namespace Tests
         [TestCase("SerialDisk.tos", "SERIALDI.TOS")]
         [TestCase("Hello There.mpeg", "HELLO_TH.MPE")]
         [TestCase(@"*+,/:;<=.æøå", "________.___")]
-        [TestCase(@">?\[]|.^'¨","______.___")]
-        [TestCase("tst.dot.exe","TST_DOT.EXE")]
+        [TestCase(@">?\[]|.^'¨", "______.___")]
+        [TestCase("tst.dot.exe", "TST_DOT.EXE")]
         public void CreateShortFileNameFromLongFileName(string longFileName, string expectedShortFileName)
         {
             var shortFileName = FAT16Helper.GetShortFileName(longFileName);

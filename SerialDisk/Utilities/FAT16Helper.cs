@@ -29,7 +29,7 @@ namespace AtariST.SerialDisk.Utilities
             fileName = invalidCharactersRegex.Replace(fileName.ToUpper(), "_");
 
             int dotIndex = fileName.LastIndexOf(".");
-            if(dotIndex != -1) fileName = fileName.Substring(0, dotIndex).Replace('.', '_') + fileName[dotIndex..];
+            if (dotIndex != -1) fileName = fileName.Substring(0, dotIndex).Replace('.', '_') + fileName[dotIndex..];
 
             string shortFileName;
 
@@ -63,7 +63,7 @@ namespace AtariST.SerialDisk.Utilities
                 DirectoryInfo directoryInfo = new DirectoryInfo(localDirectoryPath);
                 uint localDirectorySizeBytes = (uint)Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length));
 
-                if(localDirectorySizeBytes > MaxDiskSizeBytes(tosVersion))
+                if (localDirectorySizeBytes > MaxDiskSizeBytes(tosVersion))
                     throw new System.InsufficientMemoryException($"Local directory size is {localDirectorySizeBytes / BytesPerMiB} MiB, which is larger than the maximum allowable virtual disk size ({MaxDiskSizeBytes(tosVersion) / BytesPerMiB} MiB)");
 
                 else if (localDirectorySizeBytes > diskSizeBytes)
@@ -76,7 +76,7 @@ namespace AtariST.SerialDisk.Utilities
                     throw new System.InsufficientMemoryException($"The root directory has {rootDirectoryEntries} files/directories, which is more than the maximum ({maxRootDirectoryEntries} allowed");
             }
 
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }

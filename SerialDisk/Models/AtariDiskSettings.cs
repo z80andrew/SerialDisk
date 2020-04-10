@@ -1,8 +1,4 @@
-﻿using AtariST.SerialDisk.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using static AtariST.SerialDisk.Common.Constants;
+﻿using static AtariST.SerialDisk.Common.Constants;
 
 namespace AtariST.SerialDisk.Models
 {

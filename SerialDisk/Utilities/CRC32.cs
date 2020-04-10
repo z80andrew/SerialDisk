@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace AtariST.SerialDisk.Utilities
+﻿namespace AtariST.SerialDisk.Utilities
 {
     public static class CRC32
     {
@@ -52,7 +48,7 @@ namespace AtariST.SerialDisk.Utilities
         {
             uint crc32 = 0;
 
-            foreach(byte data in buffer)
+            foreach (byte data in buffer)
             {
                 crc32 = (crc32 << 8) ^ Crc32Table[data ^ ((crc32 >> 24) & 0xFF)];
             }

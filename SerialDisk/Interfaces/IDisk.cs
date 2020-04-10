@@ -1,6 +1,4 @@
 ﻿using AtariST.SerialDisk.Storage;
-using System;
-using System.IO;
 
 namespace AtariST.SerialDisk.Interfaces
 {

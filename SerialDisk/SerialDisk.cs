@@ -80,7 +80,7 @@ namespace AtariST.SerialDisk
 
         private static string ParseLocalDirectoryPath(string _applicationSettingsPath, string[] args)
         {
-            string localDirectoryPath = ".";
+            string localDirectoryPath;
 
             // args length is odd, assume final arg is a path
             if (args.Length % 2 != 0)
@@ -111,6 +111,18 @@ namespace AtariST.SerialDisk
             serviceCollection.AddSingleton<IDisk, Disk>();
             serviceCollection.AddSingleton<ISerial, Serial>();
             serviceCollection.AddSingleton<ILogger, Logger>();
+        }
+
+        private static Task ListenForConsoleExitKeypress()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                var keyInfo = new ConsoleKeyInfo();
+                do
+                {
+                    keyInfo = Console.ReadKey(true);
+                } while ((keyInfo.Modifiers & ConsoleModifiers.Control) == 0 && keyInfo.Key != ConsoleKey.X);
+            });
         }
 
         public static void Main(string[] args)
@@ -190,14 +202,14 @@ namespace AtariST.SerialDisk
 
             Console.WriteLine("Press Ctrl-X to quit.");
 
-            Task keyboardListener = ListenKeyboard();
+            Task keyboardExitListener = ListenForConsoleExitKeypress();
 
             try
             {
-                keyboardListener.Wait(cancelTokenSource.Token);
+                keyboardExitListener.Wait(cancelTokenSource.Token);
             }
 
-            catch(OperationCanceledException ex)
+            catch (OperationCanceledException ex)
             {
                 _logger.Log("Thread cancellation requested", LoggingLevel.Verbose);
                 _logger.Log(ex.Message, LoggingLevel.Verbose);
@@ -208,17 +220,5 @@ namespace AtariST.SerialDisk
 
             Console.ResetColor();
         }
-
-        private static Task ListenKeyboard()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                var keyInfo = new ConsoleKeyInfo();
-                do
-                {
-                    keyInfo = Console.ReadKey(true);
-                } while ((keyInfo.Modifiers & ConsoleModifiers.Control) == 0 && keyInfo.Key != ConsoleKey.X);
-            });
-        }
-    }   
+    }
 }
