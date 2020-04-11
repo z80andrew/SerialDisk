@@ -1,20 +1,21 @@
-using System;
-using System.Text;
-using System.Collections.Generic;
-using System.IO.Ports;
-using System.IO;
-using Microsoft.Extensions.DependencyInjection;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.Serialization.Json;
-using Microsoft.Extensions.Configuration;
-
+using AtariST.SerialDisk.Common;
 using AtariST.SerialDisk.Comms;
 using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
-using AtariST.SerialDisk.Common;
 using AtariST.SerialDisk.Storage;
 using AtariST.SerialDisk.Utilities;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Ports;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Serialization.Json;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using static AtariST.SerialDisk.Common.Constants;
 
 namespace AtariST.SerialDisk
@@ -79,7 +80,7 @@ namespace AtariST.SerialDisk
 
         private static string ParseLocalDirectoryPath(string _applicationSettingsPath, string[] args)
         {
-            string localDirectoryPath = ".";
+            string localDirectoryPath;
 
             // args length is odd, assume final arg is a path
             if (args.Length % 2 != 0)
@@ -110,6 +111,18 @@ namespace AtariST.SerialDisk
             serviceCollection.AddSingleton<IDisk, Disk>();
             serviceCollection.AddSingleton<ISerial, Serial>();
             serviceCollection.AddSingleton<ILogger, Logger>();
+        }
+
+        private static Task ListenForConsoleExitKeypress()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                var keyInfo = new ConsoleKeyInfo();
+                do
+                {
+                    keyInfo = Console.ReadKey(true);
+                } while ((keyInfo.Modifiers & ConsoleModifiers.Control) == 0 && keyInfo.Key != ConsoleKey.X);
+            });
         }
 
         public static void Main(string[] args)
@@ -178,7 +191,9 @@ namespace AtariST.SerialDisk
 
             _disk = new Disk(_diskParameters, _logger);
 
-            _serial = new Serial(_applicationSettings.SerialSettings, _disk, _logger);
+            CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
+
+            _serial = new Serial(_applicationSettings.SerialSettings, _disk, _logger, cancelTokenSource);
 
             _logger.Log($"Baud rate:{_applicationSettings.SerialSettings.BaudRate} | Data bits:{_applicationSettings.SerialSettings.DataBits}" +
                 $" | Parity:{_applicationSettings.SerialSettings.Parity} | Stop bits:{_applicationSettings.SerialSettings.StopBits} | Flow control:{_applicationSettings.SerialSettings.Handshake}", LoggingLevel.Info);
@@ -187,15 +202,23 @@ namespace AtariST.SerialDisk
 
             Console.WriteLine("Press Ctrl-X to quit.");
 
-            var keyInfo = new ConsoleKeyInfo();
+            Task keyboardExitListener = ListenForConsoleExitKeypress();
 
-            do
+            try
             {
-                keyInfo = Console.ReadKey(true);
-            } while ((keyInfo.Modifiers & ConsoleModifiers.Control) == 0 || keyInfo.Key != ConsoleKey.X);
+                keyboardExitListener.Wait(cancelTokenSource.Token);
+            }
+
+            catch (OperationCanceledException ex)
+            {
+                _logger.Log("Thread cancellation requested", LoggingLevel.Verbose);
+                _logger.Log(ex.Message, LoggingLevel.Verbose);
+            }
 
             _serial.Dispose();
             _logger.Dispose();
+
+            Console.ResetColor();
         }
     }
 }

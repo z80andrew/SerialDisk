@@ -6,7 +6,7 @@
     <RootNamespace>AtariST.SerialDisk</RootNamespace>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <FileVersion>2.0.0.0</FileVersion>
-    <Version>2.2</Version>
+    <Version>2.3</Version>
     <ApplicationIcon />
     <StartupObject></StartupObject>
     <Authors>z80andrew</Authors>
@@ -32,6 +32,7 @@
     <None Remove="Atari\hello_m.txt" />
     <None Remove="Atari\SERDISK.CFG" />
     <None Remove="Atari\SERDISK2.TOS" />
+    <None Remove="Resources\default_config_osx.json" />
     <None Remove="serialdisk.config" />
   </ItemGroup>
 
@@ -48,6 +49,9 @@
     <Content Include="Atari\SERDISK2.TOS">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <EmbeddedResource Include="Resources\default_config_osx.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="Resources\default_config_linux.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -66,16 +70,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="3.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.0.1" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.0.1" />
-    <PackageReference Include="Microsoft.Net.Compilers" Version="3.3.1">
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.1.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="3.1.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.3" />
+    <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="3.6.0-2.final">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.IO.Ports" Version="4.6.0" />
+    <PackageReference Include="System.IO.Ports" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>

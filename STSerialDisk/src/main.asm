@@ -1,6 +1,6 @@
-.include "../gemdos.asm"
-.include "../bios.asm"
-.include "../xbios.asm"
+.include "../macro/gemdos.asm"
+.include "../macro/bios.asm"
+.include "../macro/xbios.asm"
 
 |-------------------------------------------------------------------------------
 
@@ -11,6 +11,7 @@
 .equ _drvbits, 		0x4c2														| Bit-table for the mounted drives of the BIOS.
 .equ _dskbufp, 		0x4c6														| Pointer to a 1024-byte buffer for reading and writing to floppy disks or hard drives. (Unused)
 .equ _hz_200,		0x4ba														| Number of elapsed 200Hz interrupts since boot (timer C)
+.equ _bufl,			0x4b2														| Two (GEMDOS) buffer-list  headers.
 
 | SerialDisk commands
 .equ cmd_read, 		0x00
@@ -19,6 +20,7 @@
 .equ cmd_bpb, 		0x03
 
 | Other constants
+.equ wait_millis,300															| Time for pauses. 200 = 1 second.
 .equ serial_timeout,1000														| Serial read timeout. 200 = 1 second.
 .equ crc32_poly,	0x04c11db7													| Polynomial for CRC32 calculation
 .equ ascii_offset,	0x41														| Offset from number to its ASCII equivalent
@@ -46,43 +48,63 @@ start:
     lea       0xc(sp),sp     													| Correct stack
 
 	Cursconf #0,#0																| Hide cursor, 0 blink rate
-	Cconws	welcome_string
+	Cconws	msg_welcome
 	jbsr	create_crc32_table
+
+	| Read config file
 
 	jbsr	read_config_file
 	tst.w	d0																	| Test config file valid
 	jpl		1f																	| Result positive = config file valid
 
-	| Drive id in config file is invalid
+	| Config file is invalid
 
-	move.w	disk_identifier,d0													| Move disk_id into d0
-	addi.w	#ascii_offset,d0													| Convert to ASCII representation
-	Cconout	d0
-	Cconws	drive_invalid_id_string
-
-	Supexec	wait
+	Cconws	err_prefix
+	Cconws	err_config_invalid
+	Cconws	msg_press_any_key
+	Cconin
 
 	Pterm 	#0
 
 1:
+	| Mount drive
+
 	Supexec	mount_drive
 	tst.w	d0																	| Test drive mounted successfully
 	jpl		2f																	| Result positive = drive mounted successfully
 
 	| Drive is already mounted
 
+	Cconws	err_prefix
 	move.w	disk_identifier,d0													| Move disk_id into d0
 	addi.w	#ascii_offset,d0													| Convert to ASCII representation
 	Cconout	d0
-	Cconws	drive_already_mounted_string
-
-	Supexec	wait
+	Cconws	err_drive_already_mounted
+	Cconws	msg_press_any_key
+	Cconin
 
 	Pterm 	#0
 2:
+	| Allocate disk buffers
+
+	Supexec allocate_buffers
+
+	tst.w	d0																	| Test buffer allocated successfully
+	jpl		3f																	| Result positive = buffer allocated successfully
+
+	| Buffers could not be allocated
+
+	Cconws	err_prefix
+	Cconws	err_buffer_allocation
+	Cconws	msg_press_any_key
+	Cconin
+
+	Pterm 	#0
+
+3:
 	| Drive mounted successfully
 
-	Cconws	drive_mounted_string
+	Cconws	msg_drive_mounted
 	move.w	disk_identifier,d0													| Move disk_id into d0
 	addi.w	#ascii_offset,d0													| Convert to ASCII representation
 	Cconout	d0
@@ -94,6 +116,17 @@ start:
 	Ptermres d7,#0
 
 |-------------------------------------------------------------------------------
+| Replace pointers for default disk routines with pointers
+| to custom routines
+|
+| Input
+|
+| Output
+| variables: old_hdv_bpb, old_hdv_rw, old_hdv_mediach
+|
+| Corrupts
+|
+
 config_drive_rw:
 	move.l	hdv_bpb.w,old_hdv_bpb												| Move a word of hdv_bpb to old_hdv_bpb so we can call the stock method when needed
 	move.l	hdv_rw.w,old_hdv_rw													| Move a word of hdv_rw to old_hdv_rw so we can call the stock method when needed
@@ -105,6 +138,16 @@ config_drive_rw:
 rts
 
 |-------------------------------------------------------------------------------
+| Modified _hdv_bpb, _hdv_rw and _hdv_mediach
+| Jumps to default or custom routine address depending on drive ID
+|
+| Input
+| variables: old_hdv_bpb, old_hdv_rw, old_hdv_mediach, disk_identifier
+|
+| Output
+|
+| Corrupts
+| a0, a1
 
 _hdv_bpb:
 	move	4(sp),d0															| BIOS (disk) device number. Move word from offset 4 of SP address value into d0.
@@ -124,9 +167,8 @@ _hdv_mediach:
 	move	4(sp),d0															| "dev" (BIOS (disk) device number). Move word from offset 4 of SP address value into d0.
 	move.l	old_hdv_mediach,a0													| Move address of stock hdv_mediach into a0
 	lea		_mediach,a1															| Load the address of custom _mediach into a1
-
 1:
-	cmp.w	disk_identifier,d0													| Comapre drive id with device number in d0
+	cmp.w	disk_identifier,d0													| Compare drive id with device number in d0
 	jne		1f																	| Drive ids don't match, jump forward to label 1:
 
 	move.l	a1,a0																| Drive ids match, move a1 to a0 (use custom method)
@@ -134,6 +176,18 @@ _hdv_mediach:
 	jmp		(a0)																| Jump to address pointed by a0
 
 |-------------------------------------------------------------------------------
+| Sends the Get BIOS Parameter Block command over serial and
+| reads the result
+|
+| Input
+|
+| Output
+| variables: disk_bpb, sector_size_shift_value
+| Address of received BPB
+|
+| Corrupts
+| d1, d3
+| a3
 
 _bpb:
 	jbsr send_start_magic
@@ -145,7 +199,7 @@ _bpb:
 	| Get the BPB.
 
 	lea		disk_bpb,a3															| Load the address of label disk_bpb into a3
-	move	#9*2-1,d3															| Move the length of bpb into d3 (9 parameters of 2 bytes each, -1 for 0-based index)
+	move	#9*2-1,d3															| Move the length of bpb into d3 (9 parameters, 2 bytes each, -1 for 0-based index)
 1:
 	move.l	#serial_timeout,d0
 	jbsr 	await_serial
@@ -175,6 +229,19 @@ _bpb:
 	rts																			| Return to caller
 
 |-------------------------------------------------------------------------------
+| Sends the Read/Write command over serial and reads the result
+|
+| Input
+| variables: sector_size_shift_value
+|
+| Output
+| 0 on success
+| -1 on error
+|
+| Corrupts
+| variables: received_crc32
+| d3, d4
+| a3, a4
 
 _rw:
 	jbsr send_start_magic
@@ -283,6 +350,16 @@ _rw:
 	rts																			| Return to caller
 
 |-------------------------------------------------------------------------------
+| Sends the Media Changed command over serial and reads the result
+|
+| Input
+|
+| Output
+| 2 if media changed
+| 0 if media not changed
+|
+| Corrupts
+|
 
 _mediach:
 	jbsr send_start_magic
@@ -306,10 +383,17 @@ _mediach:
 	rts
 
 |-------------------------------------------------------------------------------
-| Output
-| d0.w = Id of mounted drive. Negative if drive already mounted.
+| Mounts a disk drive
 |
-| Corrupts d0,d1
+| Input
+| variables: disk_identifier
+|
+| Output
+| ID of mounted drive
+| -1 if drive already mounted
+|
+| Corrupts
+| d1
 
 mount_drive:
 	clr.l	d0																	| Clear d0
@@ -328,8 +412,14 @@ mount_drive:
 	rts
 
 |-------------------------------------------------------------------------------
-
-| Sends the start communication "magic numbers" to SerialDisk
+| Sends the start communication command to SerialDisk
+|
+| Input
+|
+| Output
+|
+| Corrupts
+|
 
 send_start_magic:
 	Bconout	#1,#0x18
@@ -340,8 +430,16 @@ send_start_magic:
 	rts
 
 |-------------------------------------------------------------------------------
+| Creates a CRC32/POSIX checksum lookup table in memory
+|
+| Input
+|
+| Output
+| variables: crc32_table
+|
 | Corrupts
-| a0, d0, d1, d2
+| d0, d1, d2
+| a0
 
 create_crc32_table:
 	lea		crc32_table,a0
@@ -367,15 +465,19 @@ create_crc32_table:
 	rts
 
 |-------------------------------------------------------------------------------
+| Calculates a CRC32/POSIX checksum
+|
 | Input
-| a0.l = buffer address.
-| d0.l = buffer size.
+| variables: crc32_table
+| a0.l = data address
+| d0.l = data length
 |
 | Output
-| d0.l = CRC32/POSIX checksum.
+| CRC32/POSIX checksum.
 |
 | Corrupts
-| a0, a1, d1, d7
+| d1, d7
+| a0, a1
 
 calculate_crc32:
 	move.l	d0,d7																| Move long d0 into d7 (data length)
@@ -400,11 +502,20 @@ calculate_crc32:
 	rts
 
 |-------------------------------------------------------------------------------
+| Pauses application for a set period
+|
+| Input
+|
+| Output
+|
+| Corrupts
+| d5, d6
+| a5
 
 wait:
     lea     _hz_200,a5
 	move.l  (a5),d5      														| Store current timerC
-	add.l	#300,d5      														| Increase to max timerC (1.5 seconds)
+	add.l	#wait_millis,d5														| Increase to max timerC (1.5 seconds)
 
 1:
 	lea     _hz_200,a5
@@ -418,11 +529,17 @@ wait:
 	rts
 
 |-------------------------------------------------------------------------------
-| Output:
-| d0 = 0 if no data received
+| Checks for availability of serial data in buffer for a set period
 |
-| Destroys:
-| a5, d0, d6
+| Input
+|
+| Output
+| 0 if data in buffer
+| -1 if no data found in buffer within period
+|
+| Corrupts
+| d5, d6
+| a5
 
 await_serial:
     lea     _hz_200,a5
@@ -445,26 +562,55 @@ await_serial:
 	rts
 
 |-------------------------------------------------------------------------------
-| Output:
-| d0 = positive if config file valid or not present, otherwise negative
+| Reads configuration file if available and sets variables
 |
+| Input
+|
+| Output
+| variables: sector_size_shift_value, disk_identifier
+| 0 on success
+| -1 on error
+|
+| Corrupts
+| variables: disk_bpb
+| d1
 
 read_config_file:
-	move	#0x4d,disk_identifier												| Move ASCII 'M' into disk id
+	move	#0x4d,disk_identifier												| Set default disk id as ASCII 'M'
+	move	#0x0d,sector_size_shift_value										| Set default sector size shift
 
-	Fopen	config_filename,#0													| Attempt to open config file
+	Fopen	const_config_filename,#0											| Attempt to open config file
 	tst.w	d0																	| Check return value
 	jmi		1f																	| Return value is negative (failed), skip read attempt
-	Fread	d0,#1,disk_identifier+1												| Read first byte of file into disk_identifier+1
+	Fread	d0,#2,disk_bpb														| Read first 2 bytes into an unused variable
 	Fclose	d0																	| Close the file handle
 
-	Cconws	config_found_string													| Display the config file found message
+	Cconws	msg_config_found													| Display the config file found message
+
+	| Read disk ID
+
+	move.b	disk_bpb,disk_identifier+1
 
 	cmp.w	#0x50,disk_identifier												| Compare read byte with ASCII 'P'
 	jgt		2f																	| Read character is > ASCII 'P' so it is invalid
 
 	cmp.w	#0x43,disk_identifier												| Compare read byte with ASCII 'C'
 	jlt		2f																	| Read character is < ASCII 'C' so it is invalid
+
+	| Read max disk size
+
+	clr		d1
+	move.b	disk_bpb+1,d1
+
+	cmp		#0x35,d1															| Compare read byte with ASCII '5'
+	jgt		2f																	| Read character is > ASCII 5 so it is invalid
+
+	cmp		#0x31,d1															| Compare read byte with ASCII '1'
+	jlt		2f																	| Read character is < ASCII 1 so it is invalid
+
+	sub		#0x28,d1															| Translate config value to number of required left shifts for sector size calculation
+
+	move	d1,sector_size_shift_value
 1:
 	clr.l	d0																	| Put success return value in d0
 	jmp		99f																	| No problems encountered, jump to end
@@ -476,28 +622,141 @@ read_config_file:
 	rts
 
 |-------------------------------------------------------------------------------
+| Allocates and assigns new disk buffers to enable disks >32MiB
+|
+| Input
+| variables: sector_size_shift_value
+|
+| Output
+| 0 on success
+| -1 on error
+|
+| Corrupts
+| d1, d2
+| a1, a4, a5, a6
+
+allocate_buffers:
+	move	sector_size_shift_value,d0											| Move sector shift (bits) to d0
+
+	cmp		#0x09,d0															| Check if sector shift is 0x09 (same as default buffer size)
+	jeq		99f																	| Sector size is 512KiB, so no need to allocate new buffer. Skip to end
+
+	moveq	#1,d1																| Init d1 with sector size value of 1
+	lsl.w	d0,d1																| Shift sector size left, i.e. multiply number of sectors by bytes per sector to get total bytes
+	move.w	d1,d2																| Store resultant size of 1 sector in d2
+	lsl.w 	#0x02,d1															| Shift sector bytes value 2 bits left (i.e. multiply by 4) to get final buffer size
+
+	Malloc 	d1
+
+	tst     d0           														| Test for null buffer pointer
+	jne     1f     		 														| Buffer is allocated, continue
+	moveq	#-1,d0																| Put failure return value in d0
+	jmp 	99f																	| Jump to end
+
+1:
+	| Data buffer 1
+
+	move.l	d0,a6																| Move address of new buffer into a6
+
+	move.l	(_bufl),a4															| Move first data BCB pointer into a4
+	move.l	(a4),a5																| Move next BCB pointer into a5
+	add.l	#0x10,a4															| Offset to buffer pointer
+
+	move.l	(a4),a1																| Store original buffer address in a1
+	move.l	a6,(a4)																| Set buffer address to new allocated area of RAM
+
+	jbsr copy_buffer
+
+	| Data buffer 2
+
+	add.l	#0x10,a5															| Offset to buffer pointer
+	move.l	(a5),a1																| Store original buffer address in a1
+	move.l	a6,(a5)																| Set buffer address to new allocated area of RAM
+
+	jbsr copy_buffer															| Offset to next sector area in buffer
+
+	| FAT buffer 1
+
+	move.l	(_bufl+0x04),a4														| Move first FAT BCB pointer into a4
+	move.l	(a4),a5																| Move next BCB pointer into a5
+	add.l	#0x10,a4															| Offset to buffer pointer
+	move.l	(a4),a1																| Store original buffer address in a1
+	move.l	a6,(a4)																| Set buffer address to new allocated area of RAM
+
+	jbsr	copy_buffer
+
+	| FAT buffer 2
+
+	add.l	#0x10,a5															| Offset to buffer pointer
+	move.l	(a5),a1																| Store original buffer address in a1
+	move.l	a6,(a5)																| Set buffer address to new allocated area of RAM
+
+	jbsr copy_buffer
+
+	clr.l	d0																	| Set success return value
+99:
+rts
+
+|-------------------------------------------------------------------------------
+| Copies 0x200 bytes from input buffer to output buffer and returns output buffer
+| at defined offset from input address
+|
+| Input
+| a1.l = source buffer address
+| a6.l = destination buffer address
+| d2.w = output offset for destination buffer
+|
+| Output
+| a6.l = a6 + d2
+|
+| Corrupts
+| d3
+
+copy_buffer:
+	move	#0x200,d3															| Put byte counter in d3 (512)
+1:
+	move.b	(a1)+,(a6)+
+	dbf		d3,1b
+
+	sub.l	#0x201,a6															| Move back to beginning of sector in buffer
+	add.l	d2,a6																| Offset to next sector area in buffer
+rts
+|-------------------------------------------------------------------------------
 
 .data
 
 |-------------------------------------------------------------------------------
 
-welcome_string:
-	.asciz	"SerialDisk v2.2\r\n"
+const_config_filename:
+	.asciz	"SERDISK.CFG"
 
-config_found_string:
+| Messages
+
+msg_welcome:
+	.asciz	"SerialDisk v2.3\r\n"
+
+msg_config_found:
 	.asciz	"Using configuration file SERDISK.CFG\r\n"
 
-drive_mounted_string:
+msg_drive_mounted:
 	.asciz	"Configured on drive "
 
-drive_already_mounted_string:
+msg_press_any_key:
+	.asciz	"\r\n\r\nPress any key to continue"
+
+| Errors
+
+err_prefix:
+	.asciz	"Error: "
+
+err_drive_already_mounted:
 	.asciz	" drive is already mounted"
 
-drive_invalid_id_string:
-	.asciz	" is not a valid drive letter (C-P)"
+err_config_invalid:
+	.asciz	"Configuration file is invalid"
 
-config_filename:
-	.asciz	"SERDISK.CFG"
+err_buffer_allocation:
+	.asciz	"Error allocating disk buffer"
 
 |-------------------------------------------------------------------------------
 
@@ -506,28 +765,28 @@ config_filename:
 |-------------------------------------------------------------------------------
 
 disk_identifier:
-	ds.w	1
+	ds.w	0x01
 
 disk_bpb:
-	ds.w	9
+	ds.w	0x09
 
 sector_size_shift_value:
-	ds.w	1
+	ds.w	0x01
 
 old_hdv_bpb:
-	ds.l	1
+	ds.l	0x01
 
 old_hdv_rw:
-	ds.l	1
+	ds.l	0x01
 
 old_hdv_mediach:
-	ds.l	1
+	ds.l	0x01
 
 crc32_table:
-	ds.l	256
+	ds.l	0x100
 
 received_crc32:
-	ds.l	1
+	ds.l	0x01
 
 |-------------------------------------------------------------------------------
 

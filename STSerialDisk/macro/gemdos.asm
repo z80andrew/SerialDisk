@@ -118,7 +118,7 @@
 	move.l	\amount,-(sp)
 	move	#72,-(sp)
 	trap	#1
-	addq	#6,sp
+	addq.l	#6,sp
 .endm
 
 | block: address of block to release
@@ -132,7 +132,7 @@
 .macro	Mshrink block, newsize
 	move.l	\newsize,-(sp)
 	pea		\block
-	clr		-(sp)
+	clr.w	-(sp)
 	move	#74,-(sp)
 	trap	#1
 	lea		12(sp),sp

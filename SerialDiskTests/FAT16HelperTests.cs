@@ -1,5 +1,5 @@
-﻿using NUnit.Framework;
-using AtariST.SerialDisk.Utilities;
+﻿using AtariST.SerialDisk.Utilities;
+using NUnit.Framework;
 using static AtariST.SerialDisk.Common.Constants;
 
 namespace Tests
@@ -16,7 +16,8 @@ namespace Tests
         [TestCase("SerialDisk.tos", "SERIALDI.TOS")]
         [TestCase("Hello There.mpeg", "HELLO_TH.MPE")]
         [TestCase(@"*+,/:;<=.æøå", "________.___")]
-        [TestCase(@">?\[]|.^'¨","______.___")]
+        [TestCase(@">?\[]|.^'¨", "______.___")]
+        [TestCase("tst.dot.exe", "TST_DOT.EXE")]
         public void CreateShortFileNameFromLongFileName(string longFileName, string expectedShortFileName)
         {
             var shortFileName = FAT16Helper.GetShortFileName(longFileName);
@@ -24,10 +25,8 @@ namespace Tests
             Assert.AreEqual(expectedShortFileName, shortFileName);
         }
 
-        [TestCase(TOSVersion.TOS100, 0x3FFF * 512 * 2)]
-        [TestCase(TOSVersion.TOS104, 0x7FFF * 512 * 2)]
-        //[TestCase(TOSVersion.TOS100, 0x3FFF * 8192 * 2)]
-        //[TestCase(TOSVersion.TOS104, 0x7FFF * 8192 * 2)]
+        [TestCase(TOSVersion.TOS100, 0x3FFF * 8192 * 2)]
+        [TestCase(TOSVersion.TOS104, 0x7FFF * 8192 * 2)]
         public void ValidDiskSizes(TOSVersion tosVersion, int expectedMaxDiskSizeBytes)
         {
             var maxDiskSizeBytes = FAT16Helper.MaxDiskSizeBytes(tosVersion);

@@ -12,7 +12,7 @@ namespace AtariST.SerialDisk.Storage
         private int _bytesPerSector;
         private byte[] _biosParameterBlock;
 
-        private ILogger _logger;
+        private readonly ILogger _logger;
 
         public int DiskTotalBytes
         {
@@ -31,7 +31,7 @@ namespace AtariST.SerialDisk.Storage
                     }
                 }
 
-                catch(ArgumentException argEx)
+                catch (ArgumentException argEx)
                 {
                     _logger.LogException(argEx);
                     throw argEx;

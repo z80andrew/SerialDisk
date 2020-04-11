@@ -1,25 +1,26 @@
+using AtariST.SerialDisk.Common;
 using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
-using AtariST.SerialDisk.Common;
+using AtariST.SerialDisk.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using AtariST.SerialDisk.Utilities;
 
 namespace AtariST.SerialDisk.Storage
 {
     public class Disk : IDisk
     {
-        private int _rootDirectoryClusterIndex = 0;
+        private readonly int _rootDirectoryClusterIndex = 0;
         private byte[] _rootDirectoryBuffer;
         private byte[] _fatBuffer;
+        private int _previousFreeClusterIndex;
 
         private ClusterInfo[] _clusterInfos;
         private List<LocalDirectoryContentInfo> _localDirectoryContentInfos;
-        private FileSystemWatcher _fileSystemWatcher { get; set; }
-        private ILogger _logger;
+        private FileSystemWatcher _fileSystemWatcher;
+        private readonly ILogger _logger;
 
         public DiskParameters Parameters { get; set; }
         public bool FileSystemWatcherEnabled
@@ -318,21 +319,35 @@ namespace AtariST.SerialDisk.Storage
 
         private int GetNextFreeClusterIndex()
         {
-            int newClusterIndex = 1; // 2 is the first valid cluster index
+            int maxClusterIndex = _fatBuffer.Length / 2;
+            int newClusterIndex = _previousFreeClusterIndex; // Start check at previous index for performance
             int newClusterValue = 0xFFFF;
 
-            do
+            try
             {
-                newClusterIndex++;
-                newClusterValue = FatGetClusterValue(newClusterIndex);
-            } while (newClusterIndex < _fatBuffer.Length / 2 && newClusterValue != 0);
+                while (newClusterValue != 0)
+                {
+                    newClusterIndex++;
+                    if (newClusterIndex > maxClusterIndex) newClusterIndex = 2; // End of buffer reached, loop back to beginning
+                    else if (newClusterIndex == _previousFreeClusterIndex) throw new Exception("Could not find a free cluster in FAT"); // We have looped without finding a free cluster
+                    newClusterValue = FatGetClusterValue(newClusterIndex);
+                }
 
+                _previousFreeClusterIndex = newClusterIndex;
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                newClusterIndex = -1;
+            }
 
             return newClusterIndex;
         }
 
         public byte[] ReadSectors(int sector, int numberOfSectors)
         {
+            int firstSector = sector;
             byte[] dataBuffer = new byte[numberOfSectors * Parameters.BytesPerSector];
             int dataOffset = 0;
 
@@ -366,21 +381,24 @@ namespace AtariST.SerialDisk.Storage
                         {
                             if (_clusterInfos[clusterIndex].ContentName != null)
                             {
+                                string contentName = _clusterInfos[clusterIndex].ContentName;
+
+                                if (firstSector == sector) _logger.Log($"Reading local file {contentName}", Constants.LoggingLevel.Info);
+
                                 byte[] fileClusterDataBuffer = new byte[Parameters.BytesPerCluster];
 
                                 try
                                 {
-                                    using (FileStream fileStream = File.OpenRead(_clusterInfos[clusterIndex].ContentName))
-                                    {
-                                        int bytesToRead = Math.Min(Parameters.BytesPerCluster, (int)(fileStream.Length - _clusterInfos[clusterIndex].FileOffset));
+                                    using FileStream fileStream = File.OpenRead(contentName);
 
-                                        fileStream.Seek(_clusterInfos[clusterIndex].FileOffset, SeekOrigin.Begin);
+                                    int bytesToRead = Math.Min(Parameters.BytesPerCluster, (int)(fileStream.Length - _clusterInfos[clusterIndex].FileOffset));
 
-                                        for (int Index = 0; Index < bytesToRead; Index++)
-                                            fileClusterDataBuffer[Index] = (byte)fileStream.ReadByte();
+                                    fileStream.Seek(_clusterInfos[clusterIndex].FileOffset, SeekOrigin.Begin);
 
-                                        Array.Copy(fileClusterDataBuffer, (readSector - clusterIndex * Parameters.SectorsPerCluster) * Parameters.BytesPerSector, dataBuffer, dataOffset, Parameters.BytesPerSector);
-                                    }
+                                    for (int Index = 0; Index < bytesToRead; Index++)
+                                        fileClusterDataBuffer[Index] = (byte)fileStream.ReadByte();
+
+                                    Array.Copy(fileClusterDataBuffer, (readSector - clusterIndex * Parameters.SectorsPerCluster) * Parameters.BytesPerSector, dataBuffer, dataOffset, Parameters.BytesPerSector);
                                 }
 
                                 catch (Exception ex)
@@ -661,8 +679,8 @@ namespace AtariST.SerialDisk.Storage
             string shortFileName = FAT16Helper.GetShortFileName(fileInfo.Name);
             int duplicateId = 1;
 
-            while(_localDirectoryContentInfos.Where(ldi => ldi.ShortFileName.Equals(shortFileName, StringComparison.InvariantCultureIgnoreCase) &&
-                ldi.DirectoryCluster == directoryClusterIndex).Any())
+            while (_localDirectoryContentInfos.Where(ldi => ldi.ShortFileName.Equals(shortFileName, StringComparison.InvariantCultureIgnoreCase) &&
+                 ldi.DirectoryCluster == directoryClusterIndex).Any())
             {
                 int numberStringLength = duplicateId.ToString().Length + 1; // +1 for ~
                 int replaceIndex = shortFileName.LastIndexOf('.') != -1 ? shortFileName.LastIndexOf('.') : shortFileName.Length;
@@ -681,6 +699,8 @@ namespace AtariST.SerialDisk.Storage
 
         public void FatImportLocalDirectoryContents(string directoryName, int directoryClusterIndex)
         {
+            _previousFreeClusterIndex = 1;
+
             if (directoryClusterIndex == _rootDirectoryClusterIndex)
             {
                 _rootDirectoryBuffer = new byte[Parameters.RootDirectorySectors * Parameters.BytesPerSector];
@@ -691,10 +711,10 @@ namespace AtariST.SerialDisk.Storage
 
             DirectoryInfo directoryInfo = new DirectoryInfo(directoryName);
 
-            foreach (DirectoryInfo subDirectoryInfo in directoryInfo.GetDirectories())
+            foreach (DirectoryInfo subDirectoryInfo in directoryInfo.EnumerateDirectories())
                 FatAddDirectory(subDirectoryInfo, directoryClusterIndex);
 
-            foreach (FileInfo fileInfo in directoryInfo.GetFiles())
+            foreach (FileInfo fileInfo in directoryInfo.EnumerateFiles())
                 FatAddFile(fileInfo, directoryClusterIndex);
         }
     }

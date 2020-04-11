@@ -5,6 +5,7 @@
 
 # Declare files that will always have CRLF line endings on checkout.
 *.txt text eol=crlf
+*.CFG text eol=crlf
 
 ###############################################################################
 # Set default behavior for command prompt diff.
