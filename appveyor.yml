@@ -3,6 +3,7 @@ version: 2.4.{build}
 image: 
 - Visual Studio 2019
 - Ubuntu1804
+- macos-mojave
 
 dotnet_csproj:
   patch: true
