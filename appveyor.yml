@@ -32,7 +32,7 @@ build_script:
     dotnet publish SerialDisk/Serialdisk.csproj -r win-x86 -c Release --self-contained false --output ./bin/Release/FDE/win-x86
 
 - sh: >-
-    if [$CI_LINUX -ic "true"]
+    if "$CI_LINUX" = true
 
     then
         # Publish and package Self Contained Executables
@@ -78,7 +78,7 @@ on_success:
     appveyor PushArtifact serialdisk_2.4_fde_win-x86.zip
 
 - sh: >-
-    if [$CI_LINUX -ic "true"]
+    if "$CI_LINUX" = true
 
     then
         tar -czf serialdisk_2.4_sce_linux-x64.tar.gz -C ./bin/Release/SCE serialdisk-linux-x64
