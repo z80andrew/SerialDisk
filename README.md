@@ -1,5 +1,5 @@
 # SerialDisk
-[![GitHub release](https://img.shields.io/github/release/z80andrew/Serialdisk.svg)](https://github.com/z80andrew/SerialDisk/releases/latest) [![GitHub issues](https://img.shields.io/github/issues/z80andrew/SerialDisk.svg)](https://github.com/z80andrew/SerialDisk/issues)[![Build status](https://ci.appveyor.com/api/projects/status/mxn16ih2tgd8ejam?svg=true)](https://ci.appveyor.com/project/z80andrew/serialdisk) 
+[![GitHub release](https://img.shields.io/github/release/z80andrew/Serialdisk.svg)](https://github.com/z80andrew/SerialDisk/releases/latest) [![GitHub issues](https://img.shields.io/github/issues/z80andrew/SerialDisk.svg)](https://github.com/z80andrew/SerialDisk/issues) [![Build status](https://ci.appveyor.com/api/projects/status/mxn16ih2tgd8ejam?svg=true)](https://ci.appveyor.com/project/z80andrew/serialdisk) 
 
 A virtual Atari ST disk over serial written in .NET Core 3.0 for Windows, Linux and ARM.
 
