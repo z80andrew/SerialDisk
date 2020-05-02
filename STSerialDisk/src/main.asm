@@ -2,7 +2,7 @@
 .include "../macro/bios.asm"
 .include "../macro/xbios.asm"
 
-|-------------------------------------------------------------------------------
+|=-------------------------------------------------------------------------------
 
 | Atari memory addresses
 .equ hdv_bpb, 		0x472														| Vector to routine that establishes the BPB of a BIOS drive.
@@ -20,8 +20,8 @@
 .equ cmd_bpb, 		0x03
 
 | Other constants
-.equ wait_millis,300															| Time for pauses. 200 = 1 second.
-.equ serial_timeout,1000														| Serial read timeout. 200 = 1 second.
+.equ wait_millis,	300															| Time for pauses. 200 = 1 second.
+.equ serial_timeout,400															| Serial read timeout. 200 = 1 second.
 .equ crc32_poly,	0x04c11db7													| Polynomial for CRC32 calculation
 .equ ascii_offset,	0x41														| Offset from number to its ASCII equivalent
 
@@ -201,12 +201,14 @@ _bpb:
 	lea		disk_bpb,a3															| Load the address of label disk_bpb into a3
 	move	#9*2-1,d3															| Move the length of bpb into d3 (9 parameters, 2 bytes each, -1 for 0-based index)
 1:
-	move.l	#serial_timeout,d0
-	jbsr 	await_serial
-	tst		d0
-	jeq		99f
+	jbsr	read_serial
+	cmp.w	#-1,d0																| Check for error
+	jne		2f
+	move.l	#0,d0																| Returning -1 as an error causes a crash, so set to 0
+	rts
 
-	Bconin	#1																	| Read a byte from BIOS console serial
+	| Bconin	#1
+2:
 	move.b	d0,(a3)+															| Move the received byte from d0 into a3, increment a3
 
 	dbf		d3,1b																| Decrement d3; jump backwards to label 1: while d3 is not zero
@@ -239,7 +241,7 @@ _bpb:
 | -1 on error
 |
 | Corrupts
-| variables: received_crc32
+| variables: temp_long
 | d3, d4
 | a3, a4
 
@@ -280,7 +282,7 @@ _rw:
 
 	| Get the destination/source buffer address.
 
-	move.l	6(sp),a3															| "buf" (1024KiB buffer address).
+	move.l	6(sp),a3															| buffer address
 
 	tst		4(sp)																| Set flags based on value of "rwflag" (0: read, 1: write).
 	jeq		2f																	| Jump if equal (zero) - forwards to label 2:
@@ -299,39 +301,45 @@ _rw:
 2:
 	| Read data.
 
-	move.l	a3,a4																| Move address of received data into a4
-	move.l	d3,d4																| Move length of received data into d4
+	move.l	a3,a4																| Copy address of received data
+	move.l	d3,data_length														| Copy length of received data
+
+	| Receive compressed data length.
+
+	move	#4-1,d3																| Move counter into d3 (There are 4 bytes to read, -1 for 0-based index)
+	lea		temp_long,a3														| Load address of label received_crc32 into a3
 1:
-	move.l	#serial_timeout,d0
-	jbsr 	await_serial														| Wait for serial data
-	tst		d0																	| Was anything received?
-	jne		2f																	| Yes, jump to read
+	jbsr	read_serial
+	tst.w	d0
+	jmi		99f
 
-	move.l	#-1,d0																| Set error return value for subroutine
-	jmp		99f																	| Jump to end
+	move.b	d0,(a3)+
 
-2:
-	Bconin	#1																	| Read byte from serial
-	move.b	d0,(a3)+															| Add read byte to buffer, increment address to next buffer byte
+	dbf		d3,1b																| Decrement d3, jump backwards to label 1: if not zero
 
-	subq.l	#1,d3																| Subtract 1 from number of sectors
-	jne		1b																	| Jump if number of sectors != 0 - backwards to label 1:
+	| Read compressed data bytes
+
+	move.l	a4,a5
+	jbsr	lz4_depack
+	tst		d0
+	jmi		99f
 
 	| Receive remote CRC32 checksum.
 
 	move	#4-1,d3																| Move counter into d3 (There are 4 bytes to read, -1 for 0-based index)
-	lea		received_crc32,a3													| Load address of label received_crc32 into a3
+	lea		temp_long,a3														| Load address of label received_crc32 into a3
+
+	|move.l	#serial_timeout,d0
+	|jbsr 	await_serial														| Wait for serial data
+	|tst		d0																	| Was anything received?
+	|jne		2f																	| Yes, jump to read
+
+	|move.l	#-1,d0																| Set error return value for subroutine
+	|jmp		99f																	| Jump to end
 1:
-	move.l	#serial_timeout,d0
-	jbsr 	await_serial														| Wait for serial data
-	tst		d0																	| Was anything received?
-	jne		2f																	| Yes, jump to read
-
-	move.l	#-1,d0																| Set error return value for subroutine
-	jmp		99f																	| Jump to end
-
-2:
-	Bconin	#1																	| Read a byte from BIOS console serial
+	jbsr	read_serial
+	tst.w	d0
+	jmi		99f
 	move.b	d0,(a3)+
 
 	dbf		d3,1b																| Decrement d3, jump backwards to label 1: if not zero
@@ -339,10 +347,11 @@ _rw:
 	| Calculate local CRC32 checksum.
 
 	move.l	a4,a0																| Move address of received data into a0
-	move.l	d4,d0																| Move length of received data into d0
+	move.l	data_length,d0														| Move length of received data into d0
+
 	jbsr	calculate_crc32														| Get CRC32 from subroutine
 
-	cmp.l	received_crc32,d0													| Compare calculated CRC32 in d0 with received CRC32
+	cmp.l	temp_long,d0														| Compare calculated CRC32 in d0 with received CRC32
 	jne		_rw																	| Jump if CRCs not equal - to label _rw (retry read / write)
 
 	clr.l	d0																	| Clear d0 to return 0 (success)
@@ -370,14 +379,10 @@ _mediach:
 
 	| Get the media changed status.
 
-	move.l	#serial_timeout,d0
-	jbsr 	await_serial														| Wait for serial data
-	tst.l	d0																	| Is there data in the buffer?
-	jne		1f																	| Yes, jump to read
-	move.l	#2,d0																| No, jump to end with return value 2 (media definitely changed)
-	jmp		99f																	| so that get_bpb will be called next
-1:
-	Bconin	#1
+	jbsr	read_serial
+	tst		d0
+	jmi		99f
+
 	and.l	#0xff,d0
 99:
 	rts
@@ -538,27 +543,30 @@ wait:
 | -1 if no data found in buffer within period
 |
 | Corrupts
-| d5, d6
-| a5
+| d6, d7
+| a6
 
-await_serial:
-    lea     _hz_200,a5
-	move.l  (a5),d5      														| Store current timerC
-	addi.l	#serial_timeout,d5      											| Increase to max timerC
-
+read_serial:
+    lea     _hz_200,a6
+	move.l  (a6),d6      														| Store current timerC
+	addi.l	#serial_timeout,d6      											| Increase to max timerC
 1:
     Bconstat #1           														| Read the serial buffer state
 	tst     d0           														| Test for presence of data in buffer
-	jne     2f     		 														| There is data - stop checking
+	jne     3f     		 														| There is data - stop checking
 
-    lea     _hz_200,a5
-	move.l  (a5),d6      														| Current timerC
+	move.l  (a6),d7      														| Current timerC
 
-	cmp.l    d5,d6       														| Compare max timerC with current timerC
-	jgt	     2f     															| Timeout if current timerC is greater than max timerC
+	cmp.l   d6,d7       														| Compare max timerC with current timerC
+	jgt	    2f     																| Timeout if current timerC is greater than max timerC
 
-	jra      1b        															| Check serial status again if current timerC is less than max timerC
+	jra     1b        															| Check serial status again if current timerC is less than max timerC
 2:
+	move	#-1,d0
+	rts
+3:
+	Bconin	#1
+99:
 	rts
 
 |-------------------------------------------------------------------------------
@@ -723,6 +731,8 @@ copy_buffer:
 rts
 |-------------------------------------------------------------------------------
 
+.include "../src/LZ4_serial.asm"
+
 .data
 
 |-------------------------------------------------------------------------------
@@ -785,7 +795,10 @@ old_hdv_mediach:
 crc32_table:
 	ds.l	0x100
 
-received_crc32:
+temp_long:
+	ds.l	0x01
+
+data_length:
 	ds.l	0x01
 
 |-------------------------------------------------------------------------------

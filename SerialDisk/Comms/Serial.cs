@@ -369,23 +369,35 @@ namespace AtariST.SerialDisk.Comms
 
             byte[] sendDataBuffer = _localDisk.ReadSectors((int)_receivedSectorIndex, (int)_receivedSectorCount);
 
+            UInt32 crc32Checksum = CRC32.CalculateCRC32(sendDataBuffer);
+
+            var compressedDataBuffer = Utilities.LZ4.CompressAsStandardLZ4Block(sendDataBuffer);
+
             _transferStartDateTime = DateTime.Now;
 
-            for (int i = 0; i < sendDataBuffer.Length; i++)
+            byte[] dataLenBuffer = new byte[4];
+            dataLenBuffer[0] = (byte)((compressedDataBuffer.Length >> 24) & 0xff);
+            dataLenBuffer[1] = (byte)((compressedDataBuffer.Length >> 16) & 0xff);
+            dataLenBuffer[2] = (byte)((compressedDataBuffer.Length >> 8) & 0xff);
+            dataLenBuffer[3] = (byte)(compressedDataBuffer.Length & 0xff);
+
+            _logger.Log($"Sending compressed data ({compressedDataBuffer.Length} bytes)...", LoggingLevel.Verbose);
+
+            _serialPort.BaseStream.Write(dataLenBuffer, 0, dataLenBuffer.Length);
+
+            for (int i = 0; i < compressedDataBuffer.Length; i++)
             {
-                _serialPort.BaseStream.WriteByte(sendDataBuffer[i]);
-                string percentSent = ((Convert.ToDecimal(i + 1) / sendDataBuffer.Length) * 100).ToString("00.0");
-                Console.Write($"\rSent [{(i + 1).ToString("D" + sendDataBuffer.Length.ToString().Length)} / {sendDataBuffer.Length} Bytes] {percentSent}% ");
+                _serialPort.BaseStream.WriteByte(compressedDataBuffer[i]);
+                string percentSent = ((Convert.ToDecimal(i + 1) / compressedDataBuffer.Length) * 100).ToString("00.0");
+                Console.Write($"\rSent [{(i + 1).ToString("D" + compressedDataBuffer.Length.ToString().Length)} / {compressedDataBuffer.Length} Bytes] {percentSent}% ");
             }
             Console.WriteLine();
 
             byte[] crc32Buffer = new byte[4];
-            UInt32 crc32Value = CRC32.CalculateCRC32(sendDataBuffer);
-
-            crc32Buffer[0] = (byte)((crc32Value >> 24) & 0xff);
-            crc32Buffer[1] = (byte)((crc32Value >> 16) & 0xff);
-            crc32Buffer[2] = (byte)((crc32Value >> 8) & 0xff);
-            crc32Buffer[3] = (byte)(crc32Value & 0xff);
+            crc32Buffer[0] = (byte)((crc32Checksum >> 24) & 0xff);
+            crc32Buffer[1] = (byte)((crc32Checksum >> 16) & 0xff);
+            crc32Buffer[2] = (byte)((crc32Checksum >> 8) & 0xff);
+            crc32Buffer[3] = (byte)(crc32Checksum & 0xff);
 
             _logger.Log("Sending CRC32...", LoggingLevel.Verbose);
 
