@@ -1,3 +1,8 @@
+| ---------------------------------------------------------------------------------------------------------------------------------
+| IMPORTANT NOTE:
+| The GEMDOS receives its parameters from the stack. Only registers d3-d7 and a3-a7 are saved, all others may be altered by the call.
+| ---------------------------------------------------------------------------------------------------------------------------------
+
 .macro	Cauxin
 	move	#3,-(sp)
 	trap	#1

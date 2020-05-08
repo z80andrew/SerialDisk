@@ -335,12 +335,12 @@ _rw_read:
 	| Calculate local CRC32 checksum.
 
 	move.l	a4,a0																| Copy address of received data
-	move.l	(sp)+,d0															| Pop data length off the stack
+	move.l	(sp)+,d0															| Pop uncompressed data length off the stack
 
 	jbsr	calculate_crc32														| Get CRC32 from subroutine
 
 	cmp.l	temp_long,d0														| Compare calculated CRC32 with received CRC32
-	|jne		_rw																	| Retry read / write if CRCs do not match
+	jne		_rw																	| Retry read / write if CRCs do not match
 
 	clr.l	d0																	| Success return value
 99:
@@ -533,9 +533,10 @@ wait:
 | Corrupts
 | d6, d7
 | a6
+| d1, d2 corrupted by BIOS calls
 
 read_serial:
-	movem.l	d1-d7/a0-a6,-(a7)
+	movem.l	d1-d2,-(a7)
     lea     _hz_200,a6
 	move.l  (a6),d6      														| Store current timerC
 	addi.l	#serial_timeout,d6      											| Increase to max timerC
@@ -552,11 +553,11 @@ read_serial:
 	jra     1b        															| Check serial status again if current timerC is less than max timerC
 2:
 	move	#-1,d0
-	rts
+	jmp		99f
 3:
 	Bconin	#1
 99:
-	movem.l	(a7)+,d1-d7/a0-a6
+	movem.l	(a7)+,d1-d2
 	rts
 
 |-------------------------------------------------------------------------------
