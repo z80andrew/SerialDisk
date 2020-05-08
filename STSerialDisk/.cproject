@@ -49,7 +49,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/LZ4_original.asm|src/LZ4_serial.asm|src/maina.asm|src/LZ4a.asm|src/LZ4.asm|src/LZ77.asm|src/inflate.asm|macro/xbios.asm|macro/gemdos.asm|macro/bios.asm" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/LZ4_serial.asm|macro/xbios.asm|macro/gemdos.asm|macro/bios.asm" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -108,7 +108,7 @@
 					<fileInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1504084603.318582090" name=".cproject" rcbsApplicability="disable" resourcePath=".cproject" toolsToInvoke=""/>
 					<fileInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1504084603.1538417760" name=".project" rcbsApplicability="disable" resourcePath=".project" toolsToInvoke=""/>
 					<sourceEntries>
-						<entry excluding="src/LZ4_original.asm|src/LZ4_serial.asm|src/maina.asm|src/LZ4a.asm|src/LZ4.asm|src/LZ77.asm|src/inflate.asm|macro/xbios.asm|macro/gemdos.asm|macro/bios.asm" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/LZ4_serial.asm|macro/xbios.asm|macro/gemdos.asm|macro/bios.asm" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

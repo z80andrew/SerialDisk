@@ -21,7 +21,7 @@
 
 | Other constants
 .equ wait_millis,	300															| Time for pauses. 200 = 1 second.
-.equ serial_timeout,400															| Serial read timeout. 200 = 1 second.
+.equ serial_timeout,1000														| Serial read timeout. 200 = 1 second.
 .equ crc32_poly,	0x04c11db7													| Polynomial for CRC32 calculation
 .equ ascii_offset,	0x41														| Offset from number to its ASCII equivalent
 
@@ -275,39 +275,35 @@ _rw:
 	move.b	10+1(sp),d0
 	Bconout	#1,d0
 
-	moveq	#0,d3																| Clear d3
+	| Get the destination/source buffer address.
+
+	move.l	6(sp),a4															| buffer address
+	clr.l	d3
 	move	10(sp),d3															| Move "count" (number of sectors) to d3
 	move	sector_size_shift_value,d0											| Move sector shift (num. bits) to d0
 	lsl.l	d0,d3																| Shift "count" left, i.e. multiply number of sectors by bytes per sector to get total bytes
 
-	| Get the destination/source buffer address.
-
-	move.l	6(sp),a3															| buffer address
-
 	tst		4(sp)																| Set flags based on value of "rwflag" (0: read, 1: write).
-	jeq		2f																	| Jump if equal (zero) - forwards to label 2:
+	jeq		_rw_read
 
-	| Write data.
-1:
-	move.b	(a3)+,d0															| Move buffer address into d0, increment to next byte in rw struct
+_rw_write:
+	move.b	(a4)+,d0															| Move buffer address into d0, increment to next byte in rw struct
 	Bconout	#1,d0																| Write byte to serial
 
-	subq.l	#1,d3																| Subtract 1 from number of sectors
-	jne		1b																	| Jump if number of sectors != 0 - backwards to label 1:
+	subq.l	#1,d3																| Decrement number of bytes remaining
+	jne		_rw_write
 
-	clr.l	d0																	| Clear d0 to return 0 (success)
+	clr.l	d0																	| Success return value
 
 	rts
-2:
-	| Read data.
 
-	move.l	a3,a4																| Copy address of received data
-	move.l	d3,data_length														| Copy length of received data
+_rw_read:
+	move.l	d3,-(sp)															| Push uncompressed data length on to stack
 
 	| Receive compressed data length.
 
-	move	#4-1,d3																| Move counter into d3 (There are 4 bytes to read, -1 for 0-based index)
-	lea		temp_long,a3														| Load address of label received_crc32 into a3
+	move	#4-1,d3																| Copy byte count into counter (There are 4 bytes to read, -1 for 0-based index)
+	lea		temp_long,a3														| Load address to store compressed data length
 1:
 	jbsr	read_serial
 	tst.w	d0
@@ -315,48 +311,40 @@ _rw:
 
 	move.b	d0,(a3)+
 
-	dbf		d3,1b																| Decrement d3, jump backwards to label 1: if not zero
+	dbf		d3,1b
 
-	| Read compressed data bytes
+	| Receive compressed data bytes
 
-	move.l	a4,a5
+	move.l	a4,a5																| Copy destination address
 	jbsr	lz4_depack
 	tst		d0
 	jmi		99f
 
 	| Receive remote CRC32 checksum.
 
-	move	#4-1,d3																| Move counter into d3 (There are 4 bytes to read, -1 for 0-based index)
-	lea		temp_long,a3														| Load address of label received_crc32 into a3
-
-	|move.l	#serial_timeout,d0
-	|jbsr 	await_serial														| Wait for serial data
-	|tst		d0																	| Was anything received?
-	|jne		2f																	| Yes, jump to read
-
-	|move.l	#-1,d0																| Set error return value for subroutine
-	|jmp		99f																	| Jump to end
+	move	#4-1,d3																| Copy byte count into counter (There are 4 bytes to read, -1 for 0-based index)
+	lea		temp_long,a3														| Load address to store CRC32 checksum
 1:
 	jbsr	read_serial
 	tst.w	d0
 	jmi		99f
 	move.b	d0,(a3)+
 
-	dbf		d3,1b																| Decrement d3, jump backwards to label 1: if not zero
+	dbf		d3,1b
 
 	| Calculate local CRC32 checksum.
 
-	move.l	a4,a0																| Move address of received data into a0
-	move.l	data_length,d0														| Move length of received data into d0
+	move.l	a4,a0																| Copy address of received data
+	move.l	(sp)+,d0															| Pop data length off the stack
 
 	jbsr	calculate_crc32														| Get CRC32 from subroutine
 
-	cmp.l	temp_long,d0														| Compare calculated CRC32 in d0 with received CRC32
-	jne		_rw																	| Jump if CRCs not equal - to label _rw (retry read / write)
+	cmp.l	temp_long,d0														| Compare calculated CRC32 with received CRC32
+	|jne		_rw																	| Retry read / write if CRCs do not match
 
-	clr.l	d0																	| Clear d0 to return 0 (success)
+	clr.l	d0																	| Success return value
 99:
-	rts																			| Return to caller
+	rts
 
 |-------------------------------------------------------------------------------
 | Sends the Media Changed command over serial and reads the result
@@ -401,17 +389,17 @@ _mediach:
 | d1
 
 mount_drive:
-	clr.l	d0																	| Clear d0
-	move.w	disk_identifier,d0													| Move the virtual disk id into d0
-	move.l	_drvbits,d1															| Load the list of mounted drives into d1
+	clr.l	d0
+	move.w	disk_identifier,d0													| Copy the virtual disk id
+	move.l	_drvbits,d1															| Load the list of mounted drives
 	btst	d0,d1																| Has this drive id already been mounted?
 
 	jeq		1f																	| Result is 0; this drive is not mounted
 
-	move.w	#-1,d0
+	move.w	#-1,d0																| Failure return value
 	jmp 	99f
 1:
-	bset.l	d0,d1																| Set the bit at location d0 in d1 (always long-word between registers)
+	bset.l	d0,d1																| Set the bit at location d0 in mounted drives (always long-word between registers)
 	move.l	d1,_drvbits															| Put the updated list of mounted drives into memory
 99:
 	rts
@@ -462,7 +450,7 @@ create_crc32_table:
 3:
 	dbf		d2,2b																| Decrement loop counter, process next bit
 
-	move.l	d1,(a0)+															| Put result into table, increment a0 to next table entry
+	move.l	d1,(a0)+															| Put result into table, increment to next table entry
 
 	add.l	#0x01000000,d0														| Add 0x01000000 to d0 (0xFF*0x01000000 == 0x100000000 which overflows to 0x0)
 	jne		1b																	| Haven't reached end of table, process next table entry
@@ -485,22 +473,22 @@ create_crc32_table:
 | a0, a1
 
 calculate_crc32:
-	move.l	d0,d7																| Move long d0 into d7 (data length)
-	lea		crc32_table,a1														| Load address of crc32_table into a1
-	clr.l	d0																	| Clear d0
+	move.l	d0,d7																| Copy data length
+	lea		crc32_table,a1														| Load address of precomputed CRC32 table
+	clr.l	d0
 1:
 	rol.l	#8,d0																| Rotate d0 left 8 bits
 	moveq	#0,d1																| Set value of d1 to 0
 	move.b	(a0)+,d1															| Move a byte of a0 into d1 then increment a0
 	eor.b	d0,d1																| Exclusive OR a byte of d0 and d1
-	add		d1,d1																| Double the value of d1 (shift left)
-	add		d1,d1																| Double the value of d1 (shift left)
+	add		d1,d1																| Double the value of d1
+	add		d1,d1																| Double the value of d1
 	move.l	(a1,d1.w),d1														| offset into table entry d1 and move the value into d1
 	clr.b	d0																	| Clear a byte of d0
 	eor.l	d1,d0																| Exclusive OR long of d1 and d0
 
-	subq.l	#1,d7																| Subtract 1 from d7 (remaining data length)
-	jne		1b																	| Jump if not zero - backwards to label 1:
+	subq.l	#1,d7																| Subtract 1 from remaining data length
+	jne		1b
 
 	eor.l   #0xFFFFFFFF,d0       												| Invert checksum
 
@@ -547,6 +535,7 @@ wait:
 | a6
 
 read_serial:
+	movem.l	d1-d7/a0-a6,-(a7)
     lea     _hz_200,a6
 	move.l  (a6),d6      														| Store current timerC
 	addi.l	#serial_timeout,d6      											| Increase to max timerC
@@ -567,6 +556,7 @@ read_serial:
 3:
 	Bconin	#1
 99:
+	movem.l	(a7)+,d1-d7/a0-a6
 	rts
 
 |-------------------------------------------------------------------------------
@@ -590,14 +580,14 @@ read_config_file:
 	Fopen	const_config_filename,#0											| Attempt to open config file
 	tst.w	d0																	| Check return value
 	jmi		1f																	| Return value is negative (failed), skip read attempt
-	Fread	d0,#2,disk_bpb														| Read first 2 bytes into an unused variable
+	Fread	d0,#2,temp_long														| Read first 2 bytes into temp variable
 	Fclose	d0																	| Close the file handle
 
 	Cconws	msg_config_found													| Display the config file found message
 
 	| Read disk ID
 
-	move.b	disk_bpb,disk_identifier+1
+	move.b	temp_long,disk_identifier+1
 
 	cmp.w	#0x50,disk_identifier												| Compare read byte with ASCII 'P'
 	jgt		2f																	| Read character is > ASCII 'P' so it is invalid
@@ -608,7 +598,7 @@ read_config_file:
 	| Read max disk size
 
 	clr		d1
-	move.b	disk_bpb+1,d1
+	move.b	temp_long+1,d1
 
 	cmp		#0x35,d1															| Compare read byte with ASCII '5'
 	jgt		2f																	| Read character is > ASCII 5 so it is invalid
@@ -620,10 +610,10 @@ read_config_file:
 
 	move	d1,sector_size_shift_value
 1:
-	clr.l	d0																	| Put success return value in d0
+	clr.l	d0																	| Success return value
 	jmp		99f																	| No problems encountered, jump to end
 2:
-	move.w	#-1,d0																| Put failure return value in d0
+	move.w	#-1,d0																| Failure return value
 99:
 	subi.w	#ascii_offset,disk_identifier										| Convert the ASCII character to its numeric value
 
@@ -644,33 +634,33 @@ read_config_file:
 | a1, a4, a5, a6
 
 allocate_buffers:
-	move	sector_size_shift_value,d0											| Move sector shift (bits) to d0
+	move	sector_size_shift_value,d0											| Copy sector shift (bits)
 
 	cmp		#0x09,d0															| Check if sector shift is 0x09 (same as default buffer size)
 	jeq		99f																	| Sector size is 512KiB, so no need to allocate new buffer. Skip to end
 
 	moveq	#1,d1																| Init d1 with sector size value of 1
 	lsl.w	d0,d1																| Shift sector size left, i.e. multiply number of sectors by bytes per sector to get total bytes
-	move.w	d1,d2																| Store resultant size of 1 sector in d2
+	move.w	d1,d2																| Copy resultant size of 1 sector
 	lsl.w 	#0x02,d1															| Shift sector bytes value 2 bits left (i.e. multiply by 4) to get final buffer size
 
 	Malloc 	d1
 
 	tst     d0           														| Test for null buffer pointer
 	jne     1f     		 														| Buffer is allocated, continue
-	moveq	#-1,d0																| Put failure return value in d0
-	jmp 	99f																	| Jump to end
+	moveq	#-1,d0																| Failure return value
+	rts
 
 1:
 	| Data buffer 1
 
-	move.l	d0,a6																| Move address of new buffer into a6
+	move.l	d0,a6																| Copy address of new buffer
 
-	move.l	(_bufl),a4															| Move first data BCB pointer into a4
-	move.l	(a4),a5																| Move next BCB pointer into a5
+	move.l	(_bufl),a4															| Copy first data BCB pointer
+	move.l	(a4),a5																| Copy next BCB pointer
 	add.l	#0x10,a4															| Offset to buffer pointer
 
-	move.l	(a4),a1																| Store original buffer address in a1
+	move.l	(a4),a1																| Copy original buffer address
 	move.l	a6,(a4)																| Set buffer address to new allocated area of RAM
 
 	jbsr copy_buffer
@@ -678,17 +668,17 @@ allocate_buffers:
 	| Data buffer 2
 
 	add.l	#0x10,a5															| Offset to buffer pointer
-	move.l	(a5),a1																| Store original buffer address in a1
+	move.l	(a5),a1																| Copy original buffer address
 	move.l	a6,(a5)																| Set buffer address to new allocated area of RAM
 
 	jbsr copy_buffer															| Offset to next sector area in buffer
 
 	| FAT buffer 1
 
-	move.l	(_bufl+0x04),a4														| Move first FAT BCB pointer into a4
-	move.l	(a4),a5																| Move next BCB pointer into a5
+	move.l	(_bufl+0x04),a4														| Copy first FAT BCB pointer
+	move.l	(a4),a5																| Copy next BCB pointer
 	add.l	#0x10,a4															| Offset to buffer pointer
-	move.l	(a4),a1																| Store original buffer address in a1
+	move.l	(a4),a1																| Copy original buffer address
 	move.l	a6,(a4)																| Set buffer address to new allocated area of RAM
 
 	jbsr	copy_buffer
@@ -696,12 +686,12 @@ allocate_buffers:
 	| FAT buffer 2
 
 	add.l	#0x10,a5															| Offset to buffer pointer
-	move.l	(a5),a1																| Store original buffer address in a1
+	move.l	(a5),a1																| Copy original buffer address
 	move.l	a6,(a5)																| Set buffer address to new allocated area of RAM
 
 	jbsr copy_buffer
 
-	clr.l	d0																	| Set success return value
+	clr.l	d0																	| Success return value
 99:
 rts
 
@@ -721,13 +711,13 @@ rts
 | d3
 
 copy_buffer:
-	move	#0x200,d3															| Put byte counter in d3 (512)
+	move	#0x200,d3															| Put byte count into counter (512)
 1:
 	move.b	(a1)+,(a6)+
 	dbf		d3,1b
 
-	sub.l	#0x201,a6															| Move back to beginning of sector in buffer
-	add.l	d2,a6																| Offset to next sector area in buffer
+	sub.l	#0x201,a6															| Move back to beginning of destination buffer
+	add.l	d2,a6																| Offset destination buffer
 rts
 |-------------------------------------------------------------------------------
 
@@ -796,9 +786,6 @@ crc32_table:
 	ds.l	0x100
 
 temp_long:
-	ds.l	0x01
-
-data_length:
 	ds.l	0x01
 
 |-------------------------------------------------------------------------------

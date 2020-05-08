@@ -13,7 +13,7 @@
 | Smallest version
 |
 | input: a5.l : output buffer
-|		 d5.l : LZ4 packed block size (in bytes)
+|		 temp_long: long address of compressed data length
 |
 | output: -ve on failure
 |
