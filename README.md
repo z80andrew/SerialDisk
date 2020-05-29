@@ -3,7 +3,7 @@
 
 A virtual Atari ST disk over serial written in .NET Core 3.0 for Windows, Linux and ARM.
 
-SerialDisk is free software, but if you find it useful please consider donating towards my coffee fund to aid additional development - any amount is appreciated. [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/z80andrew)
+SerialDisk is freeware, but if you find it useful please consider donating towards my coffee fund to aid additional development - any amount is appreciated. [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/z80andrew)
 
 ## Download
 Download the latest version at https://github.com/z80andrew/SerialDisk/releases/latest 
