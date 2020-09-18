@@ -21,7 +21,7 @@
 
 | Other constants
 .equ wait_millis,	300															| Time for pauses. 200 = 1 second.
-.equ serial_timeout,1000														| Serial read timeout. 200 = 1 second.
+.equ serial_timeout,10000														| Serial read timeout. 200 = 1 second.
 .equ crc32_poly,	0x04c11db7													| Polynomial for CRC32 calculation
 .equ ascii_offset,	0x41														| Offset from number to its ASCII equivalent
 
@@ -300,7 +300,12 @@ _rw_write:
 _rw_read:
 	move.l	d3,-(sp)															| Push uncompressed data length on to stack
 
-	| Receive compressed data length.
+	move.l	a4,a5																| Copy destination address so it can be used again later
+
+	tst.w	compression_enabled
+	jeq		2f
+
+	| Receive compressed data length
 
 	move	#4-1,d3																| Copy byte count into counter (There are 4 bytes to read, -1 for 0-based index)
 	lea		temp_long,a3														| Load address to store compressed data length
@@ -314,23 +319,35 @@ _rw_read:
 	dbf		d3,1b
 
 	| Receive compressed data bytes
-
-	move.l	a4,a5																| Copy destination address
 	jbsr	lz4_depack
 	tst		d0
 	jmi		99f
 
+	jmp		3f
+
+2:
+	| Receive uncompressed data bytes
+
+	jbsr	read_serial
+	tst.w	d0
+	jmi		99f
+	move.b	d0,(a5)+															| Add read byte to buffer, increment address to next buffer byte
+
+	subq.l	#1,d3																| Subtract 1 from number of sectors
+	jne		2b																	| Jump if number of sectors != 0 - backwards to label 1:
+
+3:
 	| Receive remote CRC32 checksum.
 
 	move	#4-1,d3																| Copy byte count into counter (There are 4 bytes to read, -1 for 0-based index)
 	lea		temp_long,a3														| Load address to store CRC32 checksum
-1:
+4:
 	jbsr	read_serial
 	tst.w	d0
 	jmi		99f
 	move.b	d0,(a3)+
 
-	dbf		d3,1b
+	dbf		d3,4b
 
 	| Calculate local CRC32 checksum.
 
@@ -610,6 +627,10 @@ read_config_file:
 	sub		#0x28,d1															| Translate config value to number of required left shifts for sector size calculation
 
 	move	d1,sector_size_shift_value
+
+	| Read compression flag
+
+	move.w	#0x00,compression_enabled
 1:
 	clr.l	d0																	| Success return value
 	jmp		99f																	| No problems encountered, jump to end
@@ -772,6 +793,9 @@ disk_bpb:
 	ds.w	0x09
 
 sector_size_shift_value:
+	ds.w	0x01
+
+compression_enabled:
 	ds.w	0x01
 
 old_hdv_bpb:

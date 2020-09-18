@@ -193,7 +193,7 @@ namespace AtariST.SerialDisk
 
             CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
 
-            _serial = new Serial(_applicationSettings.SerialSettings, _disk, _logger, cancelTokenSource);
+            _serial = new Serial(_applicationSettings.SerialSettings, _disk, _logger, cancelTokenSource, _applicationSettings.IsCompressionEnabled);
 
             _logger.Log($"Baud rate:{_applicationSettings.SerialSettings.BaudRate} | Data bits:{_applicationSettings.SerialSettings.DataBits}" +
                 $" | Parity:{_applicationSettings.SerialSettings.Parity} | Stop bits:{_applicationSettings.SerialSettings.StopBits} | Flow control:{_applicationSettings.SerialSettings.Handshake}", LoggingLevel.Info);

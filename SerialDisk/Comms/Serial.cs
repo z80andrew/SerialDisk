@@ -30,11 +30,14 @@ namespace AtariST.SerialDisk.Comms
 
         private readonly CancellationTokenSource _listenTokenSource;
 
-        public Serial(SerialPortSettings serialPortSettings, IDisk disk, ILogger log, CancellationTokenSource cancelTokenSource)
+        private bool _isCompressionEnabled;
+
+        public Serial(SerialPortSettings serialPortSettings, IDisk disk, ILogger log, CancellationTokenSource cancelTokenSource, bool isCompressionEnabled)
         {
             _localDisk = disk;
             _logger = log;
             _listenTokenSource = cancelTokenSource;
+            _isCompressionEnabled = isCompressionEnabled;
 
             try
             {
@@ -371,26 +374,30 @@ namespace AtariST.SerialDisk.Comms
 
             UInt32 crc32Checksum = CRC32.CalculateCRC32(sendDataBuffer);
 
-            var compressedDataBuffer = Utilities.LZ4.CompressAsStandardLZ4Block(sendDataBuffer);
-
-            _transferStartDateTime = DateTime.Now;
-
-            byte[] dataLenBuffer = new byte[4];
-            dataLenBuffer[0] = (byte)((compressedDataBuffer.Length >> 24) & 0xff);
-            dataLenBuffer[1] = (byte)((compressedDataBuffer.Length >> 16) & 0xff);
-            dataLenBuffer[2] = (byte)((compressedDataBuffer.Length >> 8) & 0xff);
-            dataLenBuffer[3] = (byte)(compressedDataBuffer.Length & 0xff);
-
-            _logger.Log($"Sending compressed data ({compressedDataBuffer.Length} bytes)...", LoggingLevel.Verbose);
-
-            _serialPort.BaseStream.Write(dataLenBuffer, 0, dataLenBuffer.Length);
-
-            for (int i = 0; i < compressedDataBuffer.Length; i++)
+            if (_isCompressionEnabled)
             {
-                _serialPort.BaseStream.WriteByte(compressedDataBuffer[i]);
-                string percentSent = ((Convert.ToDecimal(i + 1) / compressedDataBuffer.Length) * 100).ToString("00.0");
-                Console.Write($"\rSent [{(i + 1).ToString("D" + compressedDataBuffer.Length.ToString().Length)} / {compressedDataBuffer.Length} Bytes] {percentSent}% ");
+                sendDataBuffer = Utilities.LZ4.CompressAsStandardLZ4Block(sendDataBuffer);
+
+                _transferStartDateTime = DateTime.Now;
+
+                byte[] dataLenBuffer = new byte[4];
+                dataLenBuffer[0] = (byte)((sendDataBuffer.Length >> 24) & 0xff);
+                dataLenBuffer[1] = (byte)((sendDataBuffer.Length >> 16) & 0xff);
+                dataLenBuffer[2] = (byte)((sendDataBuffer.Length >> 8) & 0xff);
+                dataLenBuffer[3] = (byte)(sendDataBuffer.Length & 0xff);
+
+                _logger.Log($"Sending compressed data ({sendDataBuffer.Length} bytes)...", LoggingLevel.Verbose);
+
+                _serialPort.BaseStream.Write(dataLenBuffer, 0, dataLenBuffer.Length);
             }
+
+            for (int i = 0; i < sendDataBuffer.Length; i++)
+            {
+                _serialPort.BaseStream.WriteByte(sendDataBuffer[i]);
+                string percentSent = ((Convert.ToDecimal(i + 1) / sendDataBuffer.Length) * 100).ToString("00.0");
+                Console.Write($"\rSent [{(i + 1).ToString("D" + sendDataBuffer.Length.ToString().Length)} / {sendDataBuffer.Length} Bytes] {percentSent}% ");
+            }
+            
             Console.WriteLine();
 
             byte[] crc32Buffer = new byte[4];
