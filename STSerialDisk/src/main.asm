@@ -19,9 +19,12 @@
 .equ cmd_mediach,	0x02
 .equ cmd_bpb, 		0x03
 
+| SerialDisk data flags
+.equ compression_isenabled,	0x00
+
 | Other constants
 .equ wait_millis,	300															| Time for pauses. 200 = 1 second.
-.equ serial_timeout,10000														| Serial read timeout. 200 = 1 second.
+.equ serial_timeout,1000														| Serial read timeout. 200 = 1 second.
 .equ crc32_poly,	0x04c11db7													| Polynomial for CRC32 calculation
 .equ ascii_offset,	0x41														| Offset from number to its ASCII equivalent
 
@@ -302,7 +305,12 @@ _rw_read:
 
 	move.l	a4,a5																| Copy destination address so it can be used again later
 
-	tst.w	compression_enabled
+	jbsr	read_serial															| Receive serial data flags
+	tst.w	d0
+	jmi		99f
+
+	btst	#compression_isenabled,d0											| Check for compression flag
+
 	jeq		2f
 
 	| Receive compressed data length
@@ -628,9 +636,6 @@ read_config_file:
 
 	move	d1,sector_size_shift_value
 
-	| Read compression flag
-
-	move.w	#0x00,compression_enabled
 1:
 	clr.l	d0																	| Success return value
 	jmp		99f																	| No problems encountered, jump to end
@@ -784,6 +789,7 @@ err_buffer_allocation:
 
 .bss
 
+| ds.w is the smallest size that can be specified here
 |-------------------------------------------------------------------------------
 
 disk_identifier:
@@ -793,9 +799,6 @@ disk_bpb:
 	ds.w	0x09
 
 sector_size_shift_value:
-	ds.w	0x01
-
-compression_enabled:
 	ds.w	0x01
 
 old_hdv_bpb:

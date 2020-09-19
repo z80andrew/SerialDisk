@@ -16,7 +16,7 @@ namespace AtariST.SerialDisk.Models
 
         public string LocalDirectoryName { get; set; }
 
-        public bool IsCompressionEnabled { get; set; }
+        public bool CompressionIsEnabled { get; set; }
 
         public string LogFileName
         {

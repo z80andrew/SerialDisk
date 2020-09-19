@@ -17,27 +17,30 @@ namespace AtariST.SerialDisk.Comms
         private readonly ILogger _logger;
         private readonly IDisk _localDisk;
 
-        private int _receivedDataCounter = 0;
+        private int _receivedDataCounter;
 
-        private UInt32 _receivedSectorIndex = 0;
-        private UInt32 _receivedSectorCount = 0;
+        private UInt32 _receivedSectorIndex;
+        private UInt32 _receivedSectorCount;
         private byte[] _receiverDataBuffer;
-        private int _receiverDataIndex = 0;
+        private int _receiverDataIndex;
 
-        private DateTime _transferStartDateTime = DateTime.Now;
+        [Flags]
+        private enum _serialFlags { compression = 1};
+
+        private DateTime _transferStartDateTime;
 
         private ReceiverState _state = ReceiverState.ReceiveStartMagic;
 
         private readonly CancellationTokenSource _listenTokenSource;
 
-        private bool _isCompressionEnabled;
+        private readonly bool _compressionIsEnabled;
 
-        public Serial(SerialPortSettings serialPortSettings, IDisk disk, ILogger log, CancellationTokenSource cancelTokenSource, bool isCompressionEnabled)
+        public Serial(SerialPortSettings serialPortSettings, IDisk disk, ILogger log, CancellationTokenSource cancelTokenSource, bool CompressionIsEnabled)
         {
             _localDisk = disk;
             _logger = log;
             _listenTokenSource = cancelTokenSource;
-            _isCompressionEnabled = isCompressionEnabled;
+            _compressionIsEnabled = CompressionIsEnabled;
 
             try
             {
@@ -52,6 +55,8 @@ namespace AtariST.SerialDisk.Comms
                 _logger.LogException(portException, $"Error opening serial port {serialPortSettings.PortName}");
                 throw portException;
             }
+
+            _state = ReceiverState.ReceiveStartMagic;
 
             StartListening();
         }
@@ -374,7 +379,14 @@ namespace AtariST.SerialDisk.Comms
 
             UInt32 crc32Checksum = CRC32.CalculateCRC32(sendDataBuffer);
 
-            if (_isCompressionEnabled)
+            _serialFlags serialFlags = 0;
+            
+            if(_compressionIsEnabled) serialFlags |= _serialFlags.compression;
+
+            _logger.Log($"Sending data flags: {serialFlags.ToString()}...", LoggingLevel.Verbose);
+            _serialPort.BaseStream.WriteByte(Convert.ToByte(serialFlags));
+
+            if (serialFlags.HasFlag(_serialFlags.compression))
             {
                 sendDataBuffer = Utilities.LZ4.CompressAsStandardLZ4Block(sendDataBuffer);
 
