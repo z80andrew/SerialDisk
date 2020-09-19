@@ -17,24 +17,30 @@ namespace AtariST.SerialDisk.Comms
         private readonly ILogger _logger;
         private readonly IDisk _localDisk;
 
-        private int _receivedDataCounter = 0;
+        private int _receivedDataCounter;
 
-        private UInt32 _receivedSectorIndex = 0;
-        private UInt32 _receivedSectorCount = 0;
+        private UInt32 _receivedSectorIndex;
+        private UInt32 _receivedSectorCount;
         private byte[] _receiverDataBuffer;
-        private int _receiverDataIndex = 0;
+        private int _receiverDataIndex;
 
-        private DateTime _transferStartDateTime = DateTime.Now;
+        [Flags]
+        private enum _serialFlags { compression = 1};
+
+        private DateTime _transferStartDateTime;
 
         private ReceiverState _state = ReceiverState.ReceiveStartMagic;
 
         private readonly CancellationTokenSource _listenTokenSource;
 
-        public Serial(SerialPortSettings serialPortSettings, IDisk disk, ILogger log, CancellationTokenSource cancelTokenSource)
+        private readonly bool _compressionIsEnabled;
+
+        public Serial(SerialPortSettings serialPortSettings, IDisk disk, ILogger log, CancellationTokenSource cancelTokenSource, bool CompressionIsEnabled)
         {
             _localDisk = disk;
             _logger = log;
             _listenTokenSource = cancelTokenSource;
+            _compressionIsEnabled = CompressionIsEnabled;
 
             try
             {
@@ -49,6 +55,8 @@ namespace AtariST.SerialDisk.Comms
                 _logger.LogException(portException, $"Error opening serial port {serialPortSettings.PortName}");
                 throw portException;
             }
+
+            _state = ReceiverState.ReceiveStartMagic;
 
             StartListening();
         }
@@ -362,14 +370,47 @@ namespace AtariST.SerialDisk.Comms
             _logger.Log("Sending data...", LoggingLevel.Verbose);
 
             if (_receivedSectorCount == 1)
-                _logger.Log("Reading sector " + _receivedSectorIndex + " (" + _localDisk.Parameters.BytesPerSector + " Bytes)... ", LoggingLevel.Info);
+                _logger.Log("Reading sector " + _receivedSectorIndex, LoggingLevel.Info);
             else
-                _logger.Log("Reading sectors " + _receivedSectorIndex + " - " + (_receivedSectorIndex + _receivedSectorCount - 1) + " (" + (_receivedSectorCount * _localDisk.Parameters.BytesPerSector) + " Bytes)... ", LoggingLevel.Info);
-
+                _logger.Log("Reading sectors " + _receivedSectorIndex + " - " + (_receivedSectorIndex + _receivedSectorCount - 1), LoggingLevel.Info);
 
             byte[] sendDataBuffer = _localDisk.ReadSectors((int)_receivedSectorIndex, (int)_receivedSectorCount);
 
-            _transferStartDateTime = DateTime.Now;
+            UInt32 crc32Checksum = CRC32.CalculateCRC32(sendDataBuffer);
+
+            _serialFlags serialFlags = 0;
+            
+            if(_compressionIsEnabled) serialFlags |= _serialFlags.compression;
+
+            _logger.Log($"Sending serial flags: {serialFlags.ToString()}...", LoggingLevel.Verbose);
+            _serialPort.BaseStream.WriteByte(Convert.ToByte(serialFlags));
+
+            var numUncompressedBytes = sendDataBuffer.Length;
+
+            string sendingMessage = $"Sending {numUncompressedBytes} bytes";
+
+            if (serialFlags.HasFlag(_serialFlags.compression))
+            {
+                sendDataBuffer = Utilities.LZ4.CompressAsStandardLZ4Block(sendDataBuffer);
+
+                sendingMessage = $"Sending {sendDataBuffer.Length} bytes";
+
+                _transferStartDateTime = DateTime.Now;
+
+                byte[] dataLenBuffer = new byte[4];
+                dataLenBuffer[0] = (byte)((sendDataBuffer.Length >> 24) & 0xff);
+                dataLenBuffer[1] = (byte)((sendDataBuffer.Length >> 16) & 0xff);
+                dataLenBuffer[2] = (byte)((sendDataBuffer.Length >> 8) & 0xff);
+                dataLenBuffer[3] = (byte)(sendDataBuffer.Length & 0xff);
+
+                float percentageOfOriginalSize = (100 / (float)numUncompressedBytes) * sendDataBuffer.Length;
+
+                _logger.Log($"Compression: { percentageOfOriginalSize.ToString("00.0")}% of { numUncompressedBytes} bytes", LoggingLevel.Verbose);
+
+                _serialPort.BaseStream.Write(dataLenBuffer, 0, dataLenBuffer.Length);
+            }
+
+            _logger.Log(sendingMessage, LoggingLevel.Info);
 
             for (int i = 0; i < sendDataBuffer.Length; i++)
             {
@@ -377,15 +418,14 @@ namespace AtariST.SerialDisk.Comms
                 string percentSent = ((Convert.ToDecimal(i + 1) / sendDataBuffer.Length) * 100).ToString("00.0");
                 Console.Write($"\rSent [{(i + 1).ToString("D" + sendDataBuffer.Length.ToString().Length)} / {sendDataBuffer.Length} Bytes] {percentSent}% ");
             }
+            
             Console.WriteLine();
 
             byte[] crc32Buffer = new byte[4];
-            UInt32 crc32Value = CRC32.CalculateCRC32(sendDataBuffer);
-
-            crc32Buffer[0] = (byte)((crc32Value >> 24) & 0xff);
-            crc32Buffer[1] = (byte)((crc32Value >> 16) & 0xff);
-            crc32Buffer[2] = (byte)((crc32Value >> 8) & 0xff);
-            crc32Buffer[3] = (byte)(crc32Value & 0xff);
+            crc32Buffer[0] = (byte)((crc32Checksum >> 24) & 0xff);
+            crc32Buffer[1] = (byte)((crc32Checksum >> 16) & 0xff);
+            crc32Buffer[2] = (byte)((crc32Checksum >> 8) & 0xff);
+            crc32Buffer[3] = (byte)(crc32Checksum & 0xff);
 
             _logger.Log("Sending CRC32...", LoggingLevel.Verbose);
 

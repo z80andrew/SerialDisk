@@ -1,6 +1,7 @@
 {
   "LocalDirectoryName": ".",
-  "LoggingLevel": 1,
+  "CompressionIsEnabled": true,
+  "LoggingLevel": 0,
 
   "SerialSettings": {
     "PortName": "/dev/ttyS0",

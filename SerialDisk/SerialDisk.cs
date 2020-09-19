@@ -57,16 +57,17 @@ namespace AtariST.SerialDisk
             Console.WriteLine($"{parameters[0]} <disk_size_in_MiB> ({_applicationSettings.DiskSettings.DiskSizeMiB})");
             Console.WriteLine($"{parameters[1]} [{FormatEnumParams(typeof(TOSVersion))}] ({_applicationSettings.DiskSettings.DiskTOSCompatibility})");
             Console.WriteLine($"{parameters[2]} <sectors> ({_applicationSettings.DiskSettings.RootDirectorySectors})");
+            Console.WriteLine($"{parameters[3]} [True|False] ({_applicationSettings.CompressionIsEnabled})");
 
-            Console.WriteLine($"{parameters[3]} [port_name] ({_applicationSettings.SerialSettings.PortName})");
-            Console.WriteLine($"{parameters[4]} <baud_rate> ({_applicationSettings.SerialSettings.BaudRate})");
-            Console.WriteLine($"{parameters[5]} <data_bits> ({_applicationSettings.SerialSettings.DataBits})");
-            Console.WriteLine($"{parameters[6]} [{FormatEnumParams(typeof(StopBits))}] ({_applicationSettings.SerialSettings.StopBits})");
-            Console.WriteLine($"{parameters[7]} [{FormatEnumParams(typeof(Parity))}] ({_applicationSettings.SerialSettings.Parity})");
-            Console.WriteLine($"{parameters[8]} [{FormatEnumParams(typeof(Handshake))}] ({_applicationSettings.SerialSettings.Handshake})");
+            Console.WriteLine($"{parameters[4]} [port_name] ({_applicationSettings.SerialSettings.PortName})");
+            Console.WriteLine($"{parameters[5]} <baud_rate> ({_applicationSettings.SerialSettings.BaudRate})");
+            Console.WriteLine($"{parameters[6]} <data_bits> ({_applicationSettings.SerialSettings.DataBits})");
+            Console.WriteLine($"{parameters[7]} [{FormatEnumParams(typeof(StopBits))}] ({_applicationSettings.SerialSettings.StopBits})");
+            Console.WriteLine($"{parameters[8]} [{FormatEnumParams(typeof(Parity))}] ({_applicationSettings.SerialSettings.Parity})");
+            Console.WriteLine($"{parameters[9]} [{FormatEnumParams(typeof(Handshake))}] ({_applicationSettings.SerialSettings.Handshake})");
 
-            Console.WriteLine($"{parameters[9]} [{FormatEnumParams(typeof(Constants.LoggingLevel))}] ({_applicationSettings.LoggingLevel})");
-            Console.WriteLine($"{parameters[10]} [log_file_name]");
+            Console.WriteLine($"{parameters[10]} [{FormatEnumParams(typeof(Constants.LoggingLevel))}] ({_applicationSettings.LoggingLevel})");
+            Console.WriteLine($"{parameters[11]} [log_file_name]");
             Console.WriteLine();
 
             Console.WriteLine("Serial ports available:");
@@ -193,11 +194,12 @@ namespace AtariST.SerialDisk
 
             CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
 
-            _serial = new Serial(_applicationSettings.SerialSettings, _disk, _logger, cancelTokenSource);
+            _serial = new Serial(_applicationSettings.SerialSettings, _disk, _logger, cancelTokenSource, _applicationSettings.CompressionIsEnabled);
 
             _logger.Log($"Baud rate:{_applicationSettings.SerialSettings.BaudRate} | Data bits:{_applicationSettings.SerialSettings.DataBits}" +
                 $" | Parity:{_applicationSettings.SerialSettings.Parity} | Stop bits:{_applicationSettings.SerialSettings.StopBits} | Flow control:{_applicationSettings.SerialSettings.Handshake}", LoggingLevel.Info);
             _logger.Log($"Using local directory {_applicationSettings.LocalDirectoryName} as a {_applicationSettings.DiskSettings.DiskSizeMiB}MiB virtual disk", LoggingLevel.Info);
+            _logger.Log($"Compression: " + (_applicationSettings.CompressionIsEnabled ? "Enabled" : "Disabled"), LoggingLevel.Info);
             _logger.Log($"Logging level: { _applicationSettings.LoggingLevel} ", LoggingLevel.Info);
 
             Console.WriteLine("Press Ctrl-X to quit.");
