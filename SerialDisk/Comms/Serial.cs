@@ -25,7 +25,7 @@ namespace AtariST.SerialDisk.Comms
         private int _receiverDataIndex;
 
         [Flags]
-        private enum _serialFlags { compression = 1};
+        private enum SerialFlags { None = 0, Compression = 1};
 
         private DateTime _transferStartDateTime;
 
@@ -35,12 +35,12 @@ namespace AtariST.SerialDisk.Comms
 
         private readonly bool _compressionIsEnabled;
 
-        public Serial(SerialPortSettings serialPortSettings, IDisk disk, ILogger log, CancellationTokenSource cancelTokenSource, bool CompressionIsEnabled)
+        public Serial(SerialPortSettings serialPortSettings, IDisk disk, ILogger log, CancellationTokenSource cancelTokenSource, bool compressionIsEnabled)
         {
             _localDisk = disk;
             _logger = log;
             _listenTokenSource = cancelTokenSource;
-            _compressionIsEnabled = CompressionIsEnabled;
+            _compressionIsEnabled = compressionIsEnabled;
 
             try
             {
@@ -336,9 +336,9 @@ namespace AtariST.SerialDisk.Comms
             if (_receivedDataCounter == 0)
             {
                 if (_receivedSectorCount == 1)
-                    _logger.Log("Writing sector " + _receivedSectorIndex + " (" + _localDisk.Parameters.BytesPerSector + " Bytes)... ", LoggingLevel.Info);
+                    _logger.Log("Writing sector " + _receivedSectorIndex + " (" + _localDisk.Parameters.BytesPerSector + " Bytes)... ", LoggingLevel.Verbose);
                 else
-                    _logger.Log("Writing sectors " + _receivedSectorIndex + " - " + (_receivedSectorIndex + _receivedSectorCount - 1) + " (" + (_receivedSectorCount * _localDisk.Parameters.BytesPerSector) + " Bytes)... ", LoggingLevel.Info);
+                    _logger.Log("Writing sectors " + _receivedSectorIndex + " - " + (_receivedSectorIndex + _receivedSectorCount - 1) + " (" + (_receivedSectorCount * _localDisk.Parameters.BytesPerSector) + " Bytes)... ", LoggingLevel.Verbose);
 
 
                 _receiverDataBuffer = new byte[_receivedSectorCount * _localDisk.Parameters.BytesPerSector];
@@ -370,26 +370,26 @@ namespace AtariST.SerialDisk.Comms
             _logger.Log("Sending data...", LoggingLevel.Verbose);
 
             if (_receivedSectorCount == 1)
-                _logger.Log("Reading sector " + _receivedSectorIndex, LoggingLevel.Info);
+                _logger.Log("Reading sector " + _receivedSectorIndex, LoggingLevel.Verbose);
             else
-                _logger.Log("Reading sectors " + _receivedSectorIndex + " - " + (_receivedSectorIndex + _receivedSectorCount - 1), LoggingLevel.Info);
+                _logger.Log("Reading sectors " + _receivedSectorIndex + " - " + (_receivedSectorIndex + _receivedSectorCount - 1), LoggingLevel.Verbose);
 
             byte[] sendDataBuffer = _localDisk.ReadSectors((int)_receivedSectorIndex, (int)_receivedSectorCount);
 
             UInt32 crc32Checksum = CRC32.CalculateCRC32(sendDataBuffer);
 
-            _serialFlags serialFlags = 0;
+            SerialFlags serialFlags = SerialFlags.None;
             
-            if(_compressionIsEnabled) serialFlags |= _serialFlags.compression;
+            if(_compressionIsEnabled) serialFlags |= SerialFlags.Compression;
 
-            _logger.Log($"Sending serial flags: {serialFlags.ToString()}...", LoggingLevel.Verbose);
+            _logger.Log($"Sending serial flags: {serialFlags}...", LoggingLevel.Verbose);
             _serialPort.BaseStream.WriteByte(Convert.ToByte(serialFlags));
 
             var numUncompressedBytes = sendDataBuffer.Length;
 
             string sendingMessage = $"Sending {numUncompressedBytes} bytes";
 
-            if (serialFlags.HasFlag(_serialFlags.compression))
+            if (serialFlags.HasFlag(SerialFlags.Compression))
             {
                 sendDataBuffer = Utilities.LZ4.CompressAsStandardLZ4Block(sendDataBuffer);
 
@@ -449,7 +449,7 @@ namespace AtariST.SerialDisk.Comms
         {
             if (_localDisk.MediaChanged)
             {
-                _logger.Log("Media has been changed. Importing directory \"" + _localDisk.Parameters.LocalDirectoryPath + "\"... ", LoggingLevel.Info);
+                _logger.Log("Media has been changed. Importing directory \"" + _localDisk.Parameters.LocalDirectoryPath + "\"... ", LoggingLevel.Verbose);
 
                 _localDisk.FatImportLocalDirectoryContents(_localDisk.Parameters.LocalDirectoryPath, 0);
             }
