@@ -129,9 +129,10 @@ namespace AtariST.SerialDisk
 
         public static void Main(string[] args)
         {
-            var versionMessage = "Serial Disk v" + Assembly.GetExecutingAssembly().GetName().Version;
-            Console.WriteLine(versionMessage);
+            var versionMessage = "Serial Disk v" + Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
 
+            Console.WriteLine(versionMessage);
+           
             #region Dependency injection
 
             var serviceCollection = new ServiceCollection();

@@ -443,7 +443,8 @@ namespace AtariST.SerialDisk.Storage
 
                 else if (sector < Parameters.SectorsPerFat * 2 + Parameters.RootDirectorySectors) // Root directory area?
                 {
-                    _logger.Log("Updating ROOT directory area", Constants.LoggingLevel.Info);
+                    _logger.Log($"Updating ROOT directory sector {sector}", Constants.LoggingLevel.Info);
+
                     Array.Copy(dataBuffer, dataOffset, _rootDirectoryBuffer, (sector - Parameters.SectorsPerFat * 2) * Parameters.BytesPerSector, Parameters.BytesPerSector);
 
                     SyncLocalDisk(_rootDirectoryClusterIndex, false); // Root directory must be synced independently
@@ -451,8 +452,10 @@ namespace AtariST.SerialDisk.Storage
 
                 else // Data area.
                 {
-                    _logger.Log("Updating DATA area", Constants.LoggingLevel.Info);
                     int WriteSector = sector - (Parameters.SectorsPerFat * 2 + Parameters.RootDirectorySectors) + 2 * Parameters.SectorsPerCluster;
+
+                    _logger.Log($"Updating DATA sector {WriteSector}", Constants.LoggingLevel.Info);
+
                     clusterIndex = WriteSector / Parameters.SectorsPerCluster;
 
                     if (_clusterInfos[clusterIndex] == null) _clusterInfos[clusterIndex] = new ClusterInfo();

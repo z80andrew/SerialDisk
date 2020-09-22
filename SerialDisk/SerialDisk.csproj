@@ -6,7 +6,7 @@
     <RootNamespace>AtariST.SerialDisk</RootNamespace>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <FileVersion>2.0.0.0</FileVersion>
-    <Version>2.5</Version>
+    <Version>2.5 BETA $([System.DateTime]::UtcNow.ToString("yyyy-MM-dd"))</Version>
     <ApplicationIcon />
     <StartupObject></StartupObject>
     <Authors>z80andrew</Authors>
@@ -16,7 +16,7 @@
     <RepositoryUrl>https://github.com/z80andrew/SerialDisk.git</RepositoryUrl>
     <RepositoryType>GitHub</RepositoryType>
     <PackageReleaseNotes></PackageReleaseNotes>
-    <Copyright>z80andrew 2019</Copyright>
+    <Copyright>© z80andrew $([System.DateTime]::UtcNow.Year)</Copyright>
     <Deterministic>False</Deterministic>
   </PropertyGroup>
 
@@ -25,6 +25,7 @@
     <DebugSymbols>true</DebugSymbols>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors>1605</WarningsAsErrors>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
