@@ -14,6 +14,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization.Json;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using static AtariST.SerialDisk.Common.Constants;
@@ -128,7 +129,8 @@ namespace AtariST.SerialDisk
 
         public static void Main(string[] args)
         {
-            Console.WriteLine("Serial Disk v" + Assembly.GetExecutingAssembly().GetName().Version);
+            var versionMessage = "Serial Disk v" + Assembly.GetExecutingAssembly().GetName().Version;
+            Console.WriteLine(versionMessage);
 
             #region Dependency injection
 
@@ -182,6 +184,12 @@ namespace AtariST.SerialDisk
             #endregion
 
             _logger = new Logger(_applicationSettings.LoggingLevel, _applicationSettings.LogFileName);
+
+            _logger.LogToFile(versionMessage);
+
+            var json = JsonSerializer.Serialize(_applicationSettings, typeof(ApplicationSettings));
+
+            _logger.Log(json, LoggingLevel.Verbose);
 
             _logger.Log($"Operating system: {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture} {System.Runtime.InteropServices.RuntimeInformation.OSDescription}", LoggingLevel.Verbose);
             _logger.Log($"Framework version: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", LoggingLevel.Verbose);
