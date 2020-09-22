@@ -148,9 +148,15 @@ namespace AtariST.SerialDisk
 
                 using (var defaultConfigStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(defaultConfigResourceName))
                 {
-                    DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(ApplicationSettings));
-                    _applicationSettings = (ApplicationSettings)ser.ReadObject(defaultConfigStream);
+                    DataContractJsonSerializer appSettingsSerializer = new DataContractJsonSerializer(typeof(ApplicationSettings));
+                    _applicationSettings = (ApplicationSettings)appSettingsSerializer.ReadObject(defaultConfigStream);
                 }
+
+                var configBuilder = new ConfigurationBuilder();
+
+                configBuilder.AddJsonFile("serialdisk.config", true, false)
+                    .Build()
+                    .Bind(_applicationSettings);
 
                 if (args.Any() && args.Where(arg => arg.ToLowerInvariant().StartsWith("--help")).Any())
                 {
@@ -158,9 +164,7 @@ namespace AtariST.SerialDisk
                     return;
                 }
 
-                new ConfigurationBuilder()
-                    .AddJsonFile("serialdisk.config", true, false)
-                    .AddCommandLine(args, Constants.ConsoleParameterMappings)
+                configBuilder.AddCommandLine(args, Constants.ConsoleParameterMappings)
                     .Build()
                     .Bind(_applicationSettings);
 
