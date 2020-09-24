@@ -25,6 +25,15 @@ namespace Tests
             Assert.AreEqual(expectedShortFileName, shortFileName);
         }
 
+        [TestCase(".htaccess","_HTACCES")]
+        [TestCase(".filename.jpeg","_FILENAM.JPE")]
+        public void CreateShortFileNameFromInvalidFileName(string invalidFileName, string expectedShortFileName)
+        {
+            var shortFileName = FAT16Helper.GetShortFileName(invalidFileName);
+
+            Assert.AreEqual(expectedShortFileName, shortFileName);
+        }
+
         [TestCase(TOSVersion.TOS100, 0x3FFF * 8192 * 2)]
         [TestCase(TOSVersion.TOS104, 0x7FFF * 8192 * 2)]
         public void ValidDiskSizes(TOSVersion tosVersion, int expectedMaxDiskSizeBytes)

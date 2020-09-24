@@ -29,7 +29,16 @@ namespace AtariST.SerialDisk.Utilities
             fileName = invalidCharactersRegex.Replace(fileName.ToUpper(), "_");
 
             int dotIndex = fileName.LastIndexOf(".");
-            if (dotIndex != -1) fileName = fileName.Substring(0, dotIndex).Replace('.', '_') + fileName[dotIndex..];
+
+            // Filenames cannot start with . so if this is the only one in the name, replace it
+            if (dotIndex == 0)
+            {
+                fileName = fileName.Replace('.', '_');
+                dotIndex = -1;
+            }
+
+            // Replace all except the final .
+            else if (dotIndex != -1) fileName = fileName.Substring(0, dotIndex).Replace('.', '_') + fileName[dotIndex..];
 
             string shortFileName;
 
