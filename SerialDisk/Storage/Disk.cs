@@ -431,10 +431,11 @@ namespace AtariST.SerialDisk.Storage
                 {
                     int WriteSector = sector;
 
+                    // Force all writes to the first FAT
                     if (WriteSector >= Parameters.SectorsPerFat)
                         WriteSector -= Parameters.SectorsPerFat;
 
-                    _logger.Log($"Updating FAT sector {WriteSector}", Constants.LoggingLevel.Info);
+                    _logger.Log($"Updating FAT sector {WriteSector}", Constants.LoggingLevel.Verbose);
 
                     Array.Copy(dataBuffer, dataOffset, _fatBuffer, WriteSector * Parameters.BytesPerSector, Parameters.BytesPerSector);
 
@@ -443,7 +444,7 @@ namespace AtariST.SerialDisk.Storage
 
                 else if (sector < Parameters.SectorsPerFat * 2 + Parameters.RootDirectorySectors) // Root directory area?
                 {
-                    _logger.Log($"Updating ROOT directory sector {sector}", Constants.LoggingLevel.Info);
+                    _logger.Log($"Updating ROOT directory sector {sector}", Constants.LoggingLevel.Verbose);
 
                     Array.Copy(dataBuffer, dataOffset, _rootDirectoryBuffer, (sector - Parameters.SectorsPerFat * 2) * Parameters.BytesPerSector, Parameters.BytesPerSector);
 
@@ -454,7 +455,7 @@ namespace AtariST.SerialDisk.Storage
                 {
                     int WriteSector = sector - (Parameters.SectorsPerFat * 2 + Parameters.RootDirectorySectors) + 2 * Parameters.SectorsPerCluster;
 
-                    _logger.Log($"Updating DATA sector {WriteSector}", Constants.LoggingLevel.Info);
+                    _logger.Log($"Updating DATA sector {WriteSector}", Constants.LoggingLevel.Verbose);
 
                     clusterIndex = WriteSector / Parameters.SectorsPerCluster;
 
