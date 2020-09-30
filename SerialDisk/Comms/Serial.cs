@@ -4,6 +4,7 @@ using AtariST.SerialDisk.Utilities;
 using System;
 using System.IO;
 using System.IO.Ports;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static AtariST.SerialDisk.Common.Constants;
@@ -23,6 +24,8 @@ namespace AtariST.SerialDisk.Comms
         private UInt32 _receivedSectorCount;
         private byte[] _receiverDataBuffer;
         private int _receiverDataIndex;
+        private byte? _previousByte;
+        private bool _isRLERun;
 
         [Flags]
         private enum SerialFlags { None = 0, Compression = 1};
@@ -41,6 +44,7 @@ namespace AtariST.SerialDisk.Comms
             _logger = log;
             _listenTokenSource = cancelTokenSource;
             _compressionIsEnabled = compressionIsEnabled;
+            _isRLERun = false;
 
             try
             {
@@ -345,9 +349,34 @@ namespace AtariST.SerialDisk.Comms
                 _receiverDataIndex = 0;
 
                 _transferStartDateTime = DateTime.Now;
+
+                _isRLERun = false;
+                _previousByte = null;
             }
 
-            _receiverDataBuffer[_receiverDataIndex++] = Data;
+            //decompress RLE data
+            if (_isRLERun)
+            {
+                while (Data > 1)
+                {
+                    _receiverDataBuffer[_receiverDataIndex++] = _previousByte.Value;
+                    Data--;
+                }
+
+                _previousByte = null;
+                _isRLERun = false;
+            }
+
+            else if (_previousByte.HasValue && _previousByte.Value == Data)
+            {
+                _isRLERun = true;
+            }
+
+            else
+            {
+                _receiverDataBuffer[_receiverDataIndex++] = Data;
+                _previousByte = Data;
+            }
 
             string percentReceived = ((Convert.ToDecimal(_receiverDataIndex) / _receiverDataBuffer.Length) * 100).ToString("00.0");
             Console.Write($"\rReceived [{_receiverDataIndex} / {_receiverDataBuffer.Length} Bytes] {percentReceived}% ");
@@ -454,7 +483,7 @@ namespace AtariST.SerialDisk.Comms
                 _localDisk.FatImportLocalDirectoryContents(_localDisk.Parameters.LocalDirectoryPath, 0);
             }
 
-            _serialPort.BaseStream.WriteByte(_localDisk.MediaChanged ? (byte)2 : (byte)0);
+            _serialPort.BaseStream.WriteByte(_localDisk.MediaChanged ? (byte)1 : (byte)0);
 
             _localDisk.MediaChanged = false;
 

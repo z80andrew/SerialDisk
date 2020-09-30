@@ -290,14 +290,8 @@ _rw:
 	jeq		_rw_read
 
 _rw_write:
-	move.b	(a4)+,d0															| Move buffer address into d0, increment to next byte in rw struct
-	Bconout	#1,d0																| Write byte to serial
-
-	subq.l	#1,d3																| Decrement number of bytes remaining
-	jne		_rw_write
-
+	 .include "../src/RLE.asm"
 	clr.l	d0																	| Success return value
-
 	rts
 
 _rw_read:
@@ -760,7 +754,7 @@ const_config_filename:
 | Messages
 
 msg_welcome:
-	.asciz	"SerialDisk v2.5\r\n"
+	.asciz	"SerialDisk v2.5 RLE\r\n"
 
 msg_config_found:
 	.asciz	"Using configuration file SERDISK.CFG\r\n"

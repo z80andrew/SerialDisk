@@ -455,9 +455,9 @@ namespace AtariST.SerialDisk.Storage
                 {
                     int WriteSector = sector - (Parameters.SectorsPerFat * 2 + Parameters.RootDirectorySectors) + 2 * Parameters.SectorsPerCluster;
 
-                    _logger.Log($"Updating DATA sector {WriteSector}", Constants.LoggingLevel.Verbose);
-
                     clusterIndex = WriteSector / Parameters.SectorsPerCluster;
+
+                    _logger.Log($"Updating DATA sector {WriteSector}, cluster {clusterIndex}", Constants.LoggingLevel.Verbose);
 
                     if (_clusterInfos[clusterIndex] == null) _clusterInfos[clusterIndex] = new ClusterInfo();
                     if (_clusterInfos[clusterIndex].DataBuffer == null) _clusterInfos[clusterIndex].DataBuffer = new byte[Parameters.BytesPerCluster];
@@ -465,7 +465,7 @@ namespace AtariST.SerialDisk.Storage
                     {
                         // Get content name by walking backwards through the FAT cluster values
                         var contentName = _localDirectoryContentInfos.Where(dci => FatGetClusterValue(dci.StartCluster) == clusterIndex).FirstOrDefault()?.ContentName;
-                        _clusterInfos[clusterIndex].ContentName = contentName;
+                        _clusterInfos[clusterIndex].ContentName = contentName ?? "";
                     }
 
                     Array.Copy(dataBuffer, dataOffset, _clusterInfos[clusterIndex].DataBuffer, (WriteSector - clusterIndex * Parameters.SectorsPerCluster) * Parameters.BytesPerSector, Parameters.BytesPerSector);
