@@ -10,11 +10,11 @@
 | output: -ve on failure
 |
 | Corrupts
-| d3, d4, d5, d7
+| d3, d4, d7
 | a4
 
 rle_compress:
-    clr.l   d7                      | repeat counter
+    moveq   #0,d7                   | repeat counter
 do_read:
     move.b  (a4)+,d4                | read file byte
     jbsr	add_run
@@ -24,8 +24,7 @@ do_read:
     jbsr    do_run
     jmp     99f
 do_compare:
-    move.b  (a4),d5                | read file byte
-    cmp.b   d4,d5                   | is this byte the same as the next?
+    cmp.b	(a4),d4
     jeq     do_read
     jbsr    do_run
     jmp     do_read
@@ -43,14 +42,16 @@ not_run:
     rts
 
 do_run:
-    tst.b   d7
+    tst.b	d7
     jeq     end_run
-    cmp.b   #1,d7
+    cmpi.b  #1,d7
     jeq     end_run
-    Bconout	#1,d4                | send d5 (previous file byte)
-    Bconout	#1,d7                | send d7 (repeats)
+    move.b	d4,d0
+    jbsr	write_serial
+    move.b	d7,d0
+    jbsr	write_serial
 end_run:
-    clr.b   d7
+    moveq   #0,d7
     rts
 
 99:

@@ -197,7 +197,8 @@ _bpb:
 
 	| Send the command.
 
-	Bconout	#1,#cmd_bpb
+	move.b	#cmd_bpb,d0
+	jbsr 	write_serial
 
 	| Get the BPB.
 
@@ -254,29 +255,33 @@ _rw:
 	| Send the command.
 
 	move	4(sp),d0															| "rwflag" (0: read, 1: write).
-	Bconout	#1,d0																| Send read or write command
+	jbsr	write_serial																| Send read or write command
 
 	| Send the start sector.
 
-	Bconout	#1,#0
-	Bconout	#1,#0
+	moveq	#0,d0
+	jbsr	write_serial
+	moveq	#0,d0
+	jbsr	write_serial
 
 	move.b	12(sp),d0
-	Bconout	#1,d0
+	jbsr	write_serial
 
 	move.b	12+1(sp),d0
-	Bconout	#1,d0
+	jbsr	write_serial
 
 	| Send the number of sectors.
 
-	Bconout	#1,#0
-	Bconout	#1,#0
+	moveq	#0,d0
+	jbsr	write_serial
+	moveq	#0,d0
+	jbsr	write_serial
 
 	move.b	10(sp),d0
-	Bconout	#1,d0
+	jbsr	write_serial
 
 	move.b	10+1(sp),d0
-	Bconout	#1,d0
+	jbsr	write_serial
 
 	| Get the destination/source buffer address.
 
@@ -382,7 +387,8 @@ _mediach:
 
 	| Send the command.
 
-	Bconout	#1,#cmd_mediach
+	move.b	#cmd_mediach,d0
+	jbsr	write_serial
 
 	| Get the media changed status.
 
@@ -434,10 +440,14 @@ mount_drive:
 |
 
 send_start_magic:
-	Bconout	#1,#0x18
-	Bconout	#1,#0x03
-	Bconout	#1,#0x20
-	Bconout	#1,#0x06
+	move.b		#0x18,d0
+	jbsr		write_serial
+	moveq		#0x03,d0
+	jbsr		write_serial
+	move.b		#0x20,d0
+	jbsr		write_serial
+	moveq		#0x06,d0
+	jbsr		write_serial
 
 	rts
 
@@ -552,10 +562,9 @@ wait:
 | Corrupts
 | d6, d7
 | a6
-| d1, d2 corrupted by BIOS calls
 
 read_serial:
-	movem.l	d1-d2,-(a7)
+	movem.l	d1-d2,-(a7)															| Push registers to the stack which are affected by BIOS calls
     lea     _hz_200,a6
 	move.l  (a6),d6      														| Store current timerC
 	addi.l	#serial_timeout,d6      											| Increase to max timerC
@@ -574,9 +583,27 @@ read_serial:
 	move	#-1,d0
 	jmp		99f
 3:
-	Bconin	#1
+	Bconin	#1																	| Read byte from serial port
 99:
-	movem.l	(a7)+,d1-d2
+	movem.l	(a7)+,d1-d2															| Restore registers affected by BIOS calls
+	rts
+
+|-------------------------------------------------------------------------------
+| Writes a byte to the serial port
+|
+| Input
+| d0.b	byte to send
+|
+| Output
+|
+| Corrupts
+| d1, d2 corrupted by BIOS calls
+write_serial:
+	move	d0,-(sp)
+	move	#1,-(sp)
+	move	#3,-(sp)
+	trap	#13
+	addq.l	#6,sp
 	rts
 
 |-------------------------------------------------------------------------------
