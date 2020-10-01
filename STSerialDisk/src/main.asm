@@ -259,11 +259,6 @@ _rw:
 
 	| Send the start sector.
 
-	moveq	#0,d0
-	jbsr	write_serial
-	moveq	#0,d0
-	jbsr	write_serial
-
 	move.b	12(sp),d0
 	jbsr	write_serial
 
@@ -271,11 +266,6 @@ _rw:
 	jbsr	write_serial
 
 	| Send the number of sectors.
-
-	moveq	#0,d0
-	jbsr	write_serial
-	moveq	#0,d0
-	jbsr	write_serial
 
 	move.b	10(sp),d0
 	jbsr	write_serial
@@ -286,7 +276,6 @@ _rw:
 	| Get the destination/source buffer address.
 
 	move.l	6(sp),a4															| buffer address
-	clr.l	d3
 	move	10(sp),d3															| Move "count" (number of sectors) to d3
 	move	sector_size_shift_value,d0											| Move sector shift (num. bits) to d0
 	lsl.l	d0,d3																| Shift "count" left, i.e. multiply number of sectors by bytes per sector to get total bytes

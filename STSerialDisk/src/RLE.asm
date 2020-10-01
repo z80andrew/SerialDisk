@@ -19,7 +19,7 @@ do_read:
     move.b  (a4)+,d4                | read file byte
     jbsr	add_run
     subq    #1,d3                   | decrement bytes left to read
-    tst.l   d3
+    tst     d3
     jne     do_compare
     jbsr    do_run
     jmp     99f
@@ -42,10 +42,8 @@ not_run:
     rts
 
 do_run:
-    tst.b	d7
-    jeq     end_run
-    cmpi.b  #1,d7
-    jeq     end_run
+    cmpi.b  #2,d7
+    jcs     end_run
     move.b	d4,d0
     jbsr	write_serial
     move.b	d7,d0

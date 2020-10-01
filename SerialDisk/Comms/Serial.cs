@@ -227,12 +227,10 @@ namespace AtariST.SerialDisk.Comms
                         switch (_receivedDataCounter)
                         {
                             case 0:
-                            case 1:
-                            case 2:
                                 _receivedSectorIndex = (_receivedSectorIndex << 8) + Data;
                                 break;
 
-                            case 3:
+                            case 1:
                                 _receivedSectorIndex = (_receivedSectorIndex << 8) + Data;
                                 _logger.Log($"Received read sector index command - sector {_receivedSectorIndex}", LoggingLevel.Verbose);
                                 _state = ReceiverState.ReceiveReadSectorCount;
@@ -247,12 +245,10 @@ namespace AtariST.SerialDisk.Comms
                         switch (_receivedDataCounter)
                         {
                             case 0:
-                            case 1:
-                            case 2:
                                 _receivedSectorCount = (_receivedSectorCount << 8) + Data;
                                 break;
 
-                            case 3:
+                            case 1:
                                 _receivedSectorCount = (_receivedSectorCount << 8) + Data;
                                 _logger.Log($"Received read sector count command - {_receivedSectorCount} sector(s)", LoggingLevel.Verbose);
                                 _state = ReceiverState.SendData;
@@ -266,12 +262,10 @@ namespace AtariST.SerialDisk.Comms
                         switch (_receivedDataCounter)
                         {
                             case 0:
-                            case 1:
-                            case 2:
                                 _receivedSectorIndex = (_receivedSectorIndex << 8) + Data;
                                 break;
 
-                            case 3:
+                            case 1:
                                 _receivedSectorIndex = (_receivedSectorIndex << 8) + Data;
                                 _logger.Log($"Received write sector index command - sector {_receivedSectorIndex}", LoggingLevel.Verbose);
                                 _state = ReceiverState.ReceiveWriteSectorCount;
@@ -286,12 +280,10 @@ namespace AtariST.SerialDisk.Comms
                         switch (_receivedDataCounter)
                         {
                             case 0:
-                            case 1:
-                            case 2:
                                 _receivedSectorCount = (_receivedSectorCount << 8) + Data;
                                 break;
 
-                            case 3:
+                            case 1:
                                 _receivedSectorCount = (_receivedSectorCount << 8) + Data;
                                 _logger.Log($"Received write sector count command  - {_receivedSectorCount} sector(s)", LoggingLevel.Verbose);
                                 _state = ReceiverState.ReceiveData;
