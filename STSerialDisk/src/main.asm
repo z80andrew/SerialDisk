@@ -255,7 +255,7 @@ _rw:
 	| Send the command.
 
 	move	4(sp),d0															| "rwflag" (0: read, 1: write).
-	jbsr	write_serial																| Send read or write command
+	jbsr	write_serial														| Send read or write command
 
 	| Send the start sector.
 
@@ -276,6 +276,7 @@ _rw:
 	| Get the destination/source buffer address.
 
 	move.l	6(sp),a4															| buffer address
+	clr.l	d3
 	move	10(sp),d3															| Move "count" (number of sectors) to d3
 	move	sector_size_shift_value,d0											| Move sector shift (num. bits) to d0
 	lsl.l	d0,d3																| Shift "count" left, i.e. multiply number of sectors by bytes per sector to get total bytes

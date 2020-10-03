@@ -472,7 +472,7 @@ namespace AtariST.SerialDisk.Comms
             {
                 _logger.Log("Media has been changed. Importing directory \"" + _localDisk.Parameters.LocalDirectoryPath + "\"... ", LoggingLevel.Verbose);
 
-                _localDisk.FatImportLocalDirectoryContents(_localDisk.Parameters.LocalDirectoryPath, 0);
+                //_localDisk.FatImportLocalDirectoryContents(_localDisk.Parameters.LocalDirectoryPath, 0);
             }
 
             _serialPort.BaseStream.WriteByte(_localDisk.MediaChanged ? (byte)1 : (byte)0);
