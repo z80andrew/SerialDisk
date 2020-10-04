@@ -12,6 +12,11 @@ namespace AtariST.SerialDisk.Utilities
 
         public const int BytesPerDirectoryEntry = 32;
 
+        public static bool IsDirectoryCluster(byte[] clusterData, int clusterIndex)
+        {
+            return (clusterData[0] == 0x2e && clusterData[32] == 0x2e) || clusterIndex == 0;
+        }
+
         public static int MaxDiskClusters(TOSVersion minimumTOSVersion)
         {
             return minimumTOSVersion == TOSVersion.TOS100 ? 0x3FFF : 0x7FFF;
