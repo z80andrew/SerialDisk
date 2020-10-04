@@ -18,6 +18,7 @@ namespace AtariST.SerialDisk.Comms
         private readonly ILogger _logger;
         private readonly IDisk _localDisk;
 
+        private bool _receiveCompressedData;
         private int _receivedDataCounter;
 
         private UInt32 _receivedSectorIndex;
@@ -294,7 +295,8 @@ namespace AtariST.SerialDisk.Comms
                         break;
 
                     case ReceiverState.ReceiveData:
-                        ReceiveData(Data);
+                        if(_receivedDataCounter == 0) _receiveCompressedData = (Data & 0x01F) == 1;
+                        else ReceiveData(Data);
                         break;
                 }
 
@@ -329,7 +331,7 @@ namespace AtariST.SerialDisk.Comms
 
         private void ReceiveData(byte Data)
         {
-            if (_receivedDataCounter == 0)
+            if (_receivedDataCounter == 1)
             {
                 if (_receivedSectorCount == 1)
                     _logger.Log("Writing sector " + _receivedSectorIndex + " (" + _localDisk.Parameters.BytesPerSector + " Bytes)... ", LoggingLevel.Verbose);
@@ -346,28 +348,36 @@ namespace AtariST.SerialDisk.Comms
                 _previousByte = null;
             }
 
-            //decompress RLE data
-            if (_isRLERun)
+            if (_receiveCompressedData)
             {
-                while (Data > 1)
+                //decompress RLE data
+                if (_isRLERun)
                 {
-                    _receiverDataBuffer[_receiverDataIndex++] = _previousByte.Value;
-                    Data--;
+                    while (Data > 1)
+                    {
+                        _receiverDataBuffer[_receiverDataIndex++] = _previousByte.Value;
+                        Data--;
+                    }
+
+                    _previousByte = null;
+                    _isRLERun = false;
                 }
 
-                _previousByte = null;
-                _isRLERun = false;
-            }
+                else if (_previousByte.HasValue && _previousByte.Value == Data)
+                {
+                    _isRLERun = true;
+                }
 
-            else if (_previousByte.HasValue && _previousByte.Value == Data)
-            {
-                _isRLERun = true;
+                else
+                {
+                    _receiverDataBuffer[_receiverDataIndex++] = Data;
+                    _previousByte = Data;
+                }
             }
 
             else
             {
                 _receiverDataBuffer[_receiverDataIndex++] = Data;
-                _previousByte = Data;
             }
 
             string percentReceived = ((Convert.ToDecimal(_receiverDataIndex) / _receiverDataBuffer.Length) * 100).ToString("00.0");
