@@ -792,7 +792,7 @@ const_config_filename:
 | Messages
 
 msg_welcome:
-	.asciz	"SerialDisk v2.5 RLE\r\n"
+	.asciz	"SerialDisk v2.5\r\n"
 
 msg_config_found:
 	.asciz	"Using configuration file SERDISK.CFG\r\n"
