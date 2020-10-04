@@ -71,212 +71,241 @@ namespace AtariST.SerialDisk.Storage
 
         public void SyncLocalDisk(int directoryClusterIndex, bool syncSubDirectoryContents = true)
         {
-            while (!FAT16Helper.IsEndOfFile(directoryClusterIndex))
+            byte[] directoryData;
+
+            directoryData = GetDirectoryClusterData(directoryClusterIndex);
+
+            // Only check for changes if this cluster contains directory entry information
+            if (FAT16Helper.IsDirectoryCluster(directoryData, directoryClusterIndex))
             {
-                int directoryEntryIndex = 0;
-                byte[] directoryBuffer;
+                bool IsEndOfDirectoryEntries = false;
 
-                if (directoryClusterIndex == 0)
-                    directoryBuffer = _rootDirectoryBuffer;
-                else
-                    directoryBuffer = _clusterInfos[directoryClusterIndex].DataBuffer;
-
-                while (directoryEntryIndex < directoryBuffer.Length && directoryBuffer[directoryEntryIndex] != 0)
+                while (!FAT16Helper.IsEndOfFile(directoryClusterIndex) && !IsEndOfDirectoryEntries)
                 {
-                    if (directoryBuffer[directoryEntryIndex] != 0x2e) // The entry is not "." or "..".
+                    int directoryEntryIndex = 0;
+
+                    while (directoryEntryIndex < directoryData.Length && directoryData[directoryEntryIndex] != 0)
                     {
-                        string fileName = ASCIIEncoding.ASCII.GetString(directoryBuffer, directoryEntryIndex, 8).Trim();
-                        string fileExtension = ASCIIEncoding.ASCII.GetString(directoryBuffer, directoryEntryIndex + 8, 3).Trim();
-
-                        if (fileExtension != "")
-                            fileName += "." + fileExtension;
-
-                        int startClusterIndex = directoryBuffer[directoryEntryIndex + 26] | (directoryBuffer[directoryEntryIndex + 27] << 8);
-
-                        // Find the matching local content and check what happened to it.
-
-                        string LocalDirectoryContentName = "";
-
-                        for(int contentIndex = 0; contentIndex < _localDirectoryContentInfos.Count(); contentIndex++)
+                        // The entry is not "." or "..".
+                        if (directoryData[directoryEntryIndex] != 0x2e)
                         {
-                            if (_localDirectoryContentInfos[contentIndex].EntryIndex == directoryEntryIndex 
-                                && _localDirectoryContentInfos[contentIndex].DirectoryCluster == directoryClusterIndex)
+                            string fileName = ASCIIEncoding.ASCII.GetString(directoryData, directoryEntryIndex, 8).Trim();
+                            string fileExtension = ASCIIEncoding.ASCII.GetString(directoryData, directoryEntryIndex + 8, 3).Trim();
+
+                            if (fileExtension != "")
+                                fileName += "." + fileExtension;
+
+                            int startClusterIndex = directoryData[directoryEntryIndex + 26] | (directoryData[directoryEntryIndex + 27] << 8);
+
+                            // Find the matching local content and check what happened to it.
+                            string LocalDirectoryContentName = "";
+
+                            for (int contentIndex = 0; contentIndex < _localDirectoryContentInfos.Count(); contentIndex++)
                             {
-                                var directoryContentInfo = _localDirectoryContentInfos[contentIndex];
-
-                                LocalDirectoryContentName = directoryContentInfo.ContentName;
-
-                                if (directoryContentInfo.ShortFileName != fileName)
+                                if (_localDirectoryContentInfos[contentIndex].EntryIndex == directoryEntryIndex
+                                    && _localDirectoryContentInfos[contentIndex].DirectoryCluster == directoryClusterIndex)
                                 {
-                                    if (directoryBuffer[directoryEntryIndex] == 0xe5) // Has the entry been deleted?
+                                    var directoryContentInfo = _localDirectoryContentInfos[contentIndex];
+
+                                    LocalDirectoryContentName = directoryContentInfo.ContentName;
+
+                                    if (directoryContentInfo.ShortFileName != fileName)
                                     {
-                                        if (directoryBuffer[directoryEntryIndex + 11] == 0x10) // Is it a directory?
+                                        if (directoryData[directoryEntryIndex] == 0xe5) // Has the entry been deleted?
                                         {
-                                            _logger.Log($"Deleting local directory \"{ directoryContentInfo.ContentName}\".", Constants.LoggingLevel.Info);
-
-                                            Directory.Delete(directoryContentInfo.ContentName, true);
-                                        }
-
-                                        else // It's a file
-                                        {
-                                            _logger.Log($"Deleting local file \"{directoryContentInfo.ContentName}\".", Constants.LoggingLevel.Info);
-
-                                            File.Delete(directoryContentInfo.ContentName);
-                                        }
-
-                                        _localDirectoryContentInfos.Remove(directoryContentInfo);
-
-                                        _clusterInfos
-                                            .Where(ci => ci?.ContentName == directoryContentInfo.ContentName)
-                                            .ToList()
-                                            .ForEach(ci => ci.ContentName = null);
-                                    }
-                                    else // Entry has been renamed.
-                                    {
-                                        if (directoryBuffer[directoryEntryIndex + 11] == 0x10) // Is it a directory?
-                                        {
-                                            _logger.Log($"Renaming local directory \"{directoryContentInfo.ContentName}\" to \"{Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName)}\".",
-                                                Constants.LoggingLevel.Info);
-
-                                            Directory.Move(directoryContentInfo.ContentName, Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName));
-                                        }
-
-                                        else // It's a file
-                                        {
-                                            _logger.Log($"Renaming local file \"{directoryContentInfo.ContentName}\" to \"{Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName)}\".",
-                                                Constants.LoggingLevel.Info);
-
-                                            File.Move(directoryContentInfo.ContentName, Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName));
-                                        }
-
-                                        _clusterInfos
-                                            .Where(ci => ci?.ContentName == directoryContentInfo.ContentName)
-                                            .ToList()
-                                            .ForEach(ci => ci.ContentName = Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName));
-
-
-                                        directoryContentInfo.ContentName = Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName);
-                                        directoryContentInfo.ShortFileName = fileName;
-                                    }
-                                }
-
-                                break;
-                            }
-                        }
-
-                        // Is the content new but not been deleted
-                        if (String.IsNullOrEmpty(LocalDirectoryContentName) && directoryBuffer[directoryEntryIndex] != 0xe5) 
-                        {
-                            string newContentPath = "";
-                            if (directoryClusterIndex != _rootDirectoryClusterIndex) newContentPath = Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName); // Subdirectory
-                            else newContentPath = Path.Combine(Parameters.LocalDirectoryPath, fileName); // Root dir
-
-                            try
-                            {
-                                // Is it a directory with a valid start cluster?
-                                if (directoryBuffer[directoryEntryIndex + 11] == 0x10 && startClusterIndex != 0)
-                                {
-                                    _logger.Log("Creating local directory \"" + newContentPath + "\".", Constants.LoggingLevel.Info);
-
-                                    var CreatedLocalDirectory = Directory.CreateDirectory(newContentPath);
-
-                                    _clusterInfos[startClusterIndex].FileOffset = -1;
-                                    _clusterInfos[startClusterIndex].ContentName = newContentPath;
-
-                                    _localDirectoryContentInfos.Add(new LocalDirectoryContentInfo
-                                    {
-                                        ContentName = newContentPath,
-                                        ShortFileName = fileName,
-                                        EntryIndex = directoryEntryIndex,
-                                        DirectoryCluster = directoryClusterIndex,
-                                        StartCluster = startClusterIndex,
-
-                                    });
-                                }
-
-                                // it's a file
-                                else
-                                {
-                                    int fileClusterIndex = startClusterIndex;
-
-                                    int fileSize = directoryBuffer[directoryEntryIndex + 28] | (directoryBuffer[directoryEntryIndex + 29] << 8) | (directoryBuffer[directoryEntryIndex + 30] << 16) | (directoryBuffer[directoryEntryIndex + 31] << 24);
-
-                                    if (fileSize == 0) File.Create(newContentPath).Dispose();
-
-                                    else if (startClusterIndex != 0)
-                                    {
-                                        // Check if the file has been completely written.
-                                        while (!FAT16Helper.IsEndOfClusterChain(fileClusterIndex))
-                                        {
-                                            fileClusterIndex = FatGetClusterValue(fileClusterIndex);
-                                        }
-
-                                        if (FAT16Helper.IsEndOfFile(fileClusterIndex))
-                                        {
-                                            try
+                                            if (directoryData[directoryEntryIndex + 11] == 0x10) // Is it a directory?
                                             {
-                                                _logger.Log("Saving local file \"" + newContentPath + "\".", Constants.LoggingLevel.Info);
+                                                _logger.Log($"Deleting local directory \"{ directoryContentInfo.ContentName}\".", Constants.LoggingLevel.Info);
 
-                                                using (BinaryWriter FileBinaryWriter = new BinaryWriter(File.OpenWrite(newContentPath)))
+                                                Directory.Delete(directoryContentInfo.ContentName, true);
+                                            }
+
+                                            else // It's a file
+                                            {
+                                                _logger.Log($"Deleting local file \"{directoryContentInfo.ContentName}\".", Constants.LoggingLevel.Info);
+
+                                                File.Delete(directoryContentInfo.ContentName);
+                                            }
+
+                                            _localDirectoryContentInfos.Remove(directoryContentInfo);
+
+                                            _clusterInfos
+                                                .Where(ci => ci?.ContentName == directoryContentInfo.ContentName)
+                                                .ToList()
+                                                .ForEach(ci => ci.ContentName = null);
+                                        }
+                                        else // Entry has been renamed.
+                                        {
+                                            if (directoryData[directoryEntryIndex + 11] == 0x10) // Is it a directory?
+                                            {
+                                                _logger.Log($"Renaming local directory \"{directoryContentInfo.ContentName}\" to \"{Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName)}\".",
+                                                    Constants.LoggingLevel.Info);
+
+                                                Directory.Move(directoryContentInfo.ContentName, Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName));
+                                            }
+
+                                            else // It's a file
+                                            {
+                                                _logger.Log($"Renaming local file \"{directoryContentInfo.ContentName}\" to \"{Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName)}\".",
+                                                    Constants.LoggingLevel.Info);
+
+                                                File.Move(directoryContentInfo.ContentName, Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName));
+                                            }
+
+                                            _clusterInfos
+                                                .Where(ci => ci?.ContentName == directoryContentInfo.ContentName)
+                                                .ToList()
+                                                .ForEach(ci => ci.ContentName = Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName));
+
+
+                                            directoryContentInfo.ContentName = Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName);
+                                            directoryContentInfo.ShortFileName = fileName;
+                                        }
+                                    }
+
+                                    break;
+                                }
+                            }
+
+                            // Is the content new but not been deleted
+                            if (String.IsNullOrEmpty(LocalDirectoryContentName) && directoryData[directoryEntryIndex] != 0xe5)
+                            {
+                                string newContentPath = "";
+                                if (directoryClusterIndex != _rootDirectoryClusterIndex) newContentPath = Path.Combine(_clusterInfos[directoryClusterIndex].ContentName, fileName); // Subdirectory
+                                else newContentPath = Path.Combine(Parameters.LocalDirectoryPath, fileName); // Root dir
+
+                                try
+                                {
+                                    // Is it a directory with a valid start cluster?
+                                    if (directoryData[directoryEntryIndex + 11] == 0x10)
+                                    {
+                                        if (startClusterIndex != 0)
+                                        {
+                                            _logger.Log("Creating local directory \"" + newContentPath + "\".", Constants.LoggingLevel.Info);
+
+                                            var CreatedLocalDirectory = Directory.CreateDirectory(newContentPath);
+
+                                            _clusterInfos[startClusterIndex].FileOffset = -1;
+                                            _clusterInfos[startClusterIndex].ContentName = newContentPath;
+
+                                            _localDirectoryContentInfos.Add(new LocalDirectoryContentInfo
+                                            {
+                                                ContentName = newContentPath,
+                                                ShortFileName = fileName,
+                                                EntryIndex = directoryEntryIndex,
+                                                DirectoryCluster = directoryClusterIndex,
+                                                StartCluster = startClusterIndex,
+
+                                            });
+                                        }
+                                    }
+
+                                    // it's a file
+                                    else
+                                    {
+                                        int fileClusterIndex = startClusterIndex;
+
+                                        int fileSize = directoryData[directoryEntryIndex + 28] | (directoryData[directoryEntryIndex + 29] << 8) | (directoryData[directoryEntryIndex + 30] << 16) | (directoryData[directoryEntryIndex + 31] << 24);
+
+                                        if (fileSize == 0)
+                                        {
+                                            _logger.Log($"PATH: {newContentPath}", Constants.LoggingLevel.Verbose);
+                                            File.Create(newContentPath).Dispose();
+                                        }
+
+                                        else if (startClusterIndex != 0)
+                                        {
+                                            // Check if the file has been completely written.
+                                            while (!FAT16Helper.IsEndOfClusterChain(fileClusterIndex))
+                                            {
+                                                fileClusterIndex = FatGetClusterValue(fileClusterIndex);
+                                            }
+
+                                            if (FAT16Helper.IsEndOfFile(fileClusterIndex))
+                                            {
+                                                try
                                                 {
-                                                    fileClusterIndex = startClusterIndex;
+                                                    _logger.Log("Saving local file \"" + newContentPath + "\".", Constants.LoggingLevel.Info);
 
-                                                    while (!FAT16Helper.IsEndOfFile(fileClusterIndex))
+                                                    using (BinaryWriter FileBinaryWriter = new BinaryWriter(File.OpenWrite(newContentPath)))
                                                     {
-                                                        _clusterInfos[fileClusterIndex].ContentName = newContentPath;
+                                                        fileClusterIndex = startClusterIndex;
 
-                                                        FileBinaryWriter.Write(_clusterInfos[fileClusterIndex].DataBuffer, 0, Math.Min(_clusterInfos[fileClusterIndex].DataBuffer.Length, fileSize));
+                                                        while (!FAT16Helper.IsEndOfFile(fileClusterIndex))
+                                                        {
+                                                            _clusterInfos[fileClusterIndex].ContentName = newContentPath;
 
-                                                        fileSize -= _clusterInfos[fileClusterIndex].DataBuffer.Length;
+                                                            FileBinaryWriter.Write(_clusterInfos[fileClusterIndex].DataBuffer, 0, Math.Min(_clusterInfos[fileClusterIndex].DataBuffer.Length, fileSize));
 
-                                                        fileClusterIndex = FatGetClusterValue(fileClusterIndex);
+                                                            fileSize -= _clusterInfos[fileClusterIndex].DataBuffer.Length;
+
+                                                            fileClusterIndex = FatGetClusterValue(fileClusterIndex);
+                                                        }
                                                     }
+
+                                                    _localDirectoryContentInfos.Add(new LocalDirectoryContentInfo
+                                                    {
+                                                        ContentName = newContentPath,
+                                                        ShortFileName = fileName,
+                                                        EntryIndex = directoryEntryIndex,
+                                                        DirectoryCluster = directoryClusterIndex,
+                                                        StartCluster = startClusterIndex,
+
+                                                    });
                                                 }
 
-                                                _localDirectoryContentInfos.Add(new LocalDirectoryContentInfo
+                                                catch (Exception ex)
                                                 {
-                                                    ContentName = newContentPath,
-                                                    ShortFileName = fileName,
-                                                    EntryIndex = directoryEntryIndex,
-                                                    DirectoryCluster = directoryClusterIndex,
-                                                    StartCluster = startClusterIndex,
-
-                                                });
-                                            }
-
-                                            catch (Exception ex)
-                                            {
-                                                _logger.LogException(ex);
+                                                    _logger.LogException(ex);
+                                                }
                                             }
                                         }
                                     }
                                 }
+
+                                catch (Exception ex)
+                                {
+                                    _logger.LogException(ex);
+                                }
+
                             }
 
-                            catch (Exception ex)
+                            // Recurse non-deleted directories
+                            if (syncSubDirectoryContents
+                                && directoryData[directoryEntryIndex + 11] == 0x10
+                                && directoryData[directoryEntryIndex] != 0xe5)
                             {
-                                _logger.LogException(ex);
+                                SyncLocalDisk(startClusterIndex);
                             }
-
                         }
 
-                        // Recurse non-deleted directories
-                        if (syncSubDirectoryContents
-                            && directoryBuffer[directoryEntryIndex + 11] == 0x10
-                            && directoryBuffer[directoryEntryIndex] != 0xe5)
-                        {
-                            SyncLocalDisk(startClusterIndex);
-                        }
+                        directoryEntryIndex += 32;
                     }
 
-                    directoryEntryIndex += 32;
+                    if (directoryEntryIndex < directoryData.Length)
+                    {
+                        IsEndOfDirectoryEntries = true;
+                    }
+
+                    else
+                    {
+                        directoryClusterIndex = FatGetClusterValue(directoryClusterIndex);
+                        directoryData = GetDirectoryClusterData(directoryClusterIndex);
+                    }
                 }
-
-                if (directoryEntryIndex < directoryBuffer.Length)
-                    break;
-
-                directoryClusterIndex = FatGetClusterValue(directoryClusterIndex);
             }
+        }
+
+        private byte[] GetDirectoryClusterData(int directoryClusterIndex)
+        {
+            byte[] directoryClusterData;
+
+            if (directoryClusterIndex == 0)
+                directoryClusterData = _rootDirectoryBuffer;
+            else
+                directoryClusterData = _clusterInfos[directoryClusterIndex].DataBuffer;
+
+            return directoryClusterData;
         }
 
         private int FatGetClusterValue(int clusterIndex, int directoryClusterIndex = 0)
@@ -422,7 +451,7 @@ namespace AtariST.SerialDisk.Storage
 
                     Array.Copy(dataBuffer, dataOffset, _fatBuffer, WriteSector * Parameters.BytesPerSector, Parameters.BytesPerSector);
 
-                    SyncLocalDisk(_rootDirectoryClusterIndex);
+                    SyncLocalDisk(clusterIndex, true);
                 }
 
                 // Root directory area?
@@ -456,7 +485,7 @@ namespace AtariST.SerialDisk.Storage
                     Array.Copy(dataBuffer, dataOffset, _clusterInfos[clusterIndex].DataBuffer, (WriteSector - clusterIndex * Parameters.SectorsPerCluster) * Parameters.BytesPerSector, Parameters.BytesPerSector);
 
                     // Empty files are not written to the FAT so must be synced via their containing directory
-                    SyncLocalDisk(_rootDirectoryClusterIndex);
+                    SyncLocalDisk(clusterIndex, false);
                 }
 
                 dataOffset += Parameters.BytesPerSector;
