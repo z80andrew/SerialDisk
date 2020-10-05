@@ -197,7 +197,8 @@ _bpb:
 
 	| Send the command.
 
-	Bconout	#1,#cmd_bpb
+	move.b	#cmd_bpb,d0
+	jbsr 	write_serial
 
 	| Get the BPB.
 
@@ -254,29 +255,23 @@ _rw:
 	| Send the command.
 
 	move	4(sp),d0															| "rwflag" (0: read, 1: write).
-	Bconout	#1,d0																| Send read or write command
+	jbsr	write_serial														| Send read or write command
 
 	| Send the start sector.
 
-	Bconout	#1,#0
-	Bconout	#1,#0
-
 	move.b	12(sp),d0
-	Bconout	#1,d0
+	jbsr	write_serial
 
 	move.b	12+1(sp),d0
-	Bconout	#1,d0
+	jbsr	write_serial
 
 	| Send the number of sectors.
 
-	Bconout	#1,#0
-	Bconout	#1,#0
-
 	move.b	10(sp),d0
-	Bconout	#1,d0
+	jbsr	write_serial
 
 	move.b	10+1(sp),d0
-	Bconout	#1,d0
+	jbsr	write_serial
 
 	| Get the destination/source buffer address.
 
@@ -290,14 +285,19 @@ _rw:
 	jeq		_rw_read
 
 _rw_write:
+	move.b	flags,d0
+	jbsr	write_serial
+	btst	#0,flags
+	jeq		_rw_write_uncompressed
+	.include "../src/RLE.asm"
+	jmp	_rw_write_end
+_rw_write_uncompressed:
 	move.b	(a4)+,d0															| Move buffer address into d0, increment to next byte in rw struct
 	Bconout	#1,d0																| Write byte to serial
-
 	subq.l	#1,d3																| Decrement number of bytes remaining
-	jne		_rw_write
-
+	jne		_rw_write_uncompressed
+_rw_write_end:
 	clr.l	d0																	| Success return value
-
 	rts
 
 _rw_read:
@@ -388,7 +388,8 @@ _mediach:
 
 	| Send the command.
 
-	Bconout	#1,#cmd_mediach
+	move.b	#cmd_mediach,d0
+	jbsr	write_serial
 
 	| Get the media changed status.
 
@@ -440,10 +441,14 @@ mount_drive:
 |
 
 send_start_magic:
-	Bconout	#1,#0x18
-	Bconout	#1,#0x03
-	Bconout	#1,#0x20
-	Bconout	#1,#0x06
+	move.b		#0x18,d0
+	jbsr		write_serial
+	moveq		#0x03,d0
+	jbsr		write_serial
+	move.b		#0x20,d0
+	jbsr		write_serial
+	moveq		#0x06,d0
+	jbsr		write_serial
 
 	rts
 
@@ -558,10 +563,9 @@ wait:
 | Corrupts
 | d6, d7
 | a6
-| d1, d2 corrupted by BIOS calls
 
 read_serial:
-	movem.l	d1-d2,-(a7)
+	movem.l	d1-d2,-(a7)															| Push registers to the stack which are affected by BIOS calls
     lea     _hz_200,a6
 	move.l  (a6),d6      														| Store current timerC
 	addi.l	#serial_timeout,d6      											| Increase to max timerC
@@ -580,9 +584,27 @@ read_serial:
 	move	#-1,d0
 	jmp		99f
 3:
-	Bconin	#1
+	Bconin	#1																	| Read byte from serial port
 99:
-	movem.l	(a7)+,d1-d2
+	movem.l	(a7)+,d1-d2															| Restore registers affected by BIOS calls
+	rts
+
+|-------------------------------------------------------------------------------
+| Writes a byte to the serial port
+|
+| Input
+| d0.b	byte to send
+|
+| Output
+|
+| Corrupts
+| d1, d2 corrupted by BIOS calls
+write_serial:
+	move	d0,-(sp)
+	move	#1,-(sp)
+	move	#3,-(sp)
+	trap	#13
+	addq.l	#6,sp
 	rts
 
 |-------------------------------------------------------------------------------
@@ -602,11 +624,13 @@ read_serial:
 read_config_file:
 	move	#0x4d,disk_identifier												| Set default disk id as ASCII 'M'
 	move	#0x0d,sector_size_shift_value										| Set default sector size shift
+	clr.w	flags
+	bset	#0,flags															| Set default compression (enabled)
 
 	Fopen	const_config_filename,#0											| Attempt to open config file
 	tst.w	d0																	| Check return value
 	jmi		1f																	| Return value is negative (failed), skip read attempt
-	Fread	d0,#2,temp_long														| Read first 2 bytes into temp variable
+	Fread	d0,#3,temp_long														| Read first 2 bytes into temp variable
 	Fclose	d0																	| Close the file handle
 
 	Cconws	msg_config_found													| Display the config file found message
@@ -636,6 +660,15 @@ read_config_file:
 
 	move	d1,sector_size_shift_value
 
+	| Read compression flag
+
+	clr		d1
+	move.b	temp_long+2,d1
+
+	cmp		#0x30,d1															| Compare read byte with ASCII '0'
+	jne		1f																	| Not 0, keep compression default (enabled)
+
+	bclr	#0,flags															| Clear compression flag
 1:
 	clr.l	d0																	| Success return value
 	jmp		99f																	| No problems encountered, jump to end
@@ -670,7 +703,6 @@ allocate_buffers:
 	lsl.w	d0,d1																| Shift sector size left, i.e. multiply number of sectors by bytes per sector to get total bytes
 	move.w	d1,d2																| Copy resultant size of 1 sector
 	lsl.w 	#0x02,d1															| Shift sector bytes value 2 bits left (i.e. multiply by 4) to get final buffer size
-
 	Malloc 	d1
 
 	tst     d0           														| Test for null buffer pointer
@@ -812,6 +844,10 @@ old_hdv_mediach:
 
 crc32_table:
 	ds.l	0x100
+
+| 00000001 - Output compression enable flag
+flags:
+	ds.w	0x01
 
 temp_long:
 	ds.l	0x01

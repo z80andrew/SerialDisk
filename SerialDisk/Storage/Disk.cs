@@ -71,7 +71,7 @@ namespace AtariST.SerialDisk.Storage
 
         public void SyncLocalDisk(int directoryClusterIndex, bool syncSubDirectoryContents = true)
         {
-            while (!IsEndOfFile(directoryClusterIndex))
+            while (!FAT16Helper.IsEndOfFile(directoryClusterIndex))
             {
                 int directoryEntryIndex = 0;
                 byte[] directoryBuffer;
@@ -97,8 +97,10 @@ namespace AtariST.SerialDisk.Storage
 
                         string LocalDirectoryContentName = "";
 
-                        foreach (LocalDirectoryContentInfo directoryContentInfo in _localDirectoryContentInfos)
+                        for(int contentIndex = 0; contentIndex < _localDirectoryContentInfos.Count(); contentIndex++)
                         {
+                            var directoryContentInfo = _localDirectoryContentInfos[contentIndex];
+
                             if (directoryContentInfo.EntryIndex == directoryEntryIndex && directoryContentInfo.DirectoryCluster == directoryClusterIndex)
                             {
                                 LocalDirectoryContentName = directoryContentInfo.ContentName;
@@ -195,12 +197,12 @@ namespace AtariST.SerialDisk.Storage
                                     int fileClusterIndex = startClusterIndex;
 
                                     // Check if the file has been completely written.
-                                    while (!IsEndOfClusterChain(fileClusterIndex))
+                                    while (!FAT16Helper.IsEndOfClusterChain(fileClusterIndex))
                                     {
                                         fileClusterIndex = FatGetClusterValue(fileClusterIndex);
                                     }
 
-                                    if (IsEndOfFile(fileClusterIndex))
+                                    if (FAT16Helper.IsEndOfFile(fileClusterIndex))
                                     {
                                         try
                                         {
@@ -212,7 +214,7 @@ namespace AtariST.SerialDisk.Storage
                                             {
                                                 fileClusterIndex = startClusterIndex;
 
-                                                while (!IsEndOfFile(fileClusterIndex))
+                                                while (!FAT16Helper.IsEndOfFile(fileClusterIndex))
                                                 {
                                                     _clusterInfos[fileClusterIndex].ContentName = newContentPath;
 
@@ -267,34 +269,6 @@ namespace AtariST.SerialDisk.Storage
 
                 directoryClusterIndex = FatGetClusterValue(directoryClusterIndex);
             }
-        }
-
-        /// <summary>
-        /// Returns true if the given cluster value matches a free, bad or EOF identifier
-        /// </summary>
-        /// <remarks>
-        /// 0x0000 free cluster
-        /// 0xFFF8–0xFFFF last FAT entry for a file
-        /// 0xFFF0-0xFFF7 bad sector (GEMDOS)
-        /// </remarks>
-        /// <param name="clusterValue">The value of the cluster to check</param>
-        /// <returns>True if this cluster value does not correspond to a cluster index, otherwise false</returns>
-        private bool IsEndOfClusterChain(int clusterValue)
-        {
-            return clusterValue == 0 || clusterValue >= 0xfff8 || (clusterValue >= 0xfff0 && clusterValue <= 0xfff7);
-        }
-
-        /// <summary>
-        /// Returns true if the given cluster value matches an EOF identifier
-        /// </summary> 
-        /// <remarks>
-        /// 0xFFF8–0xFFFF last FAT entry for a file
-        /// </remarks>
-        /// <param name="clusterValue">The value of the cluster to check</param>
-        /// <returns>True if this cluster value matches an EOF identifier, otherwise false</returns>
-        private bool IsEndOfFile(int clusterValue)
-        {
-            return clusterValue >= 0xfff8;
         }
 
         private int FatGetClusterValue(int clusterIndex, int directoryClusterIndex = 0)
@@ -455,9 +429,9 @@ namespace AtariST.SerialDisk.Storage
                 {
                     int WriteSector = sector - (Parameters.SectorsPerFat * 2 + Parameters.RootDirectorySectors) + 2 * Parameters.SectorsPerCluster;
 
-                    _logger.Log($"Updating DATA sector {WriteSector}", Constants.LoggingLevel.Verbose);
-
                     clusterIndex = WriteSector / Parameters.SectorsPerCluster;
+
+                    _logger.Log($"Updating DATA sector {WriteSector}, cluster {clusterIndex}", Constants.LoggingLevel.Verbose);
 
                     if (_clusterInfos[clusterIndex] == null) _clusterInfos[clusterIndex] = new ClusterInfo();
                     if (_clusterInfos[clusterIndex].DataBuffer == null) _clusterInfos[clusterIndex].DataBuffer = new byte[Parameters.BytesPerCluster];
@@ -465,7 +439,7 @@ namespace AtariST.SerialDisk.Storage
                     {
                         // Get content name by walking backwards through the FAT cluster values
                         var contentName = _localDirectoryContentInfos.Where(dci => FatGetClusterValue(dci.StartCluster) == clusterIndex).FirstOrDefault()?.ContentName;
-                        _clusterInfos[clusterIndex].ContentName = contentName;
+                        _clusterInfos[clusterIndex].ContentName = contentName ?? "";
                     }
 
                     Array.Copy(dataBuffer, dataOffset, _clusterInfos[clusterIndex].DataBuffer, (WriteSector - clusterIndex * Parameters.SectorsPerCluster) * Parameters.BytesPerSector, Parameters.BytesPerSector);
@@ -500,7 +474,7 @@ namespace AtariST.SerialDisk.Storage
                     int nextDirectoryClusterIndex = FatGetClusterValue(directoryClusterIndex);
 
                     // This is the final cluster, allocate new cluster
-                    if (IsEndOfFile(nextDirectoryClusterIndex))
+                    if (FAT16Helper.IsEndOfFile(nextDirectoryClusterIndex))
                     {
                         try
                         {

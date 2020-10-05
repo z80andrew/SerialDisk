@@ -8,7 +8,9 @@ namespace AtariST.SerialDisk.Utilities
 {
     public static class FAT16Helper
     {
-        public static int BytesPerMiB = 1024 * 1024;
+        public const int BytesPerMiB = 1024 * 1024;
+
+        public const int BytesPerDirectoryEntry = 32;
 
         public static int MaxDiskClusters(TOSVersion minimumTOSVersion)
         {
@@ -63,6 +65,34 @@ namespace AtariST.SerialDisk.Utilities
             }
 
             return shortFileName;
+        }
+
+        /// <summary>
+        /// Returns true if the given cluster value matches a free, bad or EOF identifier
+        /// </summary>
+        /// <remarks>
+        /// 0x0000 free cluster
+        /// 0xFFF8–0xFFFF last FAT entry for a file
+        /// 0xFFF0-0xFFF7 bad sector (GEMDOS)
+        /// </remarks>
+        /// <param name="clusterValue">The value of the cluster to check</param>
+        /// <returns>True if this cluster value does not correspond to a cluster index, otherwise false</returns>
+        public static bool IsEndOfClusterChain(int clusterValue)
+        {
+            return clusterValue == 0 || clusterValue >= 0xfff8 || (clusterValue >= 0xfff0 && clusterValue <= 0xfff7);
+        }
+
+        /// <summary>
+        /// Returns true if the given cluster value matches an EOF identifier
+        /// </summary> 
+        /// <remarks>
+        /// 0xFFF8–0xFFFF last FAT entry for a file
+        /// </remarks>
+        /// <param name="clusterValue">The value of the cluster to check</param>
+        /// <returns>True if this cluster value matches an EOF identifier, otherwise false</returns>
+        public static bool IsEndOfFile(int clusterValue)
+        {
+            return clusterValue >= 0xfff8;
         }
 
         public static void ValidateLocalDirectory(string localDirectoryPath, int diskSizeBytes, int maxRootDirectoryEntries, TOSVersion tosVersion)
