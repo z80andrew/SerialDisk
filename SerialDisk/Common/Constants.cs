@@ -58,7 +58,8 @@ namespace AtariST.SerialDisk.Common
         public enum LoggingLevel
         {
             Info = 0,
-            Verbose
+            Debug,
+            All
         };
     }
 }
