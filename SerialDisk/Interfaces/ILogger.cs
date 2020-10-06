@@ -7,7 +7,7 @@ namespace AtariST.SerialDisk.Interfaces
     {
         void CreateLogFile(string folderPath, string fileName);
         void Dispose();
-        void Log(string message, Constants.LoggingLevel messageLogLevel = Constants.LoggingLevel.Verbose);
+        void Log(string message, Constants.LoggingLevel messageLogLevel);
         void LogException(Exception exception, string message = "");
         void LogToFile(string message);
     }

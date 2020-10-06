@@ -194,14 +194,14 @@ namespace AtariST.SerialDisk
 
             var json = JsonSerializer.Serialize(_applicationSettings, typeof(ApplicationSettings));
 
-            _logger.Log(json, LoggingLevel.Verbose);
+            _logger.Log(json, LoggingLevel.All);
 
-            _logger.Log($"Operating system: {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture} {System.Runtime.InteropServices.RuntimeInformation.OSDescription}", LoggingLevel.Verbose);
-            _logger.Log($"Framework version: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", LoggingLevel.Verbose);
+            _logger.Log($"Operating system: {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture} {System.Runtime.InteropServices.RuntimeInformation.OSDescription}", LoggingLevel.Debug);
+            _logger.Log($"Framework version: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", LoggingLevel.Debug);
 
             _diskParameters = new DiskParameters(_applicationSettings.LocalDirectoryName, _applicationSettings.DiskSettings, _logger);
 
-            _logger.Log($"Importing local directory contents from {_applicationSettings.LocalDirectoryName}", Constants.LoggingLevel.Verbose);
+            _logger.Log($"Importing local directory contents from {_applicationSettings.LocalDirectoryName}", Constants.LoggingLevel.Debug);
 
             _disk = new Disk(_diskParameters, _logger);
 
@@ -226,8 +226,8 @@ namespace AtariST.SerialDisk
 
             catch (OperationCanceledException ex)
             {
-                _logger.Log("Thread cancellation requested", LoggingLevel.Verbose);
-                _logger.Log(ex.Message, LoggingLevel.Verbose);
+                _logger.Log("Thread cancellation requested", LoggingLevel.Debug);
+                _logger.Log(ex.Message, LoggingLevel.Debug);
             }
 
             _serial.Dispose();

@@ -46,11 +46,11 @@ namespace AtariST.SerialDisk.Utilities
             }
         }
 
-        public void Log(string message, LoggingLevel messageLogLevel = LoggingLevel.Verbose)
+        public void Log(string message, LoggingLevel messageLogLevel)
         {
             if (messageLogLevel <= _logLevel)
             {
-                if (_logLevel == LoggingLevel.Verbose) Console.Write($"{DateTime.Now}\t");
+                if (_logLevel >= LoggingLevel.Debug) Console.Write($"{DateTime.Now}\t");
                 Console.Write($"{message}\r\n");
                 LogToFile(message);
             }
