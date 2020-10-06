@@ -204,11 +204,6 @@ namespace AtariST.SerialDisk.Comms
                                         break;
 
                                     case 2:
-                                        _logger.Log("Received media change command.", LoggingLevel.Debug);
-                                        _state = ReceiverState.SendMediaChangeStatus;
-                                        break;
-
-                                    case 3:
                                         _logger.Log("Received send BIOS parameter block command.", LoggingLevel.Debug);
                                         _state = ReceiverState.SendBiosParameterBlock;
                                         break;
@@ -467,12 +462,6 @@ namespace AtariST.SerialDisk.Comms
 
             _serialPort.BaseStream.Write(_localDisk.Parameters.BIOSParameterBlock, 0, _localDisk.Parameters.BIOSParameterBlock.Length);
 
-            _state = ReceiverState.ReceiveStartMagic;
-        }
-
-        private void SendMediaChangeStatus()
-        {
-            _serialPort.BaseStream.WriteByte((byte)0);
             _state = ReceiverState.ReceiveStartMagic;
         }
 

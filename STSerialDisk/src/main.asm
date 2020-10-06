@@ -16,8 +16,7 @@
 | SerialDisk commands
 .equ cmd_read, 		0x00
 .equ cmd_write, 	0x01
-.equ cmd_mediach,	0x02
-.equ cmd_bpb, 		0x03
+.equ cmd_bpb, 		0x02
 
 | SerialDisk data flags
 .equ compression_isenabled,	0x00
@@ -371,34 +370,12 @@ _rw_read:
 99:
 	rts
 
+
 |-------------------------------------------------------------------------------
-| Sends the Media Changed command over serial and reads the result
-|
-| Input
-|
-| Output
-| 2 if media changed
-| 0 if media not changed
-|
-| Corrupts
-|
+| Media changed status. Always 0 (not changed).
 
 _mediach:
-	jbsr send_start_magic
-
-	| Send the command.
-
-	move.b	#cmd_mediach,d0
-	jbsr	write_serial
-
-	| Get the media changed status.
-
-	jbsr	read_serial
-	tst		d0
-	jmi		99f
-
-	and.l	#0xff,d0
-99:
+	moveq.l	#0,d0
 	rts
 
 |-------------------------------------------------------------------------------
