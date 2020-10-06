@@ -297,10 +297,6 @@ namespace AtariST.SerialDisk.Comms
 
                 switch (_state)
                 {
-                    case ReceiverState.SendMediaChangeStatus:
-                        SendMediaChangeStatus();
-                        break;
-
                     case ReceiverState.SendBiosParameterBlock:
                         SendBIOSParameterBlock();
                         break;
