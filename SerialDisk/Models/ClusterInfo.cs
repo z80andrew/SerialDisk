@@ -8,8 +8,9 @@ namespace AtariST.SerialDisk.Models
         {
             get
             {
-                if (LocalFileName != null) return Path.Combine(LocalDirectory, LocalFileName);
-                else return LocalDirectory;
+                if (LocalDirectory == null) return null;
+                else if (LocalFileName == null) return LocalDirectory;
+                else return Path.Combine(LocalDirectory, LocalFileName);
             }
         }
 

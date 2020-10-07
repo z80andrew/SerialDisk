@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Reflection.Metadata.Ecma335;
 
 namespace AtariST.SerialDisk.Models
 {
