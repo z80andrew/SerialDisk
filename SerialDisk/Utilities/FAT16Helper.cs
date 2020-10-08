@@ -12,6 +12,10 @@ namespace AtariST.SerialDisk.Utilities
 
         public const int BytesPerDirectoryEntry = 32;
 
+        public const byte DirectoryIdentifier = 0x10;
+
+        public const byte DeletedEntryIdentifier = 0xE5;
+
         public static bool IsDirectoryCluster(byte[] clusterData, int clusterIndex)
         {
             return (clusterData[0] == 0x2e && clusterData[32] == 0x2e) || clusterIndex == 0;
