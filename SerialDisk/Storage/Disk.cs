@@ -32,7 +32,7 @@ namespace AtariST.SerialDisk.Storage
             try
             {
                 int maxRootDirectoryEntries = ((diskParams.RootDirectorySectors * diskParams.BytesPerSector) / 32) - 2; // Each entry is 32 bytes, 2 entries reserved for . and ..
-                FAT16Helper.ValidateLocalDirectory(diskParams.LocalDirectoryPath, diskParams.DiskTotalBytes, maxRootDirectoryEntries, diskParams.TOS);
+                FAT16Helper.ValidateLocalDirectory(diskParams.LocalDirectoryPath, diskParams.DiskTotalBytes, maxRootDirectoryEntries, diskParams.SectorsPerCluster, diskParams.TOS);
             }
 
             catch (Exception ex)
@@ -151,15 +151,17 @@ namespace AtariST.SerialDisk.Storage
                 File.Delete(directoryContentInfo.LocalPath);
             }
 
-            int clusterIndex = 0;
-            bool foundCluster = false;
+            var clusterIndexesToDelete = _clusterInfos
+                .Select((ci, index) => new { ci, index })
+                .Where(_ => _.ci?.LocalPath == directoryContentInfo.LocalPath)
+                .Select(_ => _.index);
 
-            while (!foundCluster && clusterIndex > _clusterInfos.Length)
+            foreach (int clusterIndex in clusterIndexesToDelete)
             {
-                if (_clusterInfos[clusterIndex].LocalPath == directoryContentInfo.LocalPath) foundCluster = true;
+                _logger.Log($"Removing local data for cluster {clusterIndex}.", Constants.LoggingLevel.All);
+                _clusterInfos[clusterIndex] = null;
             }
 
-            _clusterInfos[clusterIndex] = null;
             _localDirectoryContentInfos.Remove(directoryContentInfo);
         }
 
@@ -178,6 +180,11 @@ namespace AtariST.SerialDisk.Storage
                     .Where(ci => ci != null && ci.LocalDirectory.StartsWith(oldDirectoryPath))
                     .ToList()
                     .ForEach(ci => ci.LocalDirectory = ci.LocalDirectory.Replace(oldDirectoryPath, newDirectoryPath));
+
+                _clusterInfos
+                    .Where(ci => ci != null && ci.LocalPath == oldDirectoryPath)
+                    .ToList()
+                    .ForEach(ci => ci.LocalFileName = newContentName);
 
                 _localDirectoryContentInfos
                     .Where(ldci => ldci != null && ldci.LocalDirectory.StartsWith(oldDirectoryPath))
@@ -707,8 +714,8 @@ namespace AtariST.SerialDisk.Storage
                 0, 
                 newDirectoryClusterIndex);
             
-            FatAddDirectoryEntry(newDirectoryClusterIndex, String.Empty, ".",".", FAT16Helper.DirectoryIdentifier, directoryInfo.LastWriteTime, 0, newDirectoryClusterIndex);
-            FatAddDirectoryEntry(newDirectoryClusterIndex, String.Empty, "..","..", FAT16Helper.DirectoryIdentifier, directoryInfo.LastWriteTime, 0, directoryCluster);
+            FatAddDirectoryEntry(newDirectoryClusterIndex, _clusterInfos[newDirectoryClusterIndex].LocalPath, ".",".", FAT16Helper.DirectoryIdentifier, directoryInfo.LastWriteTime, 0, newDirectoryClusterIndex);
+            FatAddDirectoryEntry(newDirectoryClusterIndex, _clusterInfos[newDirectoryClusterIndex].LocalDirectory, "..","..", FAT16Helper.DirectoryIdentifier, directoryInfo.LastWriteTime, 0, directoryCluster);
 
             FatImportLocalDirectoryContents(directoryInfo.FullName, newDirectoryClusterIndex);
         }

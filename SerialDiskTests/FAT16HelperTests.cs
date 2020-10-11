@@ -36,9 +36,9 @@ namespace Tests
 
         [TestCase(TOSVersion.TOS100, 0x3FFF * 8192 * 2)]
         [TestCase(TOSVersion.TOS104, 0x7FFF * 8192 * 2)]
-        public void ValidDiskSizes(TOSVersion tosVersion, int expectedMaxDiskSizeBytes)
+        public void ValidDiskSizes(TOSVersion tosVersion, int sectorsPerCluster, int expectedMaxDiskSizeBytes)
         {
-            var maxDiskSizeBytes = FAT16Helper.MaxDiskSizeBytes(tosVersion);
+            var maxDiskSizeBytes = FAT16Helper.MaxDiskSizeBytes(tosVersion, sectorsPerCluster);
 
             Assert.AreEqual(expectedMaxDiskSizeBytes, maxDiskSizeBytes);
         }
