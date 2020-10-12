@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using AtariST.SerialDisk.Utilities;
+using System.IO;
 
 namespace AtariST.SerialDisk.Models
 {
@@ -17,7 +18,7 @@ namespace AtariST.SerialDisk.Models
 
         public string LocalFileName { get; set; }
 
-        public string ShortFileName { get; set; }
+        public string TOSFileName { get; set; }
         public int DirectoryCluster { get; set; }
         public int EntryIndex { get; set; }
         public int StartCluster { get; set; }
