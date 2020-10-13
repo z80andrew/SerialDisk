@@ -21,6 +21,11 @@ namespace AtariST.SerialDisk.Utilities
             return (clusterData[0] == 0x2e && clusterData[32] == 0x2e) || clusterIndex == 0;
         }
 
+        public static int MaxSectorSize
+        {
+            get => 8192;
+        }
+
         public static int MaxDiskClusters(TOSVersion minimumTOSVersion)
         {
             return minimumTOSVersion == TOSVersion.TOS100 ? 0x3FFF : 0x7FFF;

@@ -7,6 +7,8 @@ namespace Tests
     [TestFixture]
     public class FAT16HelperTests
     {
+        private const int _sectorsPerCluster = 2;
+
         [SetUp]
         public void Setup()
         {
@@ -36,9 +38,9 @@ namespace Tests
 
         [TestCase(TOSVersion.TOS100, 0x3FFF * 8192 * 2)]
         [TestCase(TOSVersion.TOS104, 0x7FFF * 8192 * 2)]
-        public void ValidDiskSizes(TOSVersion tosVersion, int sectorsPerCluster, int expectedMaxDiskSizeBytes)
+        public void ValidDiskSizes(TOSVersion tosVersion, int expectedMaxDiskSizeBytes)
         {
-            var maxDiskSizeBytes = FAT16Helper.MaxDiskSizeBytes(tosVersion, sectorsPerCluster);
+            var maxDiskSizeBytes = FAT16Helper.MaxDiskSizeBytes(tosVersion, _sectorsPerCluster);
 
             Assert.AreEqual(expectedMaxDiskSizeBytes, maxDiskSizeBytes);
         }

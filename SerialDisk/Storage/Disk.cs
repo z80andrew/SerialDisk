@@ -30,13 +30,13 @@ namespace AtariST.SerialDisk.Storage
             Parameters = diskParams;
             _rootDirectoryClusterIndex = 0;
             _previousFreeClusterIndex = 1;
+            _localDirectoryContentInfos = new List<LocalDirectoryContentInfo>();
 
             try
             {
                 _rootDirectoryBuffer = new byte[Parameters.RootDirectorySectors * Parameters.BytesPerSector];
                 _fatBuffer = new byte[Parameters.SectorsPerFat * Parameters.BytesPerSector];
                 _clusterInfos = new ClusterInfo[Parameters.DiskClusters];
-                _localDirectoryContentInfos = new List<LocalDirectoryContentInfo>();
 
                 int maxRootDirectoryEntries = ((diskParams.RootDirectorySectors * diskParams.BytesPerSector) / 32) - 2; // Each entry is 32 bytes, 2 entries reserved for . and ..
                 FAT16Helper.ValidateLocalDirectory(diskParams.LocalDirectoryPath, diskParams.DiskTotalBytes, maxRootDirectoryEntries, diskParams.SectorsPerCluster, diskParams.TOS);
@@ -768,9 +768,9 @@ namespace AtariST.SerialDisk.Storage
                 fileInfo.DirectoryName, fileInfo.Name, TOSFileName, 0x00, fileInfo.LastWriteTime, fileInfo.Length);
         }
 
-        public void FatImportLocalDirectoryContents(List<LocalDirectoryContentInfo> localDirectoryContentInfos, string directoryName, int directoryClusterIndex)
+        public void FatImportLocalDirectoryContents(List<LocalDirectoryContentInfo> localDirectoryContentInfos, string directoryPath, int directoryClusterIndex)
         {
-            DirectoryInfo directoryInfo = new DirectoryInfo(directoryName);
+            DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
 
             foreach (DirectoryInfo subDirectoryInfo in directoryInfo.EnumerateDirectories())
                 FatAddDirectory(localDirectoryContentInfos, subDirectoryInfo, directoryClusterIndex);

@@ -7,11 +7,6 @@ namespace AtariST.SerialDisk.Common
         public const string DATE_FORMAT = "yyyy-MM-dd";
         public const string TIME_FORMAT = "HH:mm:ss";
 
-        public static int MaxSectorSize
-        {
-            get => 8192;
-        }
-
         public static Dictionary<string, string> ConsoleParameterMappings
         {
             get
