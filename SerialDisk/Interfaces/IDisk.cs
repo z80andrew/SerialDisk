@@ -1,4 +1,6 @@
-﻿using AtariST.SerialDisk.Storage;
+﻿using AtariST.SerialDisk.Models;
+using AtariST.SerialDisk.Storage;
+using System.Collections.Generic;
 
 namespace AtariST.SerialDisk.Interfaces
 {
@@ -8,7 +10,7 @@ namespace AtariST.SerialDisk.Interfaces
 
         void WriteSectors(int receiveBufferLength, int startSector, byte[] dataBuffer);
 
-        void FatImportLocalDirectoryContents(string directoryName, int directoryClusterIndex);
+        void FatImportLocalDirectoryContents(List<LocalDirectoryContentInfo> localDirectoryContentInfos, string directoryName, int directoryClusterIndex);
 
         byte[] ReadSectors(int sector, int numberOfSectors);
     }

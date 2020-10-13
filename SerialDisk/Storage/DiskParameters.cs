@@ -21,9 +21,9 @@ namespace AtariST.SerialDisk.Storage
             {
                 try
                 {
-                    if (value - (MaxSectorSize * 2) > FAT16Helper.MaxDiskSizeBytes(TOS)) // Allow for an extra cluster so max size can exactly match 32/512MiB despite 14/15 bit addressing limitation
+                    if (value - (MaxSectorSize * 2) > FAT16Helper.MaxDiskSizeBytes(TOS, SectorsPerCluster)) // Allow for an extra cluster so max size can exactly match 32/512MiB despite 14/15 bit addressing limitation
                         throw new ArgumentException($"{value / FAT16Helper.BytesPerMiB}MiB is larger than the maximum possible disk size " +
-                            $"({(FAT16Helper.MaxDiskSizeBytes(TOS) + (MaxSectorSize * 2)) / FAT16Helper.BytesPerMiB}MiB)");
+                            $"({(FAT16Helper.MaxDiskSizeBytes(TOS, SectorsPerCluster) + (MaxSectorSize * 2)) / FAT16Helper.BytesPerMiB}MiB)");
 
                     else
                     {
@@ -34,7 +34,7 @@ namespace AtariST.SerialDisk.Storage
                 catch (ArgumentException argEx)
                 {
                     _logger.LogException(argEx);
-                    throw argEx;
+                    throw;
                 }
             }
         }

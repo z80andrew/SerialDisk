@@ -58,7 +58,7 @@ namespace AtariST.SerialDisk.Comms
             catch (Exception portException) when (portException is IOException || portException is UnauthorizedAccessException)
             {
                 _logger.LogException(portException, $"Error opening serial port {serialPortSettings.PortName}");
-                throw portException;
+                throw;
             }
 
             _state = ReceiverState.ReceiveStartMagic;
@@ -310,6 +310,7 @@ namespace AtariST.SerialDisk.Comms
             catch (Exception ex)
             {
                 _logger.LogException(ex, "Serial port error");
+                _listenTokenSource.Cancel();
             }
         }
 

@@ -12,6 +12,10 @@ namespace AtariST.SerialDisk.Utilities
 
         public const int BytesPerDirectoryEntry = 32;
 
+        public const byte DirectoryIdentifier = 0x10;
+
+        public const byte DeletedEntryIdentifier = 0xE5;
+
         public static bool IsDirectoryCluster(byte[] clusterData, int clusterIndex)
         {
             return (clusterData[0] == 0x2e && clusterData[32] == 0x2e) || clusterIndex == 0;
@@ -22,9 +26,9 @@ namespace AtariST.SerialDisk.Utilities
             return minimumTOSVersion == TOSVersion.TOS100 ? 0x3FFF : 0x7FFF;
         }
 
-        public static int MaxDiskSizeBytes(TOSVersion tosVersion)
+        public static int MaxDiskSizeBytes(TOSVersion tosVersion, int sectorsPerCluster)
         {
-            int maxDiskSizeBytes = MaxDiskClusters(tosVersion) * (MaxSectorSize * 2); // 2 sectors per cluster
+            int maxDiskSizeBytes = MaxDiskClusters(tosVersion) * (MaxSectorSize * sectorsPerCluster);
 
             return maxDiskSizeBytes;
         }
@@ -100,30 +104,22 @@ namespace AtariST.SerialDisk.Utilities
             return clusterValue >= 0xfff8;
         }
 
-        public static void ValidateLocalDirectory(string localDirectoryPath, int diskSizeBytes, int maxRootDirectoryEntries, TOSVersion tosVersion)
+        public static void ValidateLocalDirectory(string localDirectoryPath, int diskSizeBytes, int maxRootDirectoryEntries, int sectorsPerCluster, TOSVersion tosVersion)
         {
-            try
-            {
-                DirectoryInfo directoryInfo = new DirectoryInfo(localDirectoryPath);
-                uint localDirectorySizeBytes = (uint)Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length));
+            DirectoryInfo directoryInfo = new DirectoryInfo(localDirectoryPath);
+            uint localDirectorySizeBytes = (uint)Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length));
 
-                if (localDirectorySizeBytes > MaxDiskSizeBytes(tosVersion))
-                    throw new System.InsufficientMemoryException($"Local directory size is {localDirectorySizeBytes / BytesPerMiB} MiB, which is larger than the maximum allowable virtual disk size ({MaxDiskSizeBytes(tosVersion) / BytesPerMiB} MiB)");
+            if (localDirectorySizeBytes > MaxDiskSizeBytes(tosVersion, sectorsPerCluster))
+                throw new InsufficientMemoryException($"Local directory size is {localDirectorySizeBytes / BytesPerMiB} MiB, which is larger than the maximum allowable virtual disk size ({MaxDiskSizeBytes(tosVersion, sectorsPerCluster) / BytesPerMiB} MiB)");
 
-                else if (localDirectorySizeBytes > diskSizeBytes)
-                    throw new System.InsufficientMemoryException($"Local directory size is {localDirectorySizeBytes / BytesPerMiB} MiB, which is too large for the given virtual disk size ({diskSizeBytes / BytesPerMiB} MiB)");
+            else if (localDirectorySizeBytes > diskSizeBytes)
+                throw new InsufficientMemoryException($"Local directory size is {localDirectorySizeBytes / BytesPerMiB} MiB, which is too large for the given virtual disk size ({diskSizeBytes / BytesPerMiB} MiB)");
 
-                int rootDirectoryEntries = Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.TopDirectoryOnly).Count()
-                    + Directory.GetDirectories(directoryInfo.FullName, "*", SearchOption.TopDirectoryOnly).Count();
+            int rootDirectoryEntries = Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.TopDirectoryOnly).Count()
+                + Directory.GetDirectories(directoryInfo.FullName, "*", SearchOption.TopDirectoryOnly).Count();
 
-                if (rootDirectoryEntries > maxRootDirectoryEntries)
-                    throw new System.InsufficientMemoryException($"The root directory has {rootDirectoryEntries} files/directories, which is more than the maximum ({maxRootDirectoryEntries} allowed");
-            }
-
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+            if (rootDirectoryEntries > maxRootDirectoryEntries)
+                throw new InsufficientMemoryException($"The root directory has {rootDirectoryEntries} files/directories, which is more than the maximum ({maxRootDirectoryEntries} allowed");
         }
     }
 }
