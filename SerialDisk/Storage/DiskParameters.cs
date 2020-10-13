@@ -34,7 +34,7 @@ namespace AtariST.SerialDisk.Storage
                 catch (ArgumentException argEx)
                 {
                     _logger.LogException(argEx);
-                    throw argEx;
+                    throw;
                 }
             }
         }

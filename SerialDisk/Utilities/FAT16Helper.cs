@@ -106,28 +106,20 @@ namespace AtariST.SerialDisk.Utilities
 
         public static void ValidateLocalDirectory(string localDirectoryPath, int diskSizeBytes, int maxRootDirectoryEntries, int sectorsPerCluster, TOSVersion tosVersion)
         {
-            try
-            {
-                DirectoryInfo directoryInfo = new DirectoryInfo(localDirectoryPath);
-                uint localDirectorySizeBytes = (uint)Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length));
+            DirectoryInfo directoryInfo = new DirectoryInfo(localDirectoryPath);
+            uint localDirectorySizeBytes = (uint)Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length));
 
-                if (localDirectorySizeBytes > MaxDiskSizeBytes(tosVersion, sectorsPerCluster))
-                    throw new System.InsufficientMemoryException($"Local directory size is {localDirectorySizeBytes / BytesPerMiB} MiB, which is larger than the maximum allowable virtual disk size ({MaxDiskSizeBytes(tosVersion, sectorsPerCluster) / BytesPerMiB} MiB)");
+            if (localDirectorySizeBytes > MaxDiskSizeBytes(tosVersion, sectorsPerCluster))
+                throw new InsufficientMemoryException($"Local directory size is {localDirectorySizeBytes / BytesPerMiB} MiB, which is larger than the maximum allowable virtual disk size ({MaxDiskSizeBytes(tosVersion, sectorsPerCluster) / BytesPerMiB} MiB)");
 
-                else if (localDirectorySizeBytes > diskSizeBytes)
-                    throw new System.InsufficientMemoryException($"Local directory size is {localDirectorySizeBytes / BytesPerMiB} MiB, which is too large for the given virtual disk size ({diskSizeBytes / BytesPerMiB} MiB)");
+            else if (localDirectorySizeBytes > diskSizeBytes)
+                throw new InsufficientMemoryException($"Local directory size is {localDirectorySizeBytes / BytesPerMiB} MiB, which is too large for the given virtual disk size ({diskSizeBytes / BytesPerMiB} MiB)");
 
-                int rootDirectoryEntries = Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.TopDirectoryOnly).Count()
-                    + Directory.GetDirectories(directoryInfo.FullName, "*", SearchOption.TopDirectoryOnly).Count();
+            int rootDirectoryEntries = Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.TopDirectoryOnly).Count()
+                + Directory.GetDirectories(directoryInfo.FullName, "*", SearchOption.TopDirectoryOnly).Count();
 
-                if (rootDirectoryEntries > maxRootDirectoryEntries)
-                    throw new System.InsufficientMemoryException($"The root directory has {rootDirectoryEntries} files/directories, which is more than the maximum ({maxRootDirectoryEntries} allowed");
-            }
-
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+            if (rootDirectoryEntries > maxRootDirectoryEntries)
+                throw new InsufficientMemoryException($"The root directory has {rootDirectoryEntries} files/directories, which is more than the maximum ({maxRootDirectoryEntries} allowed");
         }
     }
 }
