@@ -20,23 +20,19 @@ namespace AtariST.SerialDisk.Storage
 
         private ClusterInfo[] _clusterInfos;
         private List<LocalDirectoryContentInfo> _localDirectoryContentInfos;
+        
+        public DiskParameters Parameters { get; }
         private readonly ILogger _logger;
-
-        public DiskParameters Parameters { get; set; }
 
         public Disk(DiskParameters diskParams, ILogger logger)
         {
             _logger = logger;
             Parameters = diskParams;
             _rootDirectoryClusterIndex = 0;
-            _previousFreeClusterIndex = 1;
-            _localDirectoryContentInfos = new List<LocalDirectoryContentInfo>();
 
             try
             {
-                _rootDirectoryBuffer = new byte[Parameters.RootDirectorySectors * Parameters.BytesPerSector];
-                _fatBuffer = new byte[Parameters.SectorsPerFat * Parameters.BytesPerSector];
-                _clusterInfos = new ClusterInfo[Parameters.DiskClusters];
+                InitDiskContentVariables();
 
                 int maxRootDirectoryEntries = ((diskParams.RootDirectorySectors * diskParams.BytesPerSector) / 32) - 2; // Each entry is 32 bytes, 2 entries reserved for . and ..
                 FAT16Helper.ValidateLocalDirectory(diskParams.LocalDirectoryPath, diskParams.DiskTotalBytes, maxRootDirectoryEntries, diskParams.SectorsPerCluster, diskParams.TOS);
@@ -49,6 +45,16 @@ namespace AtariST.SerialDisk.Storage
             }
 
             FatImportLocalDirectoryContents(_localDirectoryContentInfos, Parameters.LocalDirectoryPath, _rootDirectoryClusterIndex);
+        }
+
+        private void InitDiskContentVariables()
+        {
+            _previousFreeClusterIndex = 1;
+            _localDirectoryContentInfos = new List<LocalDirectoryContentInfo>();
+
+            _rootDirectoryBuffer = new byte[Parameters.RootDirectorySectors * Parameters.BytesPerSector];
+            _fatBuffer = new byte[Parameters.SectorsPerFat * Parameters.BytesPerSector];
+            _clusterInfos = new ClusterInfo[Parameters.DiskClusters];
         }
 
         private LocalDirectoryContentInfo FindLocalDirectoryContentInfo(List<LocalDirectoryContentInfo> localDirectoryContentInfos, int directoryClusterIndex, int directoryEntryIndex, int entryStartClusterIndex)
@@ -768,7 +774,7 @@ namespace AtariST.SerialDisk.Storage
                 fileInfo.DirectoryName, fileInfo.Name, TOSFileName, 0x00, fileInfo.LastWriteTime, fileInfo.Length);
         }
 
-        public void FatImportLocalDirectoryContents(List<LocalDirectoryContentInfo> localDirectoryContentInfos, string directoryPath, int directoryClusterIndex)
+        private void FatImportLocalDirectoryContents(List<LocalDirectoryContentInfo> localDirectoryContentInfos, string directoryPath, int directoryClusterIndex)
         {
             DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
 
@@ -777,6 +783,16 @@ namespace AtariST.SerialDisk.Storage
 
             foreach (FileInfo fileInfo in directoryInfo.EnumerateFiles())
                 FatAddFile(localDirectoryContentInfos, fileInfo, directoryClusterIndex);
+        }
+
+        public void ReimportLocalDirectoryContents()
+        {
+            _logger.Log($"Reimporting local directory contents from {Parameters.LocalDirectoryPath}", Constants.LoggingLevel.Info);
+
+            InitDiskContentVariables();
+            FatImportLocalDirectoryContents(_localDirectoryContentInfos, Parameters.LocalDirectoryPath, _rootDirectoryClusterIndex);
+
+            _logger.Log($"Import complete", Constants.LoggingLevel.Info);
         }
     }
 }

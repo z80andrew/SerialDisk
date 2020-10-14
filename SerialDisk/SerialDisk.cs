@@ -115,7 +115,7 @@ namespace AtariST.SerialDisk
             serviceCollection.AddSingleton<ILogger, Logger>();
         }
 
-        private static Task ListenForConsoleExitKeypress()
+        private static Task ListenForConsoleKeypress()
         {
             return Task.Factory.StartNew(() =>
             {
@@ -123,7 +123,9 @@ namespace AtariST.SerialDisk
                 do
                 {
                     keyInfo = Console.ReadKey(true);
-                } while ((keyInfo.Modifiers & ConsoleModifiers.Control) == 0 && keyInfo.Key != ConsoleKey.X);
+                    if ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0 && keyInfo.Key == ConsoleKey.R) _disk.ReimportLocalDirectoryContents();
+
+                } while ((keyInfo.Modifiers & ConsoleModifiers.Control) == 0 || keyInfo.Key != ConsoleKey.X);
             });
         }
 
@@ -169,7 +171,7 @@ namespace AtariST.SerialDisk
                     .Build()
                     .Bind(_applicationSettings);
 
-                _applicationSettings.LocalDirectoryName = ParseLocalDirectoryPath(_applicationSettings.LocalDirectoryName, args);
+                _applicationSettings.LocalDirectoryPath = ParseLocalDirectoryPath(_applicationSettings.LocalDirectoryPath, args);
             }
 
             catch (Exception parameterException)
@@ -179,10 +181,10 @@ namespace AtariST.SerialDisk
             }
 
 
-            if (String.IsNullOrEmpty(_applicationSettings.LocalDirectoryName)
-                || !Directory.Exists(_applicationSettings.LocalDirectoryName))
+            if (String.IsNullOrEmpty(_applicationSettings.LocalDirectoryPath)
+                || !Directory.Exists(_applicationSettings.LocalDirectoryPath))
             {
-                Console.WriteLine($"Local directory path {_applicationSettings.LocalDirectoryName} not found.");
+                Console.WriteLine($"Local directory path {_applicationSettings.LocalDirectoryPath} not found.");
                 return;
             }
 
@@ -199,9 +201,9 @@ namespace AtariST.SerialDisk
             _logger.Log($"Operating system: {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture} {System.Runtime.InteropServices.RuntimeInformation.OSDescription}", LoggingLevel.Debug);
             _logger.Log($"Framework version: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", LoggingLevel.Debug);
 
-            _diskParameters = new DiskParameters(_applicationSettings.LocalDirectoryName, _applicationSettings.DiskSettings, _logger);
+            _diskParameters = new DiskParameters(_applicationSettings.LocalDirectoryPath, _applicationSettings.DiskSettings, _logger);
 
-            _logger.Log($"Importing local directory contents from {_applicationSettings.LocalDirectoryName}", Constants.LoggingLevel.Debug);
+            _logger.Log($"Importing local directory contents from {_applicationSettings.LocalDirectoryPath}", Constants.LoggingLevel.Debug);
 
             _disk = new Disk(_diskParameters, _logger);
 
@@ -211,17 +213,17 @@ namespace AtariST.SerialDisk
 
             _logger.Log($"Baud rate:{_applicationSettings.SerialSettings.BaudRate} | Data bits:{_applicationSettings.SerialSettings.DataBits}" +
                 $" | Parity:{_applicationSettings.SerialSettings.Parity} | Stop bits:{_applicationSettings.SerialSettings.StopBits} | Flow control:{_applicationSettings.SerialSettings.Handshake}", LoggingLevel.Info);
-            _logger.Log($"Using local directory {_applicationSettings.LocalDirectoryName} as a {_applicationSettings.DiskSettings.DiskSizeMiB}MiB virtual disk", LoggingLevel.Info);
+            _logger.Log($"Using local directory {_applicationSettings.LocalDirectoryPath} as a {_applicationSettings.DiskSettings.DiskSizeMiB}MiB virtual disk", LoggingLevel.Info);
             _logger.Log($"Compression: " + (_applicationSettings.CompressionIsEnabled ? "Enabled" : "Disabled"), LoggingLevel.Info);
             _logger.Log($"Logging level: { _applicationSettings.LoggingLevel} ", LoggingLevel.Info);
 
-            Console.WriteLine("Press Ctrl-X to quit.");
+            Console.WriteLine("Press Ctrl-X to quit, Ctrl-R to reimport local disk content.");
 
-            Task keyboardExitListener = ListenForConsoleExitKeypress();
+            Task keyboardListener = ListenForConsoleKeypress();
 
             try
             {
-                keyboardExitListener.Wait(cancelTokenSource.Token);
+                keyboardListener.Wait(cancelTokenSource.Token);
             }
 
             catch (OperationCanceledException ex)
