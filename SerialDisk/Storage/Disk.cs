@@ -778,11 +778,11 @@ namespace AtariST.SerialDisk.Storage
         {
             DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
 
-            foreach (DirectoryInfo subDirectoryInfo in directoryInfo.EnumerateDirectories())
-                FatAddDirectory(localDirectoryContentInfos, subDirectoryInfo, directoryClusterIndex);
-
             foreach (FileInfo fileInfo in directoryInfo.EnumerateFiles())
                 FatAddFile(localDirectoryContentInfos, fileInfo, directoryClusterIndex);
+
+            foreach (DirectoryInfo subDirectoryInfo in directoryInfo.EnumerateDirectories())
+                FatAddDirectory(localDirectoryContentInfos, subDirectoryInfo, directoryClusterIndex);
         }
 
         public void ReimportLocalDirectoryContents()

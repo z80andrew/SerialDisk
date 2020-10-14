@@ -36,7 +36,7 @@ namespace AtariST.SerialDisk
             foreach (var item in Enum.GetNames(enumerationType))
             {
                 enumString.Append(item);
-                enumString.Append("|");
+                enumString.Append('|');
             }
 
             enumString.Remove(enumString.Length - 1, 1);
