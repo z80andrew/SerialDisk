@@ -46,6 +46,7 @@ namespace AtariST.SerialDisk.Common
             ReceiveWriteSectorIndex,
             ReceiveWriteSectorCount,
             ReceiveData,
+            ReceiveCRC32,
             SendMediaChangeStatus,
             SendBiosParameterBlock
         };
@@ -56,5 +57,12 @@ namespace AtariST.SerialDisk.Common
             Debug,
             All
         };
+
+        public static class Flags
+        {
+            public const byte RLECompressionEnabled = 0x1F;
+            public const byte CRC32Mismatch = 0x00;
+            public const byte CRC32Match = 0x01;
+        }
     }
 }

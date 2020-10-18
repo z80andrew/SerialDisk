@@ -1,3 +1,4 @@
+using AtariST.SerialDisk.Common;
 using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Utilities;
@@ -24,6 +25,7 @@ namespace AtariST.SerialDisk.Comms
         private UInt32 _receivedSectorCount;
         private byte[] _receiverDataBuffer;
         private int _receiverDataIndex;
+        private UInt32 _receivedCRC32;
         private byte? _previousByte;
         private bool _isRLERun;
 
@@ -287,8 +289,12 @@ namespace AtariST.SerialDisk.Comms
                         break;
 
                     case ReceiverState.ReceiveData:
-                        if(_receivedDataCounter == 0) _receiveCompressedData = (Data & 0x01F) == 1;
-                        else ReceiveData(Data);
+                        if (_receivedDataCounter == 0) ProcessReceiveDataFlags(Data);
+                        else if (_receiverDataIndex != _receivedSectorCount * _localDisk.Parameters.BytesPerSector) ReceiveData(Data);
+                        break;
+
+                    case ReceiverState.ReceiveCRC32:
+                        ReceiveCRC32(Data);
                         break;
                 }
 
@@ -311,6 +317,53 @@ namespace AtariST.SerialDisk.Comms
                 _logger.LogException(ex, "Serial port error");
                 _listenTokenSource.Cancel();
             }
+        }
+
+        private void ReceiveCRC32(byte data)
+        {
+            if (_receivedDataCounter == 0)
+            {
+                _logger.Log($"Receiving CRC32...", LoggingLevel.Debug);
+                _receiverDataIndex = 0;
+                _receivedCRC32 = 0;
+            }
+
+            _receivedCRC32 = (_receivedCRC32 << 8) + data;
+
+            _receiverDataIndex++;
+
+            Console.Write($"\rReceived [{_receiverDataIndex} / 4] CRC32 bytes");
+
+            if (_receiverDataIndex == 4)
+            {
+                Console.WriteLine();
+
+                var calculatedCRC32 = CRC32.CalculateCRC32(_receiverDataBuffer);
+
+                if (calculatedCRC32 == _receivedCRC32)
+                {
+                    _logger.Log($"CRC32 match. Local:{calculatedCRC32} Remote:{_receivedCRC32}", LoggingLevel.Debug);
+                    _serialPort.BaseStream.WriteByte(Flags.CRC32Match);
+                    _localDisk.WriteSectors(_receiverDataBuffer.Length, (int)_receivedSectorIndex, _receiverDataBuffer);
+                    _state = ReceiverState.ReceiveStartMagic;
+                }
+
+                else
+                {
+                    _logger.Log($"CRC32 mismatch. Local:{calculatedCRC32} Remote:{_receivedCRC32}", LoggingLevel.Debug);
+                    _serialPort.BaseStream.WriteByte(Flags.CRC32Mismatch);
+                    _state = ReceiverState.ReceiveData;
+                }
+
+                _receivedDataCounter = -1;
+
+                _logger.Log($"Receiver state: {_state}", LoggingLevel.Debug);
+            }
+        }
+
+        private void ProcessReceiveDataFlags(byte data)
+        {
+            _receiveCompressedData = (data & Flags.RLECompressionEnabled) == 1;
         }
 
         private void ReceiveData(byte Data)
@@ -366,18 +419,15 @@ namespace AtariST.SerialDisk.Comms
 
             string percentReceived = ((Convert.ToDecimal(_receiverDataIndex) / _receiverDataBuffer.Length) * 100).ToString("00.0");
             string formattedBytesReceived = _receiverDataIndex.ToString().PadLeft(_receiverDataBuffer.Length.ToString().Length, '0');
-            Console.Write($"\rReceived [{formattedBytesReceived} / {_receiverDataBuffer.Length} bytes] {percentReceived}% ");
+            Console.Write($"\rReceived [{formattedBytesReceived} / {_receiverDataBuffer.Length}] bytes {percentReceived}% ");
 
             if (_receiverDataIndex == _receivedSectorCount * _localDisk.Parameters.BytesPerSector)
             {
                 Console.WriteLine();
-
                 _logger.Log("Transfer done (" + (_receiverDataBuffer.LongLength * 10000000 / (DateTime.Now.Ticks - _transferStartDateTime.Ticks)) + " Bytes/s).", LoggingLevel.Info);
 
-                _localDisk.WriteSectors(_receiverDataBuffer.Length, (int)_receivedSectorIndex, _receiverDataBuffer);
-
-                _state = ReceiverState.ReceiveStartMagic;
                 _receivedDataCounter = -1;
+                _state = ReceiverState.ReceiveCRC32;
             }
         }
 
