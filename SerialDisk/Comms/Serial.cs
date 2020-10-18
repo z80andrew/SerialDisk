@@ -4,7 +4,6 @@ using AtariST.SerialDisk.Utilities;
 using System;
 using System.IO;
 using System.IO.Ports;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static AtariST.SerialDisk.Common.Constants;
@@ -460,6 +459,8 @@ namespace AtariST.SerialDisk.Comms
             _serialPort.BaseStream.Write(_localDisk.Parameters.BIOSParameterBlock, 0, _localDisk.Parameters.BIOSParameterBlock.Length);
 
             _state = ReceiverState.ReceiveStartMagic;
+
+            _logger.Log($"Receiver state: {_state}", LoggingLevel.Debug);
         }
 
         public void Dispose()
