@@ -476,7 +476,25 @@ namespace AtariST.SerialDisk.Storage
 
                     Array.Copy(dataBuffer, dataOffset, _fatBuffer, WriteSector * Parameters.BytesPerSector, Parameters.BytesPerSector);
 
-                    SyncLocalDisk(_localDirectoryContentInfos, clusterIndex, true);
+                    var lowerClusterBound = (WriteSector * Parameters.BytesPerSector) / 2;
+                    var upperClusterBound = ((WriteSector * Parameters.BytesPerSector) + Parameters.BytesPerSector) / 2;
+
+                    _logger.Log($"FAT entries for clusters {lowerClusterBound}-{upperClusterBound} updated", Constants.LoggingLevel.All);
+
+                    var localDirectoryContentToUpdate = new List<int>();
+
+                    for (int index = lowerClusterBound; index <= upperClusterBound; index++)
+                    {
+                        if (_clusterInfos[index] != null && _clusterInfos[index].LocalDirectoryContent != null) localDirectoryContentToUpdate.Add(_clusterInfos[index].LocalDirectoryContent.DirectoryCluster);
+                    }
+
+                    localDirectoryContentToUpdate = localDirectoryContentToUpdate.Distinct().ToList();
+
+                    foreach (var directoryClusterIndex in localDirectoryContentToUpdate)
+                    {
+                        _logger.Log($"Syncing directory cluster {directoryClusterIndex} via FAT update", Constants.LoggingLevel.All);
+                        SyncLocalDisk(_localDirectoryContentInfos, directoryClusterIndex, true);
+                    }
                 }
 
                 // Root directory area?
