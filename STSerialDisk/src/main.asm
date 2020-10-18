@@ -291,7 +291,7 @@ _rw_write:
 	btst	#0,flags
 	jeq		_rw_write_uncompressed
 	.include "../src/RLE.asm"
-	jmp	_rw_write_end
+	jmp	_rw_send_crc32
 _rw_write_uncompressed:
 	move.b	(a4)+,d0															| Move buffer address into d0, increment to next byte in rw struct
 	Bconout	#1,d0																| Write byte to serial
