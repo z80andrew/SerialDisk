@@ -71,13 +71,13 @@ namespace AtariST.SerialDisk.Storage
             directoryData = GetDirectoryClusterData(clusterIndex);
 
             // Only check for changes if this cluster contains directory entry information
-            if (FAT16Helper.IsDirectoryCluster(directoryData, clusterIndex))
+            if (clusterIndex == 0 || _clusterInfos[clusterIndex].FileOffset == -1)
             {
-                bool IsEndOfDirectoryEntries = false;
+                bool localContentChangeFound = false;
 
-                while (!FAT16Helper.IsEndOfFile(clusterIndex) && !IsEndOfDirectoryEntries)
+                do
                 {
-                    _logger.Log($"Updating cluster {clusterIndex}", Constants.LoggingLevel.All);
+                    _logger.Log($"Updating directory cluster {clusterIndex}", Constants.LoggingLevel.All);
                     int directoryEntryIndex = 0;
 
                     while (directoryEntryIndex < directoryData.Length && directoryData[directoryEntryIndex] != 0)
@@ -109,7 +109,7 @@ namespace AtariST.SerialDisk.Storage
                                     {
                                         RenameLocalDirectoryOrFile(localDirectoryContentInfos, directoryData, directoryEntryIndex, localContent, fileName);
                                     }
-                                    }
+                                }
                             }
 
                             // Entry is new
@@ -129,17 +129,24 @@ namespace AtariST.SerialDisk.Storage
                         directoryEntryIndex += 32;
                     }
 
-                    if (directoryEntryIndex < directoryData.Length)
+                    if (directoryEntryIndex < directoryData.Length || FAT16Helper.IsEndOfClusterChain(FatGetClusterValue(clusterIndex)))
                     {
-                        IsEndOfDirectoryEntries = true;
+                        localContentChangeFound = true;
                     }
 
                     else
                     {
-                        clusterIndex = FatGetClusterValue(clusterIndex);
+                        var nextClusterIndex = FatGetClusterValue(clusterIndex);
+                        _logger.Log($"Directory cluster {clusterIndex} continues in cluster {nextClusterIndex}", Constants.LoggingLevel.All);
+
+                        // If the next directory cluster is new, ensure it has a LocalDirectoryContentInfo assigned
+                        if (_clusterInfos[nextClusterIndex].LocalDirectoryContent == null) _clusterInfos[nextClusterIndex].LocalDirectoryContent = _clusterInfos[clusterIndex].LocalDirectoryContent;
+                        clusterIndex = nextClusterIndex;
+
                         directoryData = GetDirectoryClusterData(clusterIndex);
                     }
-                }
+
+                } while (!localContentChangeFound);
             }
         }
 
@@ -247,9 +254,7 @@ namespace AtariST.SerialDisk.Storage
                 {
                     int fileClusterIndex = entryStartClusterIndex;
 
-                    int fileSize = directoryData[directoryEntryIndex + 28] | (directoryData[directoryEntryIndex + 29] << 8) | (directoryData[directoryEntryIndex + 30] << 16) | (directoryData[directoryEntryIndex + 31] << 24);
-
-                    if (fileSize == 0 && !File.Exists(newContentPath))
+                    if (!File.Exists(newContentPath))
                     {
                         _logger.Log($"Creating local file: {newContentPath}", Constants.LoggingLevel.Info);
                         File.Create(newContentPath).Dispose();
@@ -267,7 +272,7 @@ namespace AtariST.SerialDisk.Storage
                         localDirectoryContentInfos.Add(newLocalDirectoryContent);
                     }
 
-                    else if (entryStartClusterIndex != 0)
+                    if (entryStartClusterIndex != 0)
                     {
                         // Check if the file has been completely written.
                         while (!FAT16Helper.IsEndOfClusterChain(fileClusterIndex))
@@ -279,15 +284,19 @@ namespace AtariST.SerialDisk.Storage
                         {
                             try
                             {
+                                _logger.Log("Finding existing content info for local file \"" + newContentPath + "\".", Constants.LoggingLevel.All);
+
                                 var newLocalDirectoryContent = localDirectoryContentInfos.Where(lcdi => lcdi.LocalPath == newContentPath).Single();
 
                                 newLocalDirectoryContent.StartCluster = entryStartClusterIndex;
 
-                                _logger.Log("Writing local file \"" + newContentPath + "\".", Constants.LoggingLevel.Info);
+                                _logger.Log("Updating local file \"" + newContentPath + "\".", Constants.LoggingLevel.Info);
 
                                 using (BinaryWriter FileBinaryWriter = new BinaryWriter(File.OpenWrite(newContentPath)))
                                 {
                                     fileClusterIndex = entryStartClusterIndex;
+
+                                    int fileSize = directoryData[directoryEntryIndex + 28] | (directoryData[directoryEntryIndex + 29] << 8) | (directoryData[directoryEntryIndex + 30] << 16) | (directoryData[directoryEntryIndex + 31] << 24);
 
                                     while (!FAT16Helper.IsEndOfFile(fileClusterIndex))
                                     {
@@ -504,8 +513,6 @@ namespace AtariST.SerialDisk.Storage
                         _clusterInfos[clusterIndex] = new ClusterInfo
                         {
                             DataBuffer = new byte[Parameters.BytesPerCluster],
-                            // Look for an existing content info to attach, in case this is a directory which has been extended
-                            LocalDirectoryContent = _localDirectoryContentInfos.Where(dci => FatGetClusterValue(dci.StartCluster) == clusterIndex).FirstOrDefault()
                         };
                     }
 

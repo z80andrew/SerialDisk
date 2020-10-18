@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AtariST.SerialDisk.Models;
+using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -15,11 +16,6 @@ namespace AtariST.SerialDisk.Utilities
         public const byte DirectoryIdentifier = 0x10;
 
         public const byte DeletedEntryIdentifier = 0xE5;
-
-        public static bool IsDirectoryCluster(byte[] clusterData, int clusterIndex)
-        {
-            return (clusterData[0] == 0x2e && clusterData[32] == 0x2e) || clusterIndex == 0;
-        }
 
         public static int MaxSectorSize
         {
@@ -125,6 +121,14 @@ namespace AtariST.SerialDisk.Utilities
 
             if (rootDirectoryEntries > maxRootDirectoryEntries)
                 throw new InsufficientMemoryException($"The root directory has {rootDirectoryEntries} files/directories, which is more than the maximum ({maxRootDirectoryEntries} allowed");
+        }
+
+        public static void WriteClusterToFile(ClusterInfo cluster)
+        {
+            using (FileStream fileStream = new FileStream($"cluster {cluster.LocalDirectoryContent.TOSFileName} offset {cluster.FileOffset}.bin", FileMode.Create))
+            {
+                fileStream.Write(cluster.DataBuffer);
+            }
         }
     }
 }
