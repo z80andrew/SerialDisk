@@ -284,28 +284,27 @@ _rw:
 	jeq		_rw_read
 
 _rw_write:
-	movem.l	d3/a4,-(sp)															| Push buffer address to the stack
+	movem.l	d3/a4,-(sp)															| Push buffer address and data length to the stack
 
 	move.b	flags,d0
 	jbsr	write_serial
 	btst	#0,flags
 	jeq		_rw_write_uncompressed
 	.include "../src/RLE.asm"
-	jmp	_rw_send_crc32
+	jmp	_rw_write_crc32
 _rw_write_uncompressed:
 	move.b	(a4)+,d0															| Move buffer address into d0, increment to next byte in rw struct
 	Bconout	#1,d0																| Write byte to serial
 	subq.l	#1,d3																| Decrement number of bytes remaining
 	jne		_rw_write_uncompressed
-_rw_send_crc32:
-	movem.l	(sp)+,d3/a4															| Pop data length off the stack
+_rw_write_crc32:
+	movem.l	(sp)+,d3/a4															| Pop buffer address and data length off the stack
 	move.l	d3,d0
 	move.l	a4,a0
 
 	jbsr	calculate_crc32														| Get CRC32
 	move.l	d0,temp_long
-	| Send remote CRC32 checksum.
-	clr.l	d0
+	| Send CRC32 checksum.
 	move	#4-1,d4																| Copy byte count into counter (There are 4 bytes to read, -1 for 0-based index)
 	lea		temp_long,a3														| Load address to store CRC32 checksum
 1:
@@ -314,11 +313,12 @@ _rw_send_crc32:
 	dbf		d4,1b
 
 	jbsr	read_serial															| Receive CRC32 comparison result
-	tst.w	d0
+	tst.b	d0
 	jeq		_rw_write															| CRC32 mismatch, resend data
-	jmi		99f																	| Data receive error
+	jmi		99f																	| Serial receive error
 _rw_write_end:
 	clr.l	d0																	| Success return value
+99:
 	rts
 
 _rw_read:
