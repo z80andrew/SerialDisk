@@ -284,23 +284,45 @@ _rw:
 	jeq		_rw_read
 
 _rw_write:
+	movem.l	d3/a4,-(sp)															| Push buffer address and data length to the stack
+
 	move.b	flags,d0
 	jbsr	write_serial
 	btst	#0,flags
 	jeq		_rw_write_uncompressed
 	.include "../src/RLE.asm"
-	jmp	_rw_write_end
+	jmp	_rw_write_crc32
 _rw_write_uncompressed:
 	move.b	(a4)+,d0															| Move buffer address into d0, increment to next byte in rw struct
 	Bconout	#1,d0																| Write byte to serial
 	subq.l	#1,d3																| Decrement number of bytes remaining
 	jne		_rw_write_uncompressed
+_rw_write_crc32:
+	movem.l	(sp)+,d3/a4															| Pop buffer address and data length off the stack
+	move.l	d3,d0
+	move.l	a4,a0
+
+	jbsr	calculate_crc32														| Get CRC32
+	move.l	d0,temp_long
+	| Send CRC32 checksum.
+	move	#4-1,d4																| Copy byte count into counter (There are 4 bytes to read, -1 for 0-based index)
+	lea		temp_long,a3														| Load address to store CRC32 checksum
+1:
+	move.b	(a3)+,d0
+	Bconout	#1,d0
+	dbf		d4,1b
+
+	jbsr	read_serial															| Receive CRC32 comparison result
+	tst.b	d0
+	jeq		_rw_write															| CRC32 mismatch, resend data
+	jmi		99f																	| Serial receive error
 _rw_write_end:
 	clr.l	d0																	| Success return value
+99:
 	rts
 
 _rw_read:
-	move.l	d3,-(sp)															| Push uncompressed data length on to stack
+	movem.l	d3,-(sp)															| Push uncompressed data length on to stack
 
 	move.l	a4,a5																| Copy destination address so it can be used again later
 
@@ -359,7 +381,7 @@ _rw_read:
 	| Calculate local CRC32 checksum.
 
 	move.l	a4,a0																| Copy address of received data
-	move.l	(sp)+,d0															| Pop uncompressed data length off the stack
+	movem.l	(sp)+,d0															| Pop uncompressed data length off the stack
 
 	jbsr	calculate_crc32														| Get CRC32 from subroutine
 
@@ -542,7 +564,7 @@ wait:
 | a6
 
 read_serial:
-	movem.l	d1-d2,-(a7)															| Push registers to the stack which are affected by BIOS calls
+	movem.l	d1-d2,-(sp)															| Push registers to the stack which are affected by BIOS calls
     lea     _hz_200,a6
 	move.l  (a6),d6      														| Store current timerC
 	addi.l	#serial_timeout,d6      											| Increase to max timerC
@@ -563,7 +585,7 @@ read_serial:
 3:
 	Bconin	#1																	| Read byte from serial port
 99:
-	movem.l	(a7)+,d1-d2															| Restore registers affected by BIOS calls
+	movem.l	(sp)+,d1-d2															| Restore registers affected by BIOS calls
 	rts
 
 |-------------------------------------------------------------------------------

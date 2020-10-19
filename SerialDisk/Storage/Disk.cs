@@ -306,6 +306,9 @@ namespace AtariST.SerialDisk.Storage
 
                                         fileSize -= _clusterInfos[fileClusterIndex].DataBuffer.Length;
 
+                                        // Buffer has been written to disk; free up RAM
+                                        _clusterInfos[fileClusterIndex].DataBuffer = null;
+
                                         fileClusterIndex = FatGetClusterValue(fileClusterIndex);
                                     }
                                 }
