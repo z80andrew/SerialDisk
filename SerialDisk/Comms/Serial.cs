@@ -440,7 +440,7 @@ namespace AtariST.SerialDisk.Comms
             else
                 _logger.Log("Reading sectors " + _receivedSectorIndex + " - " + (_receivedSectorIndex + _receivedSectorCount - 1), LoggingLevel.Debug);
 
-            byte[] sendDataBuffer = _localDisk.ReadSectors((int)_receivedSectorIndex, (int)_receivedSectorCount);
+            byte[] sendDataBuffer = _localDisk.ReadSectors(Convert.ToInt32(_receivedSectorIndex), Convert.ToInt32(_receivedSectorCount));
 
             UInt32 crc32Checksum = CRC32.CalculateCRC32(sendDataBuffer);
 
