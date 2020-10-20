@@ -59,12 +59,13 @@ namespace AtariST.SerialDisk.Storage
 
         private LocalDirectoryContentInfo FindLocalDirectoryContentInfo(List<LocalDirectoryContentInfo> localDirectoryContentInfos, int directoryClusterIndex, int directoryEntryIndex, int entryStartClusterIndex)
         {
-            return localDirectoryContentInfos.Where(lcdi => lcdi.EntryIndex == directoryEntryIndex
-                                                && lcdi.DirectoryCluster == directoryClusterIndex
-                                                && lcdi.StartCluster == entryStartClusterIndex).SingleOrDefault();
+            return localDirectoryContentInfos.Where(ldci => ldci.EntryIndex == directoryEntryIndex
+                                                && ldci.DirectoryCluster == directoryClusterIndex
+                                                && ldci.StartCluster == entryStartClusterIndex
+                                                && ldci.WriteInProgress == false).SingleOrDefault();
         }
 
-        private void SyncLocalDisk(List<LocalDirectoryContentInfo> localDirectoryContentInfos, int clusterIndex, bool syncSubDirectoryContents)
+        private void SyncDirectoryClusterToLocalDisk(List<LocalDirectoryContentInfo> localDirectoryContentInfos, int clusterIndex)
         {
             byte[] directoryData;
 
@@ -116,13 +117,6 @@ namespace AtariST.SerialDisk.Storage
                             else if (directoryData[directoryEntryIndex] != FAT16Helper.DeletedEntryIdentifier)
                             {
                                 UpdateLocalDirectoryOrFile(localDirectoryContentInfos, directoryData, clusterIndex, directoryEntryIndex, entryStartClusterIndex, fileName);
-                            }
-
-                            if (syncSubDirectoryContents
-                                && directoryData[directoryEntryIndex + 11] == FAT16Helper.DirectoryIdentifier
-                                && directoryData[directoryEntryIndex] != FAT16Helper.DeletedEntryIdentifier)
-                            {
-                                SyncLocalDisk(localDirectoryContentInfos, entryStartClusterIndex, true);
                             }
                         }
 
@@ -239,7 +233,8 @@ namespace AtariST.SerialDisk.Storage
                             TOSFileName = newContentName,
                             EntryIndex = directoryEntryIndex,
                             DirectoryCluster = directoryClusterIndex,
-                            StartCluster = entryStartClusterIndex
+                            StartCluster = entryStartClusterIndex,
+                            WriteInProgress = false
                         };
 
                         localDirectoryContentInfos.Add(newLocalDirectoryContent);
@@ -252,9 +247,15 @@ namespace AtariST.SerialDisk.Storage
                 // it's a file
                 else
                 {
+                    _logger.Log($"Checking if local file {newContentPath} should be updated", Constants.LoggingLevel.Info);
+
                     int fileClusterIndex = entryStartClusterIndex;
 
-                    if (!File.Exists(newContentPath))
+                    _logger.Log("Finding existing content info for local file \"" + newContentPath + "\".", Constants.LoggingLevel.All);
+
+                    var localDirectoryContent = localDirectoryContentInfos.Where(ldci => ldci.LocalPath == newContentPath).SingleOrDefault();
+
+                    if (localDirectoryContent == null)
                     {
                         _logger.Log($"Creating local file: {newContentPath}", Constants.LoggingLevel.Info);
                         File.Create(newContentPath).Dispose();
@@ -266,57 +267,76 @@ namespace AtariST.SerialDisk.Storage
                             TOSFileName = newContentName,
                             EntryIndex = directoryEntryIndex,
                             DirectoryCluster = directoryClusterIndex,
-                            StartCluster = entryStartClusterIndex
+                            StartCluster = entryStartClusterIndex,
+                            WriteInProgress = false
                         };
 
                         localDirectoryContentInfos.Add(newLocalDirectoryContent);
+
+                        localDirectoryContent = newLocalDirectoryContent;
                     }
 
+                    // Entry cluster will be assigned if this is a non-empty file
                     if (entryStartClusterIndex != 0)
                     {
-                        // Check if the file has been completely written.
-                        while (!FAT16Helper.IsEndOfClusterChain(fileClusterIndex))
+                        // A cluster has been assigned to the file, 
+                        // but the corresponding data and FAT entry haven't been written yet
+                        if (FatGetClusterValue(entryStartClusterIndex) == 0)
                         {
-                            fileClusterIndex = FatGetClusterValue(fileClusterIndex);
+                            localDirectoryContent.StartCluster = entryStartClusterIndex;
+                            localDirectoryContent.WriteInProgress = true;
                         }
 
-                        if (FAT16Helper.IsEndOfFile(fileClusterIndex))
+                        else
                         {
-                            try
+                            // Check if the file has been completely written.
+                            while (!FAT16Helper.IsEndOfClusterChain(fileClusterIndex))
                             {
-                                _logger.Log("Finding existing content info for local file \"" + newContentPath + "\".", Constants.LoggingLevel.All);
-
-                                var newLocalDirectoryContent = localDirectoryContentInfos.Where(lcdi => lcdi.LocalPath == newContentPath).Single();
-
-                                newLocalDirectoryContent.StartCluster = entryStartClusterIndex;
-
-                                _logger.Log("Updating local file \"" + newContentPath + "\".", Constants.LoggingLevel.Info);
-
-                                using (BinaryWriter FileBinaryWriter = new BinaryWriter(File.OpenWrite(newContentPath)))
-                                {
-                                    fileClusterIndex = entryStartClusterIndex;
-
-                                    int fileSize = directoryData[directoryEntryIndex + 28] | (directoryData[directoryEntryIndex + 29] << 8) | (directoryData[directoryEntryIndex + 30] << 16) | (directoryData[directoryEntryIndex + 31] << 24);
-
-                                    while (!FAT16Helper.IsEndOfFile(fileClusterIndex))
-                                    {
-                                        _clusterInfos[fileClusterIndex].LocalDirectoryContent = newLocalDirectoryContent;
-
-                                        FileBinaryWriter.Write(_clusterInfos[fileClusterIndex].DataBuffer, 0, Math.Min(_clusterInfos[fileClusterIndex].DataBuffer.Length, fileSize));
-
-                                        fileSize -= _clusterInfos[fileClusterIndex].DataBuffer.Length;
-
-                                        // Buffer has been written to disk; free up RAM
-                                        _clusterInfos[fileClusterIndex].DataBuffer = null;
-
-                                        fileClusterIndex = FatGetClusterValue(fileClusterIndex);
-                                    }
-                                }
+                                fileClusterIndex = FatGetClusterValue(fileClusterIndex);
                             }
 
-                            catch (Exception ex)
+
+                            // FAT cluster value matches a fully written file
+                            if (FAT16Helper.IsEndOfFile(fileClusterIndex))
                             {
-                                _logger.LogException(ex);
+                                localDirectoryContent.WriteInProgress = false;
+
+                                try
+                                {
+                                    _logger.Log("Finding existing content info for local file \"" + newContentPath + "\".", Constants.LoggingLevel.All);
+
+                                    var newLocalDirectoryContent = localDirectoryContentInfos.Where(ldci => ldci.LocalPath == newContentPath).Single();
+
+                                    newLocalDirectoryContent.StartCluster = entryStartClusterIndex;
+
+                                    _logger.Log("Updating local file \"" + newContentPath + "\".", Constants.LoggingLevel.Info);
+
+                                    using (BinaryWriter FileBinaryWriter = new BinaryWriter(File.OpenWrite(newContentPath)))
+                                    {
+                                        fileClusterIndex = entryStartClusterIndex;
+
+                                        int fileSize = directoryData[directoryEntryIndex + 28] | (directoryData[directoryEntryIndex + 29] << 8) | (directoryData[directoryEntryIndex + 30] << 16) | (directoryData[directoryEntryIndex + 31] << 24);
+
+                                        while (!FAT16Helper.IsEndOfFile(fileClusterIndex))
+                                        {
+                                            _clusterInfos[fileClusterIndex].LocalDirectoryContent = newLocalDirectoryContent;
+
+                                            FileBinaryWriter.Write(_clusterInfos[fileClusterIndex].DataBuffer, 0, Math.Min(_clusterInfos[fileClusterIndex].DataBuffer.Length, fileSize));
+
+                                            fileSize -= _clusterInfos[fileClusterIndex].DataBuffer.Length;
+
+                                            // Buffer has been written to disk; free up RAM
+                                            _clusterInfos[fileClusterIndex].DataBuffer = null;
+
+                                            fileClusterIndex = FatGetClusterValue(fileClusterIndex);
+                                        }
+                                    }
+                                }
+
+                                catch (Exception ex)
+                                {
+                                    _logger.LogException(ex);
+                                }
                             }
                         }
                     }
@@ -481,31 +501,38 @@ namespace AtariST.SerialDisk.Storage
                     int WriteSector = sector;
 
                     // Force all writes to the first FAT
-                    if (WriteSector >= Parameters.SectorsPerFat)
-                        WriteSector -= Parameters.SectorsPerFat;
+                    if (WriteSector >= Parameters.SectorsPerFat) WriteSector -= Parameters.SectorsPerFat;
 
                     _logger.Log($"Updating FAT sector {WriteSector}", Constants.LoggingLevel.All);
 
                     Array.Copy(dataBuffer, dataOffset, _fatBuffer, WriteSector * Parameters.BytesPerSector, Parameters.BytesPerSector);
 
-                    var lowerClusterBound = (WriteSector * Parameters.BytesPerSector) / 2;
-                    var upperClusterBound = ((WriteSector * Parameters.BytesPerSector) + Parameters.BytesPerSector) / 2;
+                    var lowerFATClusterBound = (WriteSector * Parameters.BytesPerSector) / 2;
+                    var upperFATClusterBound = ((WriteSector * Parameters.BytesPerSector) + Parameters.BytesPerSector) / 2;
 
-                    _logger.Log($"FAT entries for clusters {lowerClusterBound}-{upperClusterBound} updated", Constants.LoggingLevel.All);
+                    _logger.Log($"FAT entries for clusters {lowerFATClusterBound}-{upperFATClusterBound} updated", Constants.LoggingLevel.All);
 
                     var localDirectoryContentToUpdate = new List<int>();
 
-                    for (int index = lowerClusterBound; index <= upperClusterBound; index++)
+                    // Find all unique directory clusters relating to FAT cluster entries that are in the update range
+                    for (int index = lowerFATClusterBound; index <= upperFATClusterBound; index++)
                     {
-                        if (_clusterInfos[index] != null && _clusterInfos[index].LocalDirectoryContent != null) localDirectoryContentToUpdate.Add(_clusterInfos[index].LocalDirectoryContent.DirectoryCluster);
-                    }
+                        var localDirectoryContentInfos = _localDirectoryContentInfos.Where(ldci => ldci.StartCluster == index);
 
-                    localDirectoryContentToUpdate = localDirectoryContentToUpdate.Distinct().ToList();
+                        foreach (var directoryInfo in localDirectoryContentInfos)
+                        {
+                            var isDirectoryCluster = _clusterInfos[directoryInfo.StartCluster]?.FileOffset == -1;
+
+                            int directoryClusterIndex = isDirectoryCluster ? directoryInfo.StartCluster : directoryInfo.DirectoryCluster;
+
+                            if (!localDirectoryContentToUpdate.Contains(directoryClusterIndex)) localDirectoryContentToUpdate.Add(directoryClusterIndex);
+                        }
+                    }
 
                     foreach (var directoryClusterIndex in localDirectoryContentToUpdate)
                     {
                         _logger.Log($"Syncing directory cluster {directoryClusterIndex} via FAT update", Constants.LoggingLevel.All);
-                        SyncLocalDisk(_localDirectoryContentInfos, directoryClusterIndex, true);
+                        SyncDirectoryClusterToLocalDisk(_localDirectoryContentInfos, directoryClusterIndex);
                     }
                 }
 
@@ -517,7 +544,7 @@ namespace AtariST.SerialDisk.Storage
                     Array.Copy(dataBuffer, dataOffset, _rootDirectoryBuffer, (sector - Parameters.SectorsPerFat * 2) * Parameters.BytesPerSector, Parameters.BytesPerSector);
 
                     // Root directory must be synced independently
-                    SyncLocalDisk(_localDirectoryContentInfos, _rootDirectoryClusterIndex, false); 
+                    SyncDirectoryClusterToLocalDisk(_localDirectoryContentInfos, _rootDirectoryClusterIndex); 
                 }
 
                 // Data area, used for files and non-root directories
@@ -540,7 +567,7 @@ namespace AtariST.SerialDisk.Storage
                     Array.Copy(dataBuffer, dataOffset, _clusterInfos[clusterIndex].DataBuffer, (WriteSector - clusterIndex * Parameters.SectorsPerCluster) * Parameters.BytesPerSector, Parameters.BytesPerSector);
 
                     // Empty files are not written to the FAT so must be synced via their containing directory
-                    SyncLocalDisk(_localDirectoryContentInfos, clusterIndex, false);
+                    SyncDirectoryClusterToLocalDisk(_localDirectoryContentInfos, clusterIndex);
                 }
 
                 dataOffset += Parameters.BytesPerSector;
@@ -634,7 +661,8 @@ namespace AtariST.SerialDisk.Storage
                     TOSFileName = TOSFileName,
                     EntryIndex = entryIndex,
                     DirectoryCluster = directoryClusterIndex,
-                    StartCluster = entryStartClusterIndex
+                    StartCluster = entryStartClusterIndex,
+                    WriteInProgress = false
                 };
 
                 localDirectoryContentInfos.Add(newLocalDirectoryContentInfo);
