@@ -374,7 +374,11 @@ namespace AtariST.SerialDisk.Storage
                         _logger.Log($"Directory cluster {clusterIndex} continues in cluster {nextClusterIndex}", Constants.LoggingLevel.All);
 
                         // If the next directory cluster is new, ensure it has a LocalDirectoryContentInfo assigned
-                        if (_clusterInfos[nextClusterIndex].LocalDirectoryContent == null) _clusterInfos[nextClusterIndex].LocalDirectoryContent = _clusterInfos[clusterIndex].LocalDirectoryContent;
+                        if (_clusterInfos[nextClusterIndex].LocalDirectoryContent == null)
+                        {
+                            _clusterInfos[nextClusterIndex].LocalDirectoryContent = _clusterInfos[clusterIndex].LocalDirectoryContent;
+                            _clusterInfos[nextClusterIndex].FileOffset = -1;
+                        }
                         clusterIndex = nextClusterIndex;
 
                         directoryData = GetDirectoryClusterData(clusterIndex);
