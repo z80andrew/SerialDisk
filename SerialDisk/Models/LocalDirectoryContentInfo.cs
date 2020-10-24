@@ -1,5 +1,4 @@
-﻿using AtariST.SerialDisk.Utilities;
-using System.IO;
+﻿using System.IO;
 
 namespace AtariST.SerialDisk.Models
 {

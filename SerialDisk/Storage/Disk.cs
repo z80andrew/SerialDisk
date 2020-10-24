@@ -348,7 +348,7 @@ namespace AtariST.SerialDisk.Storage
 
                                     else
                                     {
-                                        RenameLocalDirectoryOrFile(localDirectoryContentInfos, directoryData, directoryEntryIndex, localContent, fileName);
+                                        RenameLocalDirectoryOrFile(directoryData, directoryEntryIndex, localContent, fileName);
                                     }
                                 }
                             }
@@ -415,7 +415,7 @@ namespace AtariST.SerialDisk.Storage
             localDirectoryContentInfos.Remove(directoryContentInfo);
         }
 
-        private void RenameLocalDirectoryOrFile(List<LocalDirectoryContentInfo> localDirectoryContentInfos, byte[] directoryData, int directoryEntryIndex, LocalDirectoryContentInfo directoryContentInfo, string newContentName)
+        private void RenameLocalDirectoryOrFile(byte[] directoryData, int directoryEntryIndex, LocalDirectoryContentInfo directoryContentInfo, string newContentName)
         {
             string oldContentPath = directoryContentInfo.LocalPath;
 
@@ -436,14 +436,18 @@ namespace AtariST.SerialDisk.Storage
             }
         }
 
-        private void UpdateLocalDirectoryOrFile(List<LocalDirectoryContentInfo> localDirectoryContentInfos, byte[] directoryData, 
+        private void UpdateLocalDirectoryOrFile(List<LocalDirectoryContentInfo> localDirectoryContentInfos, byte[] directoryData,
             int directoryClusterIndex, int directoryEntryIndex, int entryStartClusterIndex, string newContentName)
         {
-            string newPathDirectory;
-            if (directoryClusterIndex != _rootDirectoryClusterIndex) newPathDirectory = _clusterInfos[directoryClusterIndex].LocalDirectoryContent.LocalPath; // Subdirectory
-            else newPathDirectory = Parameters.LocalDirectoryPath; // Root dir
+            string newContentPath = null;
 
-            string newContentPath = Path.Combine(newPathDirectory, newContentName);
+            if (directoryClusterIndex != _rootDirectoryClusterIndex)
+            {
+                string newPathDirectory = _clusterInfos[directoryClusterIndex].LocalDirectoryContent.LocalPath;
+                newContentPath = Path.Combine(newPathDirectory, newContentName);
+            }
+
+            else newContentPath = newContentName;
 
             try
             {
