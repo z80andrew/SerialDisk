@@ -9,19 +9,17 @@ namespace AtariST.SerialDisk.Models
         {
             get
             {
-                if (LocalFileName != null) return Path.Combine(LocalDirectory, LocalFileName);
-                else return LocalDirectory;
+                if (ParentDirectory != null) return Path.Combine(ParentDirectory.LocalPath, LocalFileName);
+                else return LocalFileName;
             }
         }
 
-        public string LocalDirectory { get; set; }
-
+        public LocalDirectoryContentInfo ParentDirectory { get; set; }
         public string LocalFileName { get; set; }
-
         public string TOSFileName { get; set; }
         public int DirectoryCluster { get; set; }
         public int EntryIndex { get; set; }
         public int StartCluster { get; set; }
-        public bool WriteInProgress { get; set; }
+        public bool WriteInProgress { get; set; } = false;
     }
 }
