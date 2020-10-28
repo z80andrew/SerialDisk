@@ -19,6 +19,7 @@ namespace AtariST.SerialDisk.Models
         public int DirectoryCluster { get; set; }
         public int EntryIndex { get; set; }
         public int StartCluster { get; set; }
-        public bool WriteInProgress { get; set; } = false;
+        public int FinalCluster { get; set; }
+        public bool WriteInProgress { get; set; }
     }
 }

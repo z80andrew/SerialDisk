@@ -17,6 +17,8 @@ namespace AtariST.SerialDisk.Utilities
 
         public const byte DeletedEntryIdentifier = 0xE5;
 
+        public const int DirectoryFileOffset = -1;
+
         public static int MaxSectorSize
         {
             get => 8192;
