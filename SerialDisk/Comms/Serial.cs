@@ -417,7 +417,7 @@ namespace AtariST.SerialDisk.Comms
                 _receiverDataBuffer[_receiverDataIndex++] = Data;
             }
 
-            string percentReceived = ((Convert.ToDecimal(_receiverDataIndex) / _receiverDataBuffer.Length) * 100).ToString("00.0");
+            string percentReceived = ((Convert.ToDecimal(_receiverDataIndex) / _receiverDataBuffer.Length) * 100).ToString("00.00");
             string formattedBytesReceived = _receiverDataIndex.ToString().PadLeft(_receiverDataBuffer.Length.ToString().Length, '0');
             Console.Write($"\rReceived [{formattedBytesReceived} / {_receiverDataBuffer.Length}] bytes {percentReceived}% ");
 
@@ -471,7 +471,7 @@ namespace AtariST.SerialDisk.Comms
 
                 float percentageOfOriginalSize = (100 / (float)numUncompressedBytes) * sendDataBuffer.Length;
 
-                _logger.Log($"Compression: { percentageOfOriginalSize.ToString("00.0")}% of { numUncompressedBytes} bytes", LoggingLevel.Debug);
+                _logger.Log($"Compression: { percentageOfOriginalSize.ToString("00.00")}% of { numUncompressedBytes} bytes", LoggingLevel.Debug);
 
                 _serialPort.BaseStream.Write(dataLenBuffer, 0, dataLenBuffer.Length);
             }
@@ -481,7 +481,7 @@ namespace AtariST.SerialDisk.Comms
             for (int i = 0; i < sendDataBuffer.Length; i++)
             {
                 _serialPort.BaseStream.WriteByte(sendDataBuffer[i]);
-                string percentSent = ((Convert.ToDecimal(i + 1) / sendDataBuffer.Length) * 100).ToString("00.0");
+                string percentSent = ((Convert.ToDecimal(i + 1) / sendDataBuffer.Length) * 100).ToString("00.00");
                 Console.Write($"\rSent [{(i + 1).ToString("D" + sendDataBuffer.Length.ToString().Length)} / {sendDataBuffer.Length} Bytes] {percentSent}% ");
             }
             

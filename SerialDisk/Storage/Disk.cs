@@ -238,6 +238,7 @@ namespace AtariST.SerialDisk.Storage
 
                     var localDirectoryContentToUpdate = new List<int>();
 
+                    // Directory entries are updated in FAT on their final cluster; directories on their first
                     var localDirectoryContentInfos = _localDirectoryContentInfos.Where(ldci =>
                         (ldci.FinalCluster <= upperFATClusterBound && ldci.FinalCluster >= lowerFATClusterBound)
                         || (ldci.StartCluster <= upperFATClusterBound && ldci.StartCluster >= lowerFATClusterBound));
@@ -245,9 +246,7 @@ namespace AtariST.SerialDisk.Storage
                     foreach (var directoryInfo in localDirectoryContentInfos)
                     {
                         var isDirectoryCluster = _clusterInfos[directoryInfo.StartCluster]?.FileOffset == -1;
-
                         int directoryClusterIndex = isDirectoryCluster ? directoryInfo.StartCluster : directoryInfo.DirectoryCluster;
-
                         if (!localDirectoryContentToUpdate.Contains(directoryClusterIndex)) localDirectoryContentToUpdate.Add(directoryClusterIndex);
                     }
 
@@ -377,7 +376,6 @@ namespace AtariST.SerialDisk.Storage
                             _clusterInfos[nextClusterIndex].LocalDirectoryContent = _clusterInfos[clusterIndex].LocalDirectoryContent;
                             _clusterInfos[nextClusterIndex].FileOffset = FAT16Helper.DirectoryFileOffset;
                             _logger.Log($"Directory cluster {clusterIndex} extended to cluster {nextClusterIndex}", Constants.LoggingLevel.All);
-                            _clusterInfos[nextClusterIndex].LocalDirectoryContent.FinalCluster = nextClusterIndex;
                         }
 
                         clusterIndex = nextClusterIndex;
@@ -393,7 +391,7 @@ namespace AtariST.SerialDisk.Storage
         {
             if (directoryData[directoryEntryIndex + 11] == FAT16Helper.DirectoryIdentifier)
             {
-                _logger.Log($"Deleting local directory \"{ directoryContentInfo.LocalPath}\".", Constants.LoggingLevel.Info);
+                _logger.Log($"Deleting local directory \"{ directoryContentInfo.LocalPath}\"", Constants.LoggingLevel.Info);
 
                 Directory.Delete(GetAbsolutePath(directoryContentInfo.LocalPath), true);
             }
@@ -401,7 +399,7 @@ namespace AtariST.SerialDisk.Storage
             // It's a file
             else
             {
-                _logger.Log($"Deleting local file \"{directoryContentInfo.LocalPath}\".", Constants.LoggingLevel.Info);
+                _logger.Log($"Deleting local file \"{directoryContentInfo.LocalPath}\"", Constants.LoggingLevel.Info);
 
                 File.Delete(GetAbsolutePath(directoryContentInfo.LocalPath));
             }
@@ -413,7 +411,7 @@ namespace AtariST.SerialDisk.Storage
 
             foreach (int clusterIndex in clusterIndexesToDelete)
             {
-                _logger.Log($"Removing local data for cluster {clusterIndex}.", Constants.LoggingLevel.All);
+                _logger.Log($"Removing local data for cluster {clusterIndex}", Constants.LoggingLevel.All);
                 _clusterInfos[clusterIndex] = null;
             }
 
@@ -429,14 +427,14 @@ namespace AtariST.SerialDisk.Storage
 
             if (directoryData[directoryEntryIndex + 11] == FAT16Helper.DirectoryIdentifier)
             {
-                _logger.Log($"Renaming local directory \"{oldContentPath}\" to \"{directoryContentInfo.LocalPath}\".", Constants.LoggingLevel.Info);
+                _logger.Log($"Renaming local directory \"{oldContentPath}\" to \"{directoryContentInfo.LocalPath}\"", Constants.LoggingLevel.Info);
                 Directory.Move(GetAbsolutePath(oldContentPath), GetAbsolutePath(directoryContentInfo.LocalPath));
             }
 
             // It's a file
             else
             {
-                _logger.Log($"Renaming local file \"{oldContentPath}\" to \"{directoryContentInfo.LocalPath}\".", Constants.LoggingLevel.Info);
+                _logger.Log($"Renaming local file \"{oldContentPath}\" to \"{directoryContentInfo.LocalPath}\"", Constants.LoggingLevel.Info);
                 File.Move(GetAbsolutePath(oldContentPath), GetAbsolutePath(directoryContentInfo.LocalPath));
             }
         }
@@ -461,7 +459,7 @@ namespace AtariST.SerialDisk.Storage
                     // Is it a directory with a valid start cluster?
                     if (entryStartClusterIndex != 0)
                     {
-                        _logger.Log("Creating local directory \"" + newContentPath + "\".", Constants.LoggingLevel.Info);
+                        _logger.Log("Creating local directory \"" + newContentPath + "\"", Constants.LoggingLevel.Info);
 
                         var CreatedLocalDirectory = Directory.CreateDirectory(GetAbsolutePath(newContentPath));
 
@@ -521,7 +519,7 @@ namespace AtariST.SerialDisk.Storage
                     }
 
                     localDirectoryContent.StartCluster = entryStartClusterIndex;
-                    _logger.Log("File start cluster: " + localDirectoryContent.StartCluster + "(" + FatGetClusterValue(localDirectoryContent.StartCluster) + ")", Constants.LoggingLevel.All);
+                    _logger.Log("File start cluster: " + localDirectoryContent.StartCluster + " (" + FatGetClusterValue(localDirectoryContent.StartCluster) + ")", Constants.LoggingLevel.All);
 
                     // Entry cluster will be assigned if this is a non-empty file
                     if (entryStartClusterIndex != 0)
@@ -536,16 +534,15 @@ namespace AtariST.SerialDisk.Storage
                         // in multiple passes due to lack of available RAM on the Atari
                         while (!FAT16Helper.IsEndOfClusterChain(fileClusterIndex))
                         {
+                            // Keep final cluster updated in case this file is being written in multiple passes
                             localDirectoryContent.FinalCluster = fileClusterIndex;
                             remainingBytes -= Parameters.BytesPerCluster;
-
                             fileClusterIndex = FatGetClusterValue(fileClusterIndex);
                         }
 
                         bool allBytesAvailable = remainingBytes <= 0 && FAT16Helper.IsEndOfFile(fileClusterIndex);
 
                         _logger.Log("All bytes available?: " + allBytesAvailable, Constants.LoggingLevel.All);
-                        _logger.Log("Last cluster value for file: " + localDirectoryContent.FinalCluster, Constants.LoggingLevel.All);
 
                         // Final FAT cluster value in chain matches a fully written file
                         if (allBytesAvailable)
