@@ -19,10 +19,7 @@ namespace AtariST.SerialDisk.Utilities
 
         public const int DirectoryFileOffset = -1;
 
-        public static int MaxSectorSize
-        {
-            get => 8192;
-        }
+        public const int MaxSectorSize = 8192;
 
         public static int MaxDiskClusters(TOSVersion minimumTOSVersion)
         {
@@ -31,9 +28,7 @@ namespace AtariST.SerialDisk.Utilities
 
         public static int MaxDiskSizeBytes(TOSVersion tosVersion, int sectorsPerCluster)
         {
-            int maxDiskSizeBytes = MaxDiskClusters(tosVersion) * (MaxSectorSize * sectorsPerCluster);
-
-            return maxDiskSizeBytes;
+            return MaxDiskClusters(tosVersion) * (MaxSectorSize * sectorsPerCluster);
         }
 
         public static string GetShortFileName(string fileName)
@@ -42,17 +37,13 @@ namespace AtariST.SerialDisk.Utilities
 
             fileName = invalidCharactersRegex.Replace(fileName.ToUpper(), "_");
 
+            // Filenames cannot start with .
+            if (fileName[0] == '.') fileName = fileName.Remove(0, 1).Insert(0, "_");
+
             int dotIndex = fileName.LastIndexOf(".");
 
-            // Filenames cannot start with . so if this is the only one in the name, replace it
-            if (dotIndex == 0)
-            {
-                fileName = fileName.Replace('.', '_');
-                dotIndex = -1;
-            }
-
             // Replace all except the final .
-            else if (dotIndex != -1) fileName = fileName.Substring(0, dotIndex).Replace('.', '_') + fileName[dotIndex..];
+            if (dotIndex != -1) fileName = fileName.Substring(0, dotIndex).Replace('.', '_') + fileName[dotIndex..];
 
             string shortFileName;
 
@@ -118,8 +109,8 @@ namespace AtariST.SerialDisk.Utilities
             else if (localDirectorySizeBytes > diskSizeBytes)
                 throw new InsufficientMemoryException($"Local directory size is {localDirectorySizeBytes / BytesPerMiB} MiB, which is too large for the given virtual disk size ({diskSizeBytes / BytesPerMiB} MiB)");
 
-            int rootDirectoryEntries = Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.TopDirectoryOnly).Count()
-                + Directory.GetDirectories(directoryInfo.FullName, "*", SearchOption.TopDirectoryOnly).Count();
+            int rootDirectoryEntries = Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.TopDirectoryOnly).Length
+                + Directory.GetDirectories(directoryInfo.FullName, "*", SearchOption.TopDirectoryOnly).Length;
 
             if (rootDirectoryEntries > maxRootDirectoryEntries)
                 throw new InsufficientMemoryException($"The root directory has {rootDirectoryEntries} files/directories, which is more than the maximum ({maxRootDirectoryEntries} allowed");

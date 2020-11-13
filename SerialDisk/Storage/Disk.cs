@@ -128,7 +128,7 @@ namespace AtariST.SerialDisk.Storage
             return newClusterIndex;
         }
 
-        private LocalDirectoryContentInfo FindLocalDirectoryContentInfo(List<LocalDirectoryContentInfo> localDirectoryContentInfos, int directoryClusterIndex, int directoryEntryIndex, int entryStartClusterIndex)
+        private static LocalDirectoryContentInfo FindLocalDirectoryContentInfo(List<LocalDirectoryContentInfo> localDirectoryContentInfos, int directoryClusterIndex, int directoryEntryIndex, int entryStartClusterIndex)
         {
             return localDirectoryContentInfos.Where(ldci => ldci.EntryIndex == directoryEntryIndex
                                                 && ldci.DirectoryCluster == directoryClusterIndex
