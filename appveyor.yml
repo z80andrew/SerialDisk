@@ -3,7 +3,7 @@ version: 2.5.{build}
 image: 
 - Visual Studio 2019
 - Ubuntu2004
-#- macos
+- macos
 
 dotnet_csproj:
   patch: true
@@ -52,6 +52,10 @@ build_script:
         dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm -c Release --self-contained false --output ./bin/Release/FDE/serialdisk-linux-arm32
     
     else
+        curl -fsSL https://download.visualstudio.microsoft.com/download/pr/0871336f-9a83-4ce4-80ca-625d03003369/2eb78456e0b106e9515dc03898d3867a/dotnet-sdk-5.0.100-osx-x64.tar.gz -o dotnet-sdk.tar.gz
+        
+        sudo tar zxf dotnet-sdk.tar.gz -C /usr/local/share/dotnet
+        
         dotnet publish SerialDisk/SerialDisk.csproj -r osx-x64 -c Release --self-contained true --output ./bin/Release/SCE/serialdisk-macos-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true
 
         # Publish and package Framework Dependant Executables
