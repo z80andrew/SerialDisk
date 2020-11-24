@@ -19,7 +19,7 @@ namespace AtariST.SerialDisk.Utilities
 
             if (logFileName != null)
             {
-                string folderPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                string folderPath = Path.GetDirectoryName(AppContext.BaseDirectory);
 
                 string logFolderPath = Path.Combine(folderPath, "log");
 
