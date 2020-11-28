@@ -794,13 +794,13 @@ msg_welcome:
 	.asciz	"SerialDisk v2.5\r\n"
 
 msg_config_found:
-	.asciz	"Using configuration file SERDISK.CFG\r\n"
+	.asciz	"Found config file\r\n"
 
 msg_drive_mounted:
 	.asciz	"Configured on drive "
 
 msg_press_any_key:
-	.asciz	"\r\n\r\nPress any key to continue"
+	.asciz	"\r\n\r\nPress any key"
 
 | Errors
 
@@ -808,13 +808,13 @@ err_prefix:
 	.asciz	"Error: "
 
 err_drive_already_mounted:
-	.asciz	" drive is already mounted"
+	.asciz	" is already mounted"
 
 err_config_invalid:
-	.asciz	"Configuration file is invalid"
+	.asciz	"Configuration invalid"
 
 err_buffer_allocation:
-	.asciz	"Error allocating disk buffer"
+	.asciz	"Cannot allocate disk buffer"
 
 |-------------------------------------------------------------------------------
 
@@ -844,7 +844,7 @@ old_hdv_mediach:
 crc32_table:
 	ds.l	0x100
 
-| 00000001 - Output compression enable flag
+| 00000000 00000001 - Output compression enable flag
 flags:
 	ds.w	0x01
 

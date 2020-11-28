@@ -1,10 +1,10 @@
 {
   "LocalDirectoryPath": ".",
-  "CompressionIsEnabled": true,
+  "IsCompressionEnabled": true,
   "LoggingLevel": 0,
 
   "SerialSettings": {
-    "PortName": "/dev/ttyS0",
+    "PortName": "/dev/cu.usbserial",
     "BaudRate": 9600,
     "DataBits": 8,
     "StopBits": 1,

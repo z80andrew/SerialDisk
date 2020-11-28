@@ -58,7 +58,7 @@ namespace AtariST.SerialDisk
             Console.WriteLine($"{parameters[0]} <disk_size_in_MiB> ({_applicationSettings.DiskSettings.DiskSizeMiB})");
             Console.WriteLine($"{parameters[1]} [{FormatEnumParams(typeof(TOSVersion))}] ({_applicationSettings.DiskSettings.DiskTOSCompatibility})");
             Console.WriteLine($"{parameters[2]} <sectors> ({_applicationSettings.DiskSettings.RootDirectorySectors})");
-            Console.WriteLine($"{parameters[3]} [True|False] ({_applicationSettings.CompressionIsEnabled})");
+            Console.WriteLine($"{parameters[3]} [True|False] ({_applicationSettings.IsCompressionEnabled})");
 
             Console.WriteLine($"{parameters[4]} [port_name] ({_applicationSettings.SerialSettings.PortName})");
             Console.WriteLine($"{parameters[5]} <baud_rate> ({_applicationSettings.SerialSettings.BaudRate})");
@@ -209,12 +209,12 @@ namespace AtariST.SerialDisk
 
             CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
 
-            _serial = new Serial(_applicationSettings.SerialSettings, _disk, _logger, cancelTokenSource, _applicationSettings.CompressionIsEnabled);
+            _serial = new Serial(_applicationSettings.SerialSettings, _disk, _logger, cancelTokenSource, _applicationSettings.IsCompressionEnabled);
 
             _logger.Log($"Baud rate:{_applicationSettings.SerialSettings.BaudRate} | Data bits:{_applicationSettings.SerialSettings.DataBits}" +
                 $" | Parity:{_applicationSettings.SerialSettings.Parity} | Stop bits:{_applicationSettings.SerialSettings.StopBits} | Flow control:{_applicationSettings.SerialSettings.Handshake}", LoggingLevel.Info);
             _logger.Log($"Using local directory {_applicationSettings.LocalDirectoryPath} as a {_applicationSettings.DiskSettings.DiskSizeMiB}MiB virtual disk", LoggingLevel.Info);
-            _logger.Log($"Compression: " + (_applicationSettings.CompressionIsEnabled ? "Enabled" : "Disabled"), LoggingLevel.Info);
+            _logger.Log($"Compression: " + (_applicationSettings.IsCompressionEnabled ? "Enabled" : "Disabled"), LoggingLevel.Info);
             _logger.Log($"Logging level: { _applicationSettings.LoggingLevel} ", LoggingLevel.Info);
 
             Console.WriteLine("Press Ctrl-X to quit, Ctrl-R to reimport local disk content.");

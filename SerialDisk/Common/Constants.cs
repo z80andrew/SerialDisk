@@ -16,7 +16,7 @@ namespace AtariST.SerialDisk.Common
                     { "--disk-size", "DiskSettings:DiskSizeMiB" },
                     { "--tos-version", "DiskSettings:DiskTOSCompatibility" },
                     { "--root-directory-sectors", "DiskSettings:RootDirectorySectors" },
-                    { "--compression", "CompressionIsEnabled" },
+                    { "--compression", "IsCompressionEnabled" },
 
                     { "--port", "SerialSettings:PortName" },
                     { "--baud-rate", "SerialSettings:BaudRate" },
