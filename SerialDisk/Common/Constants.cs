@@ -7,11 +7,6 @@ namespace AtariST.SerialDisk.Common
         public const string DATE_FORMAT = "yyyy-MM-dd";
         public const string TIME_FORMAT = "HH:mm:ss";
 
-        public static int MaxSectorSize
-        {
-            get => 8192;
-        }
-
         public static Dictionary<string, string> ConsoleParameterMappings
         {
             get
@@ -21,7 +16,7 @@ namespace AtariST.SerialDisk.Common
                     { "--disk-size", "DiskSettings:DiskSizeMiB" },
                     { "--tos-version", "DiskSettings:DiskTOSCompatibility" },
                     { "--root-directory-sectors", "DiskSettings:RootDirectorySectors" },
-                    { "--compression", "CompressionIsEnabled" },
+                    { "--compression", "IsCompressionEnabled" },
 
                     { "--port", "SerialSettings:PortName" },
                     { "--baud-rate", "SerialSettings:BaudRate" },
@@ -51,6 +46,7 @@ namespace AtariST.SerialDisk.Common
             ReceiveWriteSectorIndex,
             ReceiveWriteSectorCount,
             ReceiveData,
+            ReceiveCRC32,
             SendMediaChangeStatus,
             SendBiosParameterBlock
         };
@@ -58,7 +54,15 @@ namespace AtariST.SerialDisk.Common
         public enum LoggingLevel
         {
             Info = 0,
-            Verbose
+            Debug,
+            All
         };
+
+        public static class Flags
+        {
+            public const byte RLECompressionEnabled = 0x1F;
+            public const byte CRC32Mismatch = 0x00;
+            public const byte CRC32Match = 0x01;
+        }
     }
 }

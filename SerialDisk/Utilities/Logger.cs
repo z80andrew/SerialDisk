@@ -19,7 +19,7 @@ namespace AtariST.SerialDisk.Utilities
 
             if (logFileName != null)
             {
-                string folderPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                string folderPath = Path.GetDirectoryName(AppContext.BaseDirectory);
 
                 string logFolderPath = Path.Combine(folderPath, "log");
 
@@ -46,14 +46,13 @@ namespace AtariST.SerialDisk.Utilities
             }
         }
 
-        public void Log(string message, LoggingLevel messageLogLevel = LoggingLevel.Verbose, bool displayOnly = false)
+        public void Log(string message, LoggingLevel messageLogLevel)
         {
-            if (!displayOnly && _fileStream != null) LogToFile(message);
-
             if (messageLogLevel <= _logLevel)
             {
-                if (_logLevel == LoggingLevel.Verbose) Console.Write($"{DateTime.Now}\t");
+                if (_logLevel >= LoggingLevel.Debug) Console.Write($"{DateTime.Now}\t");
                 Console.Write($"{message}\r\n");
+                LogToFile(message);
             }
         }
 
@@ -74,17 +73,19 @@ namespace AtariST.SerialDisk.Utilities
 
         public void LogToFile(string message)
         {
-            try
+            if (_fileStream != null)
             {
-                using StreamWriter fileWriter = new StreamWriter(_fileStream, Encoding.UTF8, 1024, true);
+                try
+                {
+                    using StreamWriter fileWriter = new StreamWriter(_fileStream, Encoding.UTF8, 1024, true);
+                    fileWriter.WriteLineAsync($"{DateTime.Now.ToString(Constants.DATE_FORMAT)}\t{DateTime.Now.ToString(Constants.TIME_FORMAT)}\t{message}");
+                }
 
-                fileWriter.WriteLineAsync($"{DateTime.Now.ToString(Constants.DATE_FORMAT)}\t{DateTime.Now.ToString(Constants.TIME_FORMAT)}\t{message}");
-            }
-
-            catch (Exception logException)
-            {
-                Console.WriteLine($"WARNING! Unable to write to log file {_logFilePath}.");
-                Console.WriteLine(logException.Message);
+                catch (Exception logException)
+                {
+                    Console.WriteLine($"WARNING! Unable to write to log file {_logFilePath}.");
+                    Console.WriteLine(logException.Message);
+                }
             }
         }
 

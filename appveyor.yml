@@ -1,9 +1,9 @@
-version: 2.4.{build}
+version: 2.5.{build}
 
 image: 
 - Visual Studio 2019
-- Ubuntu1804
-- macos-mojave
+- Ubuntu2004
+- macos
 
 dotnet_csproj:
   patch: true
@@ -15,33 +15,43 @@ dotnet_csproj:
   informational_version: '{version}'
 
 install:
-- cmd: >- 
-    dotnet --version
+- ps: >-
+    if(!$isLinux -AND !$isWindows)
+    {
+        # Install .NET 5.0 on macOS
+        curl -fsSL https://download.visualstudio.microsoft.com/download/pr/0871336f-9a83-4ce4-80ca-625d03003369/2eb78456e0b106e9515dc03898d3867a/dotnet-sdk-5.0.100-osx-x64.tar.gz -o dotnet-sdk.tar.gz    
 
-- sh: >-
-    dotnet --info
-  
+        sudo tar zxf dotnet-sdk.tar.gz -C /usr/local/share/dotnet
+    }
+
 build_script:
-- cmd: >-
-    dotnet publish SerialDisk/Serialdisk.csproj -r win-x64 -c Release --self-contained true --output ./bin/Release/SCE/win-x64 /p:PublishTrimmed=true
+- ps: >-
+    dotnet --info
     
-    dotnet publish SerialDisk/Serialdisk.csproj -r win-x86 -c Release --self-contained true --output ./bin/Release/SCE/win-x86 /p:PublishTrimmed=true
-    
-    dotnet publish SerialDisk/Serialdisk.csproj -r win-x64 -c Release --self-contained false --output ./bin/Release/FDE/win-x64
-    
-    dotnet publish SerialDisk/Serialdisk.csproj -r win-x86 -c Release --self-contained false --output ./bin/Release/FDE/win-x86
-
-- sh: >-
-    if "$CI_LINUX" = true
-
-    then
+    if($isWindows)
+    {
         # Publish and package Self Contained Executables
         
-        dotnet publish ./SerialDisk/SerialDisk.csproj -r linux-x64 -c Release --self-contained true --output ./bin/Release/SCE/serialdisk-linux-x64 /p:PublishTrimmed=true
+        dotnet publish SerialDisk/Serialdisk.csproj -r win-x64 -c Release --self-contained true --output ./bin/Release/SCE/win-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true
+        
+        dotnet publish SerialDisk/Serialdisk.csproj -r win-x86 -c Release --self-contained true --output ./bin/Release/SCE/win-x86 /p:PublishTrimmed=true /p:PublishSingleFile=true
+        
+        # Publish and package Framework Dependant Executables
+        
+        dotnet publish SerialDisk/Serialdisk.csproj -r win-x64 -c Release --self-contained false --output ./bin/Release/FDE/win-x64
+        
+        dotnet publish SerialDisk/Serialdisk.csproj -r win-x86 -c Release --self-contained false --output ./bin/Release/FDE/win-x86
+    }
 
-        dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm64 -c Release --self-contained true --output ./bin/Release/SCE/serialdisk-linux-arm64 /p:PublishTrimmed=true
+    elseif($isLinux)
+    {
+        # Publish and package Self Contained Executables
+        
+        dotnet publish ./SerialDisk/SerialDisk.csproj -r linux-x64 -c Release --self-contained true --output ./bin/Release/SCE/serialdisk-linux-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true
 
-        dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm -c Release --self-contained true --output ./bin/Release/SCE/serialdisk-linux-arm32 /p:PublishTrimmed=true
+        dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm64 -c Release --self-contained true --output ./bin/Release/SCE/serialdisk-linux-arm64 /p:PublishTrimmed=true /p:PublishSingleFile=true
+
+        dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm -c Release --self-contained true --output ./bin/Release/SCE/serialdisk-linux-arm32 /p:PublishTrimmed=true /p:PublishSingleFile=true
 
         # Publish and package Framework Dependant Executables
 
@@ -50,78 +60,81 @@ build_script:
         dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm64 -c Release --self-contained false --output ./bin/Release/FDE/serialdisk-linux-arm64
 
         dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm -c Release --self-contained false --output ./bin/Release/FDE/serialdisk-linux-arm32
+    }
     
     else
-        dotnet publish SerialDisk/SerialDisk.csproj -r osx-x64 -c Release --self-contained true --output ./bin/Release/SCE/serialdisk-macos-x64 /p:PublishTrimmed=true
+    {
+    
+        # Publish and package Self Contained Executables
+        
+        dotnet publish SerialDisk/SerialDisk.csproj -r osx-x64 -c Release --self-contained true --output ./bin/Release/SCE/serialdisk-macos-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true
 
         # Publish and package Framework Dependant Executables
 
         dotnet publish SerialDisk/SerialDisk.csproj -r osx-x64 -c Release --self-contained false --output ./bin/Release/FDE/serialdisk-macos-x64
-    fi  
+    }
 
 on_success:
-- cmd: >-
-    7z a -mx=9 serialdisk_2.4_sce_win-x64.zip ./bin/Release/SCE/win-x64/*
+- ps: >-
+    if($isWindows)
+    {
+        7z a -mx=9 serialdisk_2.5_sce_win-x64.zip ./bin/Release/SCE/win-x64/*
 
-    appveyor PushArtifact serialdisk_2.4_sce_win-x64.zip
+        appveyor PushArtifact serialdisk_2.5_sce_win-x64.zip
 
-    7z a -mx=9 serialdisk_2.4_sce_win-x86.zip ./bin/Release/SCE/win-x86/*
+        7z a -mx=9 serialdisk_2.5_sce_win-x86.zip ./bin/Release/SCE/win-x86/*
 
-    appveyor PushArtifact serialdisk_2.4_sce_win-x86.zip
+        appveyor PushArtifact serialdisk_2.5_sce_win-x86.zip
 
-    7z a -mx=9 serialdisk_2.4_fde_win-x64.zip ./bin/Release/FDE/win-x64/*
+        7z a -mx=9 serialdisk_2.5_fde_win-x64.zip ./bin/Release/FDE/win-x64/*
 
-    appveyor PushArtifact serialdisk_2.4_fde_win-x64.zip
+        appveyor PushArtifact serialdisk_2.5_fde_win-x64.zip
 
-    7z a -mx=9 serialdisk_2.4_fde_win-x86.zip ./bin/Release/FDE/win-x86/*
+        7z a -mx=9 serialdisk_2.5_fde_win-x86.zip ./bin/Release/FDE/win-x86/*
 
-    appveyor PushArtifact serialdisk_2.4_fde_win-x86.zip
+        appveyor PushArtifact serialdisk_2.5_fde_win-x86.zip
+    }
+    
+    elseif($isLinux)
+    {
+        tar -czf serialdisk_2.5_sce_linux-x64.tar.gz -C ./bin/Release/SCE serialdisk-linux-x64
 
-- sh: >-
-    if "$CI_LINUX" = true
+        appveyor PushArtifact serialdisk_2.5_sce_linux-x64.tar.gz
 
-    then
-        tar -czf serialdisk_2.4_sce_linux-x64.tar.gz -C ./bin/Release/SCE serialdisk-linux-x64
+        tar -czf serialdisk_2.5_sce_linux-arm64.tar.gz -C ./bin/Release/SCE serialdisk-linux-arm64
 
-        appveyor PushArtifact serialdisk_2.4_sce_linux-x64.tar.gz
+        appveyor PushArtifact serialdisk_2.5_sce_linux-arm64.tar.gz
 
-        tar -czf serialdisk_2.4_sce_linux-arm64.tar.gz -C ./bin/Release/SCE serialdisk-linux-arm64
+        tar -czf serialdisk_2.5_sce_linux-arm32.tar.gz -C ./bin/Release/SCE serialdisk-linux-arm32
 
-        appveyor PushArtifact serialdisk_2.4_sce_linux-arm64.tar.gz
+        appveyor PushArtifact serialdisk_2.5_sce_linux-arm32.tar.gz
 
-        tar -czf serialdisk_2.4_sce_linux-arm32.tar.gz -C ./bin/Release/SCE serialdisk-linux-arm32
+        tar -czf serialdisk_2.5_fde_linux-x64.tar.gz -C ./bin/Release/FDE serialdisk-linux-x64
 
-        appveyor PushArtifact serialdisk_2.4_sce_linux-arm32.tar.gz
+        appveyor PushArtifact serialdisk_2.5_fde_linux-x64.tar.gz
 
-        tar -czf serialdisk_2.4_fde_linux-x64.tar.gz -C ./bin/Release/FDE serialdisk-linux-x64
+        tar -czf serialdisk_2.5_fde_linux-arm64.tar.gz -C ./bin/Release/FDE serialdisk-linux-arm64
 
-        appveyor PushArtifact serialdisk_2.4_fde_linux-x64.tar.gz
+        appveyor PushArtifact serialdisk_2.5_fde_linux-arm64.tar.gz
 
-        tar -czf serialdisk_2.4_fde_linux-arm64.tar.gz -C ./bin/Release/FDE serialdisk-linux-arm64
+        tar -czf serialdisk_2.5_fde_linux-arm32.tar.gz -C ./bin/Release/FDE serialdisk-linux-arm32
 
-        appveyor PushArtifact serialdisk_2.4_fde_linux-arm64.tar.gz
-
-        tar -czf serialdisk_2.4_fde_linux-arm32.tar.gz -C ./bin/Release/FDE serialdisk-linux-arm32
-
-        appveyor PushArtifact serialdisk_2.4_fde_linux-arm32.tar.gz
+        appveyor PushArtifact serialdisk_2.5_fde_linux-arm32.tar.gz
+    }
     
     else
-        tar -czf serialdisk_2.4_sce_macos-x64.tar.gz -C ./bin/Release/SCE serialdisk-macos-x64
+    {
+        tar -czf serialdisk_2.5_sce_macos-x64.tar.gz -C ./bin/Release/SCE serialdisk-macos-x64
 
-        appveyor PushArtifact serialdisk_2.4_sce_macos-x64.tar.gz
+        appveyor PushArtifact serialdisk_2.5_sce_macos-x64.tar.gz
         
-        tar -czf serialdisk_2.4_fde_macos-x64.tar.gz -C ./bin/Release/FDE serialdisk-macos-x64
+        tar -czf serialdisk_2.5_fde_macos-x64.tar.gz -C ./bin/Release/FDE serialdisk-macos-x64
 
-        appveyor PushArtifact serialdisk_2.4_fde_macos-x64.tar.gz        
-    fi
+        appveyor PushArtifact serialdisk_2.5_fde_macos-x64.tar.gz        
+    }
 
 test_script:
-- cmd: >-
-    dotnet clean
-
-    dotnet test --test-adapter-path:. --logger:Appveyor -nodereuse:false
-
-- sh: >-
+- ps: >-
     dotnet clean
 
     dotnet test --test-adapter-path:. --logger:Appveyor -nodereuse:false

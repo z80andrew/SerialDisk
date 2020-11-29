@@ -1,6 +1,6 @@
 {
-  "LocalDirectoryName": ".",
-  "CompressionIsEnabled": true,
+  "LocalDirectoryPath": ".",
+  "IsCompressionEnabled": true,
   "LoggingLevel": 0,
 
   "SerialSettings": {
