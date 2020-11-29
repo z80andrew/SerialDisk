@@ -1,4 +1,4 @@
-version: 2.5.{build}
+version: 2.6.{build}
 
 image: 
 - Visual Studio 2019
@@ -76,61 +76,63 @@ build_script:
 
 on_success:
 - ps: >-
+    $versionNo = "2.6"
+    
     if($isWindows)
     {
-        7z a -mx=9 serialdisk_2.5_sce_win-x64.zip ./bin/Release/SCE/win-x64/*
+        7z a -mx=9 serialdisk_$($versionNo)_sce_win-x64.zip ./bin/Release/SCE/win-x64/*
 
-        appveyor PushArtifact serialdisk_2.5_sce_win-x64.zip
+        appveyor PushArtifact serialdisk_$($versionNo)_sce_win-x64.zip
 
-        7z a -mx=9 serialdisk_2.5_sce_win-x86.zip ./bin/Release/SCE/win-x86/*
+        7z a -mx=9 serialdisk_$($versionNo)_sce_win-x86.zip ./bin/Release/SCE/win-x86/*
 
-        appveyor PushArtifact serialdisk_2.5_sce_win-x86.zip
+        appveyor PushArtifact serialdisk_$($versionNo)_sce_win-x86.zip
 
-        7z a -mx=9 serialdisk_2.5_fde_win-x64.zip ./bin/Release/FDE/win-x64/*
+        7z a -mx=9 serialdisk_$($versionNo)_fde_win-x64.zip ./bin/Release/FDE/win-x64/*
 
-        appveyor PushArtifact serialdisk_2.5_fde_win-x64.zip
+        appveyor PushArtifact serialdisk_$($versionNo)_fde_win-x64.zip
 
-        7z a -mx=9 serialdisk_2.5_fde_win-x86.zip ./bin/Release/FDE/win-x86/*
+        7z a -mx=9 serialdisk_$($versionNo)_fde_win-x86.zip ./bin/Release/FDE/win-x86/*
 
-        appveyor PushArtifact serialdisk_2.5_fde_win-x86.zip
+        appveyor PushArtifact serialdisk_$($versionNo)_fde_win-x86.zip
     }
     
     elseif($isLinux)
     {
-        tar -czf serialdisk_2.5_sce_linux-x64.tar.gz -C ./bin/Release/SCE serialdisk-linux-x64
+        tar -czf serialdisk_$($versionNo)_sce_linux-x64.tar.gz -C ./bin/Release/SCE serialdisk-linux-x64
 
-        appveyor PushArtifact serialdisk_2.5_sce_linux-x64.tar.gz
+        appveyor PushArtifact serialdisk_$($versionNo)_sce_linux-x64.tar.gz
 
-        tar -czf serialdisk_2.5_sce_linux-arm64.tar.gz -C ./bin/Release/SCE serialdisk-linux-arm64
+        tar -czf serialdisk_$($versionNo)_sce_linux-arm64.tar.gz -C ./bin/Release/SCE serialdisk-linux-arm64
 
-        appveyor PushArtifact serialdisk_2.5_sce_linux-arm64.tar.gz
+        appveyor PushArtifact serialdisk_$($versionNo)_sce_linux-arm64.tar.gz
 
-        tar -czf serialdisk_2.5_sce_linux-arm32.tar.gz -C ./bin/Release/SCE serialdisk-linux-arm32
+        tar -czf serialdisk_$($versionNo)_sce_linux-arm32.tar.gz -C ./bin/Release/SCE serialdisk-linux-arm32
 
-        appveyor PushArtifact serialdisk_2.5_sce_linux-arm32.tar.gz
+        appveyor PushArtifact serialdisk_$($versionNo)_sce_linux-arm32.tar.gz
 
-        tar -czf serialdisk_2.5_fde_linux-x64.tar.gz -C ./bin/Release/FDE serialdisk-linux-x64
+        tar -czf serialdisk_$($versionNo)_fde_linux-x64.tar.gz -C ./bin/Release/FDE serialdisk-linux-x64
 
-        appveyor PushArtifact serialdisk_2.5_fde_linux-x64.tar.gz
+        appveyor PushArtifact serialdisk_$($versionNo)_fde_linux-x64.tar.gz
 
-        tar -czf serialdisk_2.5_fde_linux-arm64.tar.gz -C ./bin/Release/FDE serialdisk-linux-arm64
+        tar -czf serialdisk_$($versionNo)_fde_linux-arm64.tar.gz -C ./bin/Release/FDE serialdisk-linux-arm64
 
-        appveyor PushArtifact serialdisk_2.5_fde_linux-arm64.tar.gz
+        appveyor PushArtifact serialdisk_$($versionNo)_fde_linux-arm64.tar.gz
 
-        tar -czf serialdisk_2.5_fde_linux-arm32.tar.gz -C ./bin/Release/FDE serialdisk-linux-arm32
+        tar -czf serialdisk_$($versionNo)_fde_linux-arm32.tar.gz -C ./bin/Release/FDE serialdisk-linux-arm32
 
-        appveyor PushArtifact serialdisk_2.5_fde_linux-arm32.tar.gz
+        appveyor PushArtifact serialdisk_$($versionNo)_fde_linux-arm32.tar.gz
     }
     
     else
     {
-        tar -czf serialdisk_2.5_sce_macos-x64.tar.gz -C ./bin/Release/SCE serialdisk-macos-x64
+        tar -czf serialdisk_$($versionNo)_sce_macos-x64.tar.gz -C ./bin/Release/SCE serialdisk-macos-x64
 
-        appveyor PushArtifact serialdisk_2.5_sce_macos-x64.tar.gz
+        appveyor PushArtifact serialdisk_$($versionNo)_sce_macos-x64.tar.gz
         
-        tar -czf serialdisk_2.5_fde_macos-x64.tar.gz -C ./bin/Release/FDE serialdisk-macos-x64
+        tar -czf serialdisk_$($versionNo)_fde_macos-x64.tar.gz -C ./bin/Release/FDE serialdisk-macos-x64
 
-        appveyor PushArtifact serialdisk_2.5_fde_macos-x64.tar.gz        
+        appveyor PushArtifact serialdisk_$($versionNo)_fde_macos-x64.tar.gz        
     }
 
 test_script:
