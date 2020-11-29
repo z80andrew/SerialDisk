@@ -19,17 +19,13 @@ install:
 
 
 - sh: >-
-    if "$CI_LINUX" = false    
-    
-    then
-        
+    if(!$isLinux)
+    {
         # Install .NET 5.0 on macOS
-
         curl -fsSL https://download.visualstudio.microsoft.com/download/pr/0871336f-9a83-4ce4-80ca-625d03003369/2eb78456e0b106e9515dc03898d3867a/dotnet-sdk-5.0.100-osx-x64.tar.gz -o dotnet-sdk.tar.gz    
 
         sudo tar zxf dotnet-sdk.tar.gz -C /usr/local/share/dotnet
-
-    fi
+    }
 
 build_script:
 - cmd: >-
@@ -46,10 +42,8 @@ build_script:
 - sh: >-
     dotnet --info
 
-    if "$CI_LINUX" = true
-    
-    then
-    
+    if($isLinux)
+    {
         # Publish and package Self Contained Executables
         
         dotnet publish ./SerialDisk/SerialDisk.csproj -r linux-x64 -c Release --self-contained true --output ./bin/Release/SCE/serialdisk-linux-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true
@@ -65,8 +59,10 @@ build_script:
         dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm64 -c Release --self-contained false --output ./bin/Release/FDE/serialdisk-linux-arm64
 
         dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm -c Release --self-contained false --output ./bin/Release/FDE/serialdisk-linux-arm32
+    }
     
     else
+    {
     
         # Publish and package Self Contained Executables
         
@@ -75,7 +71,7 @@ build_script:
         # Publish and package Framework Dependant Executables
 
         dotnet publish SerialDisk/SerialDisk.csproj -r osx-x64 -c Release --self-contained false --output ./bin/Release/FDE/serialdisk-macos-x64
-    fi  
+    }
 
 on_success:
 - cmd: >-
@@ -96,9 +92,8 @@ on_success:
     appveyor PushArtifact serialdisk_2.5_fde_win-x86.zip
 
 - sh: >-
-    if "$CI_LINUX" = true
-    
-    then
+    if($isLinux)
+    {
         tar -czf serialdisk_2.5_sce_linux-x64.tar.gz -C ./bin/Release/SCE serialdisk-linux-x64
 
         appveyor PushArtifact serialdisk_2.5_sce_linux-x64.tar.gz
@@ -122,8 +117,10 @@ on_success:
         tar -czf serialdisk_2.5_fde_linux-arm32.tar.gz -C ./bin/Release/FDE serialdisk-linux-arm32
 
         appveyor PushArtifact serialdisk_2.5_fde_linux-arm32.tar.gz
+    }
     
     else
+    {
         tar -czf serialdisk_2.5_sce_macos-x64.tar.gz -C ./bin/Release/SCE serialdisk-macos-x64
 
         appveyor PushArtifact serialdisk_2.5_sce_macos-x64.tar.gz
@@ -131,7 +128,7 @@ on_success:
         tar -czf serialdisk_2.5_fde_macos-x64.tar.gz -C ./bin/Release/FDE serialdisk-macos-x64
 
         appveyor PushArtifact serialdisk_2.5_fde_macos-x64.tar.gz        
-    fi
+    }
 
 test_script:
 - cmd: >-
