@@ -485,7 +485,7 @@ namespace AtariST.SerialDisk.Storage
                 // it's a file
                 else
                 {
-                    _logger.Log($"Checking if local file {newContentPath} should be updated", Constants.LoggingLevel.Info);
+                    _logger.Log($"Checking if local file {newContentPath} should be updated", Constants.LoggingLevel.Debug);
 
                     int fileSize = directoryData[directoryEntryIndex + 28] | (directoryData[directoryEntryIndex + 29] << 8) | (directoryData[directoryEntryIndex + 30] << 16) | (directoryData[directoryEntryIndex + 31] << 24);
 
