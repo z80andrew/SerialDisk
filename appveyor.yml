@@ -111,7 +111,8 @@ on_success:
 
 test_script:
 - ps: >-
-    dotnet clean    
+    dotnet clean
+    
     dotnet test --test-adapter-path:. --logger:Appveyor -nodereuse:false
 
 deploy: off
