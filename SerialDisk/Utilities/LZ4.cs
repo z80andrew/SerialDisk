@@ -1,5 +1,5 @@
-﻿using LZ4;
-using System;
+﻿using K4os.Compression.LZ4;
+using System.Linq;
 
 namespace AtariST.SerialDisk.Utilities
 {
@@ -7,16 +7,14 @@ namespace AtariST.SerialDisk.Utilities
     {
         public static byte[] CompressAsStandardLZ4Block (byte[] data)
         {
-            var maximumLength = LZ4Codec.MaximumOutputLength(data.Length);
-            var outputCompressedBuffer = new byte[maximumLength];
+            var compressedBytes = new byte[LZ4Codec.MaximumOutputSize(data.Length)];
 
-            var outputLength = LZ4Codec.EncodeHC(
+            var encodedLength = LZ4Codec.Encode(
                 data, 0, data.Length,
-                outputCompressedBuffer, 0, maximumLength);
+                compressedBytes, 0, compressedBytes.Length,
+                LZ4Level.L12_MAX);
 
-            Array.Resize(ref outputCompressedBuffer, outputLength);
-
-            return outputCompressedBuffer;
+            return compressedBytes[..encodedLength];
         }
     }
 }
