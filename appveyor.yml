@@ -14,15 +14,6 @@ dotnet_csproj:
   file_version: '{version}'
   informational_version: '{version}'
 
-install:
-- ps: >-
-    if(!$isLinux -AND !$isWindows)
-    {
-        # Install .NET 5.0 on macOS
-        curl -fsSL https://download.visualstudio.microsoft.com/download/pr/0871336f-9a83-4ce4-80ca-625d03003369/2eb78456e0b106e9515dc03898d3867a/dotnet-sdk-5.0.100-osx-x64.tar.gz -o dotnet-sdk.tar.gz
-        sudo tar zxf dotnet-sdk.tar.gz -C /usr/local/share/dotnet
-    }
-
 build_script:
 - ps: >-
     dotnet --info
