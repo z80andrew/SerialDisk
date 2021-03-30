@@ -1,5 +1,4 @@
 ﻿using K4os.Compression.LZ4;
-using System.Linq;
 
 namespace AtariST.SerialDisk.Utilities
 {

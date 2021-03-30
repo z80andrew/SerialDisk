@@ -43,7 +43,7 @@ namespace AtariST.SerialDisk.Utilities
             int dotIndex = fileName.LastIndexOf(".");
 
             // Replace all except the final .
-            if (dotIndex != -1) fileName = fileName.Substring(0, dotIndex).Replace('.', '_') + fileName[dotIndex..];
+            if (dotIndex != -1) fileName = fileName.Substring(0, dotIndex).Replace('.', '_') + fileName.Substring(dotIndex, fileName.Length - dotIndex);
 
             string shortFileName;
 

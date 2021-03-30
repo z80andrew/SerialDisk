@@ -147,7 +147,9 @@ namespace AtariST.SerialDisk
 
             try
             {
-                var defaultConfigResourceName = $"AtariST.SerialDisk.Resources.default_config_{OSHelper.OperatingSystemName.ToLower()}.json";
+                var resourceFiles = Assembly.GetExecutingAssembly().GetManifestResourceNames();
+                var defaultConfigName = $"Resources.default_config_{ OSHelper.OperatingSystemName.ToLower()}.json";
+                var defaultConfigResourceName = resourceFiles.Where(res => res.Contains(defaultConfigName)).Single();
 
                 using (var defaultConfigStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(defaultConfigResourceName))
                 {
@@ -157,7 +159,7 @@ namespace AtariST.SerialDisk
 
                 var configBuilder = new ConfigurationBuilder();
 
-                configBuilder.AddJsonFile("serialdisk.config", true, false)
+                configBuilder.AddJsonFile(Constants.configFileName, true, false)
                     .Build()
                     .Bind(_applicationSettings);
 
