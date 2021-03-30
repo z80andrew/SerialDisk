@@ -12,6 +12,9 @@
 .equ _dskbufp, 		0x4c6														| Pointer to a 1024-byte buffer for reading and writing to floppy disks or hard drives. (Unused)
 .equ _hz_200,		0x4ba														| Number of elapsed 200Hz interrupts since boot (timer C)
 .equ _bufl,			0x4b2														| Two (GEMDOS) buffer-list  headers.
+.equ _vbclock,		0x462														| Vertical blank count (long)
+.equ palmode,		0xFFFF820A													| PAL/NTSC mode (byte)
+.equ screenres,		0xFFFF8260													| Screen resolution (byte)
 
 | SerialDisk commands
 .equ cmd_read, 		0x00
@@ -22,10 +25,18 @@
 .equ compression_isenabled,	0x00
 
 | Other constants
-.equ wait_millis,	300															| Time for pauses. 200 = 1 second.
-.equ serial_timeout,1000														| Serial read timeout. 200 = 1 second.
-.equ crc32_poly,	0x04c11db7													| Polynomial for CRC32 calculation
-.equ ascii_offset,	0x41														| Offset from number to its ASCII equivalent
+.equ wait_secs,				0x01												| Time for pauses (secs * 10)
+.equ serial_timeout_secs,	0x05												| Serial read timeout (secs * 10)
+.equ crc32_poly,			0x04c11db7											| Polynomial for CRC32 calculation
+.equ ascii_offset,			0x41												| Offset from number to its ASCII equivalent
+.equ palmode_pal,			0x02												| Value of byte at 0xFFFF820A when 50Hz
+.equ palmode_ntsc,			0x00												| Value of byte at 0xFFFF820A when 60Hz
+.equ screenres_high,		0x02												| Value of byte at 0xFFFF8260 when ~72Hz
+
+| Screen refresh rates
+.equ pal_hz,				0x32												| 50Hz
+.equ ntsc_hz,				0x3C												| 60Hz
+.equ hires_hz,				0x48												| 72Hz (although more accurately 71.2-71.4Hz)
 
 |-------------------------------------------------------------------------------
 
@@ -113,9 +124,31 @@ start:
 
 	Supexec	config_drive_rw
 
+4:
+	| Determine screen refresh rate
+	Supexec	set_refresh_rate
+
 	Supexec wait
 
+start_end:
 	Ptermres d7,#0
+
+set_refresh_rate:
+	move.b	(screenres), d0
+	cmp.b	#screenres_high, d0
+	jne		not_hires
+	move.w	#hires_hz, refresh_rate
+	jmp		set_refresh_rate_end
+not_hires:
+	move.b	(palmode), d0
+	cmp.b	#palmode_pal, d0
+	jne		not_pal
+	move.w	#pal_hz, refresh_rate
+	jmp		set_refresh_rate_end
+not_pal:
+	move.w	#ntsc_hz, refresh_rate
+set_refresh_rate_end:
+	rts
 
 |-------------------------------------------------------------------------------
 | Replace pointers for default disk routines with pointers
@@ -210,7 +243,6 @@ _bpb:
 	move.l	#0,d0																| Returning -1 as an error causes a crash, so set to 0
 	rts
 
-	| Bconin	#1
 2:
 	move.b	d0,(a3)+															| Move the received byte from d0 into a3, increment a3
 
@@ -535,12 +567,17 @@ calculate_crc32:
 | a5
 
 wait:
-    lea     _hz_200,a5
-	move.l  (a5),d5      														| Store current timerC
-	add.l	#wait_millis,d5														| Increase to max timerC (1.5 seconds)
+    lea     _vbclock,a5
+	move.l  (a5),d5      														| Store current VBL count
+
+	clr.l	d0
+	move.w	refresh_rate, d0
+	mulu.w	#wait_secs, d0
+
+	add.l	d0, d5																| Increase to target VBL count
 
 1:
-	lea     _hz_200,a5
+	lea     _vbclock,a5
 	move.l  (a5),d6      														| Current timerC
 
 	cmp.l    d5,d6       														| Compare max timerC with current timerC
@@ -565,9 +602,14 @@ wait:
 
 read_serial:
 	movem.l	d1-d2,-(sp)															| Push registers to the stack which are affected by BIOS calls
-    lea     _hz_200,a6
-	move.l  (a6),d6      														| Store current timerC
-	addi.l	#serial_timeout,d6      											| Increase to max timerC
+    lea     _vbclock,a6
+	move.l  (a6),d6      														| Store current VBL count
+
+	clr.l	d0
+	move.w	refresh_rate, d0
+	mulu.w	#serial_timeout_secs, d0
+
+	add.l	d0, d6																| Increase to target VBL count
 1:
     Bconstat #1           														| Read the serial buffer state
 	tst     d0           														| Test for presence of data in buffer
@@ -846,6 +888,9 @@ crc32_table:
 
 | 00000000 00000001 - Output compression enable flag
 flags:
+	ds.w	0x01
+
+refresh_rate:
 	ds.w	0x01
 
 temp_long:
