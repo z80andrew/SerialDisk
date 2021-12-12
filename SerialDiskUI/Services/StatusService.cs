@@ -40,17 +40,15 @@ namespace SerialDiskUI.Services
             private set => this.RaiseAndSetIfChanged(ref _transferredBytes, value);
         }
 
-        private SourceList<LogMessage> _logMessages;
-        public SourceList<LogMessage> LogMessages
-        {
-            get => _logMessages;
-            private set => this.RaiseAndSetIfChanged(ref _logMessages, value);
-        }
+        private readonly SourceList<LogMessage> _logMessages;
+        public IObservableList<LogMessage> LogMessages;
 
         public StatusService()
         {
             SetStatus(AtariST.SerialDisk.Common.Status.StatusKey.Stopped);
-            LogMessages = new SourceList<LogMessage>();
+
+            _logMessages = new SourceList<LogMessage>();
+            LogMessages = _logMessages.AsObservableList();
         }
 
         public void SetTransferProgress(int totalBytes, int receivedBytes)
@@ -84,7 +82,7 @@ namespace SerialDiskUI.Services
 
         internal void AddLogEntry(LogMessage message)
         {
-            LogMessages.Add(message);
+            _logMessages.Add(message);
         }
     }
 }

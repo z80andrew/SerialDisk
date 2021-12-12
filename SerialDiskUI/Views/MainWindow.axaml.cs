@@ -13,34 +13,69 @@ namespace SerialDiskUI.Views
 {
     public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
     {
+        private double savedWindowHeight;
+
+        private TextBlock _logTextBlock;
+        private ScrollViewer _logScrollViewer;
+
         public MainWindow()
         {
             InitializeComponent();
 #if DEBUG
             this.AttachDevTools();
 #endif
-            //this.WhenActivated(d =>
-            //    d(ViewModel.ToggleLogVisibility.RegisterHandler(DoToggleLogVisibility)));
             this.WhenActivated(d =>
-                d(ViewModel.ShowSettingsDialog.RegisterHandler(DoShowDialogAsync)));
+                d(ViewModel.ShowSettingsDialog.RegisterHandler(DoShowSettingsDialogAsync)));
 
             this.FindControl<Expander>("LogExpander").PropertyChanged += LogExpander_PropertyChanged;
+            
+            _logScrollViewer = this.FindControl<ScrollViewer>("LogScrollViewer");
+            _logTextBlock = this.FindControl<TextBlock>("LogText");
+
+            _logScrollViewer.PropertyChanged += _logScrollViewer_PropertyChanged;
+
+            savedWindowHeight = this.Height;
+        }
+
+        private void _logScrollViewer_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+        {
+            if (e.Property.Name == "Extent")
+            {
+                _logScrollViewer.ScrollToEnd();
+            }
         }
 
         private void LogExpander_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
         {
-            var thingy = sender as Expander;
+            var logExpander = sender as Expander;
 
-            if (e.Property.Name == "IsExpanded" && thingy != null)
+            if (logExpander != null)
             {
-                if (thingy.IsExpanded == false)
+                if (e.Property.Name == "IsExpanded")
                 {
-                    this.SizeToContent = SizeToContent.Height;
+                    if (!logExpander.IsExpanded)
+                    {
+                        savedWindowHeight = this.Height;
+                        this.SizeToContent = SizeToContent.Height;
+                    }
+
+                    else
+                    {
+                        this.MaxHeight = double.PositiveInfinity;
+                        this.SizeToContent = SizeToContent.Manual;
+                        this.Height = savedWindowHeight;
+                    }
+                }
+
+                else if (e.Property.Name == "Bounds")
+                {
+                    // Need to set this after bounds have changed, which is after IsExpanded has been changed
+                    if (!logExpander.IsExpanded) this.MaxHeight = this.Height;
                 }
             }
         }
 
-        private async Task DoShowDialogAsync(InteractionContext<SettingsWindowViewModel, SerialDiskUIModel> interaction)
+        private async Task DoShowSettingsDialogAsync(InteractionContext<SettingsWindowViewModel, SerialDiskUIModel> interaction)
         {
             var dialog = new SettingsWindow
             {
@@ -49,16 +84,6 @@ namespace SerialDiskUI.Views
 
             var result = await dialog.ShowDialog<SerialDiskUIModel>(this);
             interaction.SetOutput(result);
-        }
-
-        private async Task DoToggleLogVisibility(InteractionContext<bool, Unit> interaction)
-        {
-            if (interaction.Input == false)
-            {
-                this.SizeToContent = SizeToContent.Height;
-            }
-
-            interaction.SetOutput(Unit.Default);
         }
 
         private void InitializeComponent()

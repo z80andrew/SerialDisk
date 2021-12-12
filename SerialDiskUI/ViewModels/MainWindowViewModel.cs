@@ -72,15 +72,12 @@ namespace SerialDiskUI.ViewModels
         private readonly ObservableAsPropertyHelper<bool> _serialPortOpen;
         public bool SerialPortOpen => _serialPortOpen.Value;
 
-        private bool _logVisible;
-        public bool LogVisible
-        {
-            get => _logVisible;            
-            set => this.RaiseAndSetIfChanged(ref _logVisible, value);
-        }
+        // private SourceList<LogMessage> _logMessages;
+        //public SourceList<LogMessage> LogMessages => _logMessages;
 
-        private SourceList<LogMessage> _logMessages;
-        public SourceList<LogMessage> LogMessages => _logMessages;
+        //private readonly ObservableAsPropertyHelper<SourceList<LogMessage>> LogMessages;
+
+        public ObservableCollectionExtended<LogMessage> LogOutput;
 
         private double _sendIconOpacity;
         public double SendIconOpacity
@@ -96,9 +93,15 @@ namespace SerialDiskUI.ViewModels
             set => this.RaiseAndSetIfChanged(ref _receiveIconOpacity, value);
         }
 
+        private string _logOutputString;
+        public string LogOutputString
+        {
+            get => _logOutputString;
+            set => this.RaiseAndSetIfChanged(ref _logOutputString, value);
+        }
+
         public ICommand StartSerialDiskCommand { get; }
         public ICommand ShowVirtualDiskFolderCommand { get; }
-        public ICommand ToggleLogVisibiltyCommand { get; }
 
         public ICommand ShowSettingsCommand { get; }
         public ICommand ExitCommand { get; }
@@ -160,38 +163,15 @@ namespace SerialDiskUI.ViewModels
                 if (result != null) _model = result;
             });
 
-            //ToggleLogVisibility = new Interaction<bool, Unit>();
+            // Logging output
+            LogOutput = new ObservableCollectionExtended<LogMessage>();
 
-            //ToggleLogVisibiltyCommand = ReactiveCommand.CreateFromTask(async () =>
-            //{
-            //    try
-            //    {
-            //        await ToggleLogVisibility.Handle(LogVisible);
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        Debug.Write(ex);
-            //    }
-            //});
+            _statusService.LogMessages
+                .Connect()
+                .Bind(LogOutput)
+                .Subscribe();
 
-            this.WhenAnyValue(_ => _.LogVisible)
-                .Select(_ => Unit.Default)
-                .InvokeCommand(ToggleLogVisibiltyCommand);
-
-            DisplayLogMessageCommand = ReactiveCommand.CreateFromTask<SourceList<LogMessage>>(async (logMessages) =>
-            {
-                Debug.WriteLine($"Log events: {logMessages.Count}");
-            });
-
-            //_statusService.WhenAnyValue(x => x.LogMessages).InvokeCommand(DisplayLogMessageCommand);
-
-            //_statusService.WhenAnyValue(x => x.LogMessages).InvokeCommand(DisplayLogMessageCommand);
-
-            //var blah = _statusService.LogMessages.Connect().InvokeCommand(DisplayLogMessageCommand);
-
-            //var messages = _statusService.WhenPropertyChanged(x => x.LogMessages).Subscribe(LogMessages);
-
-            LogVisible = true;
+            LogOutput.CollectionChanged += LogOutput_CollectionChanged;
 
             ExitCommand = ReactiveCommand.CreateFromTask(async () =>
             {
@@ -206,8 +186,6 @@ namespace SerialDiskUI.ViewModels
 
             StartSerialDiskCommand = ReactiveCommand.CreateFromTask(async () =>
             {
-                LogVisible = false;
-
                 if (_statusService.Status == AtariST.SerialDisk.Common.Status.StatusKey.Stopped)
                 {
                     _serialDiskService.BeginSerialDisk(_model.ApplicationSettings, _statusService);
@@ -218,6 +196,13 @@ namespace SerialDiskUI.ViewModels
                     _serialDiskService.EndSerialDisk();
                 }
             });
+        }
+
+        private void LogOutput_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            var hello = sender as ObservableCollectionExtended<LogMessage>;
+            var lastLogMessage = hello[hello.Count - 1];
+            LogOutputString += $"{lastLogMessage.TimeStamp}: [{lastLogMessage.MessageType}] {lastLogMessage.Message} \n";
         }
 
         private Task<Unit> UpdateStatus(AtariST.SerialDisk.Common.Status.StatusKey status)

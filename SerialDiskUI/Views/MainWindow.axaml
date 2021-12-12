@@ -5,8 +5,9 @@
         xmlns:vm="using:SerialDiskUI.ViewModels"
         mc:Ignorable="d" 
         d:DesignWidth="380" d:DesignHeight="480"
-        Width="380" Height="480"
-        MinWidth="380" MinHeight="300" SizeToContent="Height"
+        Width="420"
+        MinWidth="420" MinHeight="388"
+        SizeToContent="Manual"
         x:Class="SerialDiskUI.Views.MainWindow"
         Title="MainWindow"
         TransparencyLevelHint="None">
@@ -73,7 +74,7 @@
 
     <!-- Center area -->
     <Border Classes="SectionContainer" DockPanel.Dock="Top">
-      <WrapPanel Margin="10">
+      <StackPanel Margin="10">
         <DockPanel Margin="0,0,10,10">
           <Button Command="{Binding ShowVirtualDiskFolderCommand}" VerticalContentAlignment="Center" >
             <Image Height="18" Source="/Assets/Images/folder.png"/>
@@ -112,7 +113,7 @@
             <TextBlock Grid.Row="2" Grid.Column="3" Classes="SettingsColumn" Text="{Binding Handshake}"></TextBlock>
           </Grid>
         </Border>
-      </WrapPanel>
+      </StackPanel>
     </Border>
 
     <!-- Log area -->
@@ -124,11 +125,15 @@
                  DockPanel.Dock="Top"
                  HorizontalContentAlignment="Stretch"
                  VerticalContentAlignment="Stretch">
-          <ScrollViewer VerticalScrollBarVisibility="Visible" AllowAutoHide="False"
-                        Margin="-18">
-            <TextBox TextWrapping="Wrap" BorderThickness="0" MinHeight="100">
-              Hello
-            </TextBox>
+          <ScrollViewer Name="LogScrollViewer"
+            VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Auto"
+                         AllowAutoHide="False"                         
+                        Margin="-10">
+            <TextBlock Margin="5,5,20,20" Name="LogText" Text="{Binding LogOutputString}"
+              TextWrapping="NoWrap" VerticalAlignment="Top"
+                       MinHeight="100">
+            </TextBlock>
           </ScrollViewer>
         </Expander>
     </Border>
