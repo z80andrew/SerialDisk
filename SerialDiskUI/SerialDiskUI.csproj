@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AssemblyName>SerialDiskUI</AssemblyName>
+    <RootNamespace>SerialDiskUI</RootNamespace>
+    <ApplicationIcon>Assets\SerialDisk.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Assets\Fonts\AtariST8x16SystemFont.ttf" />
+    <None Remove="Assets\Fonts\NotoSans-Bold.ttf" />
+    <None Remove="Assets\Fonts\NotoSans-BoldItalic.ttf" />
+    <None Remove="Assets\Fonts\NotoSans-Italic.ttf" />
+    <None Remove="Assets\Fonts\NotoSans-Regular.ttf" />
+    <None Remove="Assets\Images\data-in.png" />
+    <None Remove="Assets\Images\data-out.png" />
+    <None Remove="Assets\Images\folder.png" />
+    <None Remove="Assets\Images\play.png" />
+    <None Remove="Assets\Images\square.png" />
+    <None Remove="Assets\SerialDisk.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="0.10.10" />
+    <PackageReference Include="Avalonia.Desktop" Version="0.10.10" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="0.10.10" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="0.10.10" />
+    <PackageReference Include="DynamicData" Version="7.4.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
+    <PackageReference Include="System.IO.Ports" Version="6.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="D:\repos\SerialDisk\SerialDisk\SerialDisk.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Interfaces\" />
+  </ItemGroup>
+</Project>

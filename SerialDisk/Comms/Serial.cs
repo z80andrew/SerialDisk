@@ -18,6 +18,7 @@ namespace AtariST.SerialDisk.Comms
 
         private readonly ILogger _logger;
         private readonly IDisk _localDisk;
+        private readonly IStatusService _statusService;
 
         private bool _receiveCompressedData;
         private int _receivedDataCounter;
@@ -41,10 +42,12 @@ namespace AtariST.SerialDisk.Comms
 
         private readonly bool _compressionIsEnabled;
 
-        public Serial(SerialPortSettings serialPortSettings, IDisk disk, ILogger log, CancellationTokenSource cancelTokenSource, bool compressionIsEnabled)
+        public Serial(SerialPortSettings serialPortSettings, IDisk disk, ILogger logger, IStatusService statusService,
+            CancellationTokenSource cancelTokenSource, bool compressionIsEnabled)
         {
             _localDisk = disk;
-            _logger = log;
+            _logger = logger;
+            _statusService = statusService;
             _listenTokenSource = cancelTokenSource;
             _compressionIsEnabled = compressionIsEnabled;
             _isRLERun = false;
@@ -65,7 +68,7 @@ namespace AtariST.SerialDisk.Comms
                 throw;
             }
 
-            _state = ReceiverState.ReceiveStartMagic;
+            SetReceiverState(ReceiverState.ReceiveStartMagic);
 
             StartListening();
         }
@@ -117,6 +120,14 @@ namespace AtariST.SerialDisk.Comms
         public void StopListening()
         {
             if (_listenTokenSource != null) _listenTokenSource.Cancel();
+
+            Task.Run(() =>
+            {
+                _listenTokenSource.Token.WaitHandle.WaitOne();
+                _logger.Log("Serial token cancelled", LoggingLevel.All);
+            });
+
+            _statusService.SetStatus(Status.StatusKey.Stopped);
         }
 
         private Task Listen()
@@ -196,19 +207,19 @@ namespace AtariST.SerialDisk.Comms
                                 {
                                     case 0:
                                         _logger.Log("Received read command.", LoggingLevel.Debug);
-                                        _state = ReceiverState.ReceiveReadSectorIndex;
+                                        SetReceiverState(ReceiverState.ReceiveReadSectorIndex);
                                         _receivedSectorIndex = 0;
                                         break;
 
                                     case 1:
                                         _logger.Log("Received write command.", LoggingLevel.Debug);
-                                        _state = ReceiverState.ReceiveWriteSectorIndex;
+                                        SetReceiverState(ReceiverState.ReceiveWriteSectorIndex);
                                         _receivedSectorIndex = 0;
                                         break;
 
                                     case 2:
                                         _logger.Log("Received send BIOS parameter block command.", LoggingLevel.Debug);
-                                        _state = ReceiverState.SendBiosParameterBlock;
+                                        SetReceiverState(ReceiverState.SendBiosParameterBlock);
                                         break;
                                 }
 
@@ -230,7 +241,7 @@ namespace AtariST.SerialDisk.Comms
                             case 1:
                                 _receivedSectorIndex = (_receivedSectorIndex << 8) + Data;
                                 _logger.Log($"Received read sector index command - sector {_receivedSectorIndex}", LoggingLevel.Debug);
-                                _state = ReceiverState.ReceiveReadSectorCount;
+                                SetReceiverState(ReceiverState.ReceiveReadSectorCount);
                                 _receivedSectorCount = 0;
                                 _receivedDataCounter = -1;
                                 break;
@@ -248,7 +259,7 @@ namespace AtariST.SerialDisk.Comms
                             case 1:
                                 _receivedSectorCount = (_receivedSectorCount << 8) + Data;
                                 _logger.Log($"Received read sector count command - {_receivedSectorCount} sector(s)", LoggingLevel.Debug);
-                                _state = ReceiverState.SendData;
+                                SetReceiverState(ReceiverState.SendData);
                                 _receivedDataCounter = -1;
                                 break;
                         }
@@ -265,7 +276,7 @@ namespace AtariST.SerialDisk.Comms
                             case 1:
                                 _receivedSectorIndex = (_receivedSectorIndex << 8) + Data;
                                 _logger.Log($"Received write sector index command - sector {_receivedSectorIndex}", LoggingLevel.Debug);
-                                _state = ReceiverState.ReceiveWriteSectorCount;
+                                SetReceiverState(ReceiverState.ReceiveWriteSectorCount);
                                 _receivedSectorCount = 0;
                                 _receivedDataCounter = -1;
                                 break;
@@ -283,7 +294,7 @@ namespace AtariST.SerialDisk.Comms
                             case 1:
                                 _receivedSectorCount = (_receivedSectorCount << 8) + Data;
                                 _logger.Log($"Received write sector count command  - {_receivedSectorCount} sector(s)", LoggingLevel.Debug);
-                                _state = ReceiverState.ReceiveData;
+                                SetReceiverState(ReceiverState.ReceiveData);
                                 _receivedDataCounter = -1;
                                 break;
                         }
@@ -334,12 +345,10 @@ namespace AtariST.SerialDisk.Comms
 
             _receiverDataIndex++;
 
-            Console.Write($"\rReceived [{_receiverDataIndex} / 4] CRC32 bytes");
+            _statusService.SetTransferProgress(4, _receiverDataIndex);
 
             if (_receiverDataIndex == 4)
             {
-                Console.WriteLine();
-
                 var calculatedCRC32 = CRC32.CalculateCRC32(_receiverDataBuffer);
 
                 if (calculatedCRC32 == _receivedCRC32)
@@ -347,14 +356,14 @@ namespace AtariST.SerialDisk.Comms
                     _logger.Log($"CRC32 match. Local:{calculatedCRC32} Remote:{_receivedCRC32}", LoggingLevel.Debug);
                     _serialPort.BaseStream.WriteByte(Flags.CRC32Match);
                     _localDisk.WriteSectors(_receiverDataBuffer.Length, (int)_receivedSectorIndex, _receiverDataBuffer);
-                    _state = ReceiverState.ReceiveStartMagic;
+                    SetReceiverState(ReceiverState.ReceiveStartMagic);
                 }
 
                 else
                 {
                     _logger.Log($"CRC32 mismatch. Local:{calculatedCRC32} Remote:{_receivedCRC32}", LoggingLevel.Debug);
                     _serialPort.BaseStream.WriteByte(Flags.CRC32Mismatch);
-                    _state = ReceiverState.ReceiveData;
+                    SetReceiverState(ReceiverState.ReceiveData);
                 }
 
                 _receivedDataCounter = -1;
@@ -420,19 +429,16 @@ namespace AtariST.SerialDisk.Comms
                 _receiverDataBuffer[_receiverDataIndex++] = Data;
             }
 
-            string percentReceived = ((Convert.ToDecimal(_receiverDataIndex) / _receiverDataBuffer.Length) * 100).ToString("00.00");
-            string formattedBytesReceived = _receiverDataIndex.ToString().PadLeft(_receiverDataBuffer.Length.ToString().Length, '0');
-            Console.Write($"\rReceived [{formattedBytesReceived} / {_receiverDataBuffer.Length}] bytes {percentReceived}% ");
+            _statusService.SetTransferProgress(_receiverDataBuffer.Length, _receiverDataIndex);
 
             if (_receiverDataIndex == _receivedSectorCount * _localDisk.Parameters.BytesPerSector)
             {
                 _transferStopwatch.Stop();
-                Console.WriteLine();
                 var transferSpeed = (_receiverDataBuffer.LongLength * 1000) / _transferStopwatch.Elapsed.TotalMilliseconds;
                 _logger.Log("Transfer done (" + Convert.ToUInt32(transferSpeed) + " Bytes/s).", LoggingLevel.Info);
 
                 _receivedDataCounter = -1;
-                _state = ReceiverState.ReceiveCRC32;
+                SetReceiverState(ReceiverState.ReceiveCRC32);
             }
         }
 
@@ -487,13 +493,11 @@ namespace AtariST.SerialDisk.Comms
             for (int i = 0; i < sendDataBuffer.Length; i++)
             {
                 _serialPort.BaseStream.WriteByte(sendDataBuffer[i]);
-                string percentSent = ((Convert.ToDecimal(i + 1) / sendDataBuffer.Length) * 100).ToString("00.00");
-                Console.Write($"\rSent [{(i + 1).ToString("D" + sendDataBuffer.Length.ToString().Length)} / {sendDataBuffer.Length} Bytes] {percentSent}% ");
+
+                _statusService.SetTransferProgress(sendDataBuffer.Length, i+1);
             }
             
             _transferStopwatch.Stop();
-            
-            Console.WriteLine();
 
             var transferSpeed = (sendDataBuffer.LongLength * 1000) / _transferStopwatch.Elapsed.TotalMilliseconds;
             _logger.Log("Transfer done (" + Convert.ToUInt32(transferSpeed) + " Bytes/s).", LoggingLevel.Info);
@@ -508,7 +512,7 @@ namespace AtariST.SerialDisk.Comms
 
             _serialPort.BaseStream.Write(crc32Buffer, 0, crc32Buffer.Length);
 
-            _state = ReceiverState.ReceiveStartMagic;
+            SetReceiverState(ReceiverState.ReceiveStartMagic);
 
             _logger.Log($"Receiver state: {_state}", LoggingLevel.Debug);
         }
@@ -519,9 +523,34 @@ namespace AtariST.SerialDisk.Comms
 
             _serialPort.BaseStream.Write(_localDisk.Parameters.BIOSParameterBlock, 0, _localDisk.Parameters.BIOSParameterBlock.Length);
 
-            _state = ReceiverState.ReceiveStartMagic;
+            SetReceiverState(ReceiverState.ReceiveStartMagic);
 
             _logger.Log($"Receiver state: {_state}", LoggingLevel.Debug);
+        }
+
+        private void SetReceiverState(ReceiverState state)
+        {
+            _state = state;
+
+            switch (state)
+            {
+                case ReceiverState.ReceiveStartMagic:
+                    _statusService.SetStatus(Status.StatusKey.Listening, "on " + _serialPort.PortName);
+                    break;
+                case ReceiverState.ReceiveData:
+                case ReceiverState.ReceiveCRC32:
+                case ReceiverState.ReceiveReadSectorIndex:
+                case ReceiverState.ReceiveReadSectorCount:
+                case ReceiverState.ReceiveWriteSectorIndex:
+                case ReceiverState.ReceiveWriteSectorCount:
+                    _statusService.SetStatus(Status.StatusKey.Receiving);
+                    break;
+                case ReceiverState.SendData:
+                case ReceiverState.SendBiosParameterBlock:
+                case ReceiverState.SendMediaChangeStatus:
+                    _statusService.SetStatus(Status.StatusKey.Sending);
+                    break;
+            }
         }
 
         public void Dispose()

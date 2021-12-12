@@ -3,7 +3,7 @@ version: 2.6.{build}
 image: 
 - Visual Studio 2019
 - Ubuntu2004
-- macos
+- macOS
 
 dotnet_csproj:
   patch: true

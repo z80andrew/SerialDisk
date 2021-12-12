@@ -8,7 +8,7 @@ namespace AtariST.SerialDisk.Interfaces
     {
         DiskParameters Parameters { get; }
         void WriteSectors(int receiveBufferLength, int startSector, byte[] dataBuffer);
-
         byte[] ReadSectors(int sector, int numberOfSectors);
+        void ReimportLocalDirectoryContents();
     }
 }

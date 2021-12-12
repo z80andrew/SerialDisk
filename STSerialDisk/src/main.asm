@@ -1,42 +1,7 @@
 .include "../macro/gemdos.asm"
 .include "../macro/bios.asm"
 .include "../macro/xbios.asm"
-
-|=-------------------------------------------------------------------------------
-
-| Atari memory addresses
-.equ hdv_bpb, 		0x472														| Vector to routine that establishes the BPB of a BIOS drive.
-.equ hdv_rw, 		0x476														| Vector to the routine for reading and writing of blocks to BIOS drives.
-.equ hdv_mediach, 	0x47e														| Vector to routine for establishing the media-change status of a BIOS drive. The BIOS device number is passed on the stack (4(sp)).
-.equ _drvbits, 		0x4c2														| Bit-table for the mounted drives of the BIOS.
-.equ _dskbufp, 		0x4c6														| Pointer to a 1024-byte buffer for reading and writing to floppy disks or hard drives. (Unused)
-.equ _hz_200,		0x4ba														| Number of elapsed 200Hz interrupts since boot (timer C)
-.equ _bufl,			0x4b2														| Two (GEMDOS) buffer-list  headers.
-.equ _vbclock,		0x462														| Vertical blank count (long)
-.equ palmode,		0xFFFF820A													| PAL/NTSC mode (byte)
-.equ screenres,		0xFFFF8260													| Screen resolution (byte)
-
-| SerialDisk commands
-.equ cmd_read, 		0x00
-.equ cmd_write, 	0x01
-.equ cmd_bpb, 		0x02
-
-| SerialDisk data flags
-.equ compression_isenabled,	0x00
-
-| Other constants
-.equ wait_secs,				0x01												| Time for pauses (secs * 10)
-.equ serial_timeout_secs,	0x05												| Serial read timeout (secs * 10)
-.equ crc32_poly,			0x04c11db7											| Polynomial for CRC32 calculation
-.equ ascii_offset,			0x41												| Offset from number to its ASCII equivalent
-.equ palmode_pal,			0x02												| Value of byte at 0xFFFF820A when 50Hz
-.equ palmode_ntsc,			0x00												| Value of byte at 0xFFFF820A when 60Hz
-.equ screenres_high,		0x02												| Value of byte at 0xFFFF8260 when ~72Hz
-
-| Screen refresh rates
-.equ pal_hz,				0x32												| 50Hz
-.equ ntsc_hz,				0x3C												| 60Hz
-.equ hires_hz,				0x48												| 72Hz (although more accurately 71.2-71.4Hz)
+.include "../src/atari.asm"
 
 |-------------------------------------------------------------------------------
 
@@ -141,12 +106,12 @@ set_refresh_rate:
 	jmp		set_refresh_rate_end
 not_hires:
 	move.b	(palmode), d0
-	cmp.b	#palmode_pal, d0
-	jne		not_pal
-	move.w	#pal_hz, refresh_rate
-	jmp		set_refresh_rate_end
-not_pal:
+	tst.b	d0																	| 0 = NTSC, otherwise PAL
+	jne		pal
 	move.w	#ntsc_hz, refresh_rate
+	jmp		set_refresh_rate_end
+pal:
+	move.w	#pal_hz, refresh_rate
 set_refresh_rate_end:
 	rts
 
