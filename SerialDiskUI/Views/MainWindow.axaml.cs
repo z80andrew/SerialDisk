@@ -34,12 +34,12 @@ namespace SerialDiskUI.Views
 
             _logScrollViewer.PropertyChanged += _logScrollViewer_PropertyChanged;
 
-            savedWindowHeight = this.Height;
+            savedWindowHeight = this.Height + 100;
         }
 
         private void _logScrollViewer_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
         {
-            if (e.Property.Name == "Extent")
+            if (e.Property.Name == nameof(_logScrollViewer.Extent))
             {
                 _logScrollViewer.ScrollToEnd();
             }
@@ -51,7 +51,7 @@ namespace SerialDiskUI.Views
 
             if (logExpander != null)
             {
-                if (e.Property.Name == "IsExpanded")
+                if (e.Property.Name == nameof(logExpander.IsExpanded))
                 {
                     if (!logExpander.IsExpanded)
                     {
@@ -67,7 +67,7 @@ namespace SerialDiskUI.Views
                     }
                 }
 
-                else if (e.Property.Name == "Bounds")
+                else if (e.Property.Name == nameof(logExpander.Bounds))
                 {
                     // Need to set this after bounds have changed, which is after IsExpanded has been changed
                     if (!logExpander.IsExpanded) this.MaxHeight = this.Height;
@@ -93,7 +93,6 @@ namespace SerialDiskUI.Views
 
         protected override void OnClosing(CancelEventArgs e)
         {
-
             base.OnClosing(e);
         }
     }

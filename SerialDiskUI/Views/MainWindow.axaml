@@ -3,19 +3,20 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:SerialDiskUI.ViewModels"
-        mc:Ignorable="d" 
+        mc:Ignorable="d"
         d:DesignWidth="380" d:DesignHeight="480"
-        Width="420"
+        Width="420" Height="388"
         MinWidth="420" MinHeight="388"
-        SizeToContent="Manual"
+        MaxHeight="320"
+        SizeToContent="Height"
         x:Class="SerialDiskUI.Views.MainWindow"
-        Title="MainWindow"
+        Title="SerialDisk"
         TransparencyLevelHint="None">
 
   <Window.Styles>
     <StyleInclude Source="/Assets/Styles/DefaultStyle.axaml" />
   </Window.Styles>
-  
+
   <Design.DataContext>
     <vm:MainWindowViewModel />
   </Design.DataContext>
@@ -53,8 +54,8 @@
             </Panel>
           </Border>
         </DockPanel>
-            
-          <DockPanel DockPanel.Dock="Top" Margin="0,10,0,0">
+
+        <DockPanel DockPanel.Dock="Top" Margin="0,10,0,0">
           <Button Margin="0,0,30,0" Command="{Binding StartSerialDiskCommand}" >
             <ContentControl>
               <Panel>
@@ -65,7 +66,7 @@
           </Button>
           <Border BorderBrush="White" BorderThickness="2" VerticalAlignment="Center">
             <DockPanel Background="White">
-              <TextBlock Margin="5,0,0,0" Text="{Binding StatusText}"></TextBlock>            
+              <TextBlock Margin="5,0,0,0" Text="{Binding StatusText}"></TextBlock>
             </DockPanel>
           </Border>
         </DockPanel>
@@ -81,7 +82,7 @@
           </Button>
           <TextBlock TextTrimming="CharacterEllipsis" FontSize="18" Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding VirtualDiskFolder}"/>
         </DockPanel>
-        
+
         <Border BorderThickness="2" BorderBrush="White">
           <Grid ShowGridLines="False" DockPanel.Dock="Top" Background="White">
             <Grid.ColumnDefinitions>
@@ -117,26 +118,25 @@
     </Border>
 
     <!-- Log area -->
-    <Border Classes="SectionContainer" DockPanel.Dock="Top">
-        <Expander Name="LogExpander" 
-                 Header="Log"   
-                 ExpandDirection="Down"
-                 IsExpanded="True"
-                 DockPanel.Dock="Top"
-                 HorizontalContentAlignment="Stretch"
-                 VerticalContentAlignment="Stretch">
-          <ScrollViewer Name="LogScrollViewer"
-            VerticalScrollBarVisibility="Auto"
-                        HorizontalScrollBarVisibility="Auto"
-                         AllowAutoHide="False"                         
-                        Margin="-10">
-            <TextBlock Margin="5,5,20,20" Name="LogText" Text="{Binding LogOutputString}"
-              TextWrapping="NoWrap" VerticalAlignment="Top"
-                       MinHeight="100">
-            </TextBlock>
-          </ScrollViewer>
-        </Expander>
+    <Border Classes="SectionContainer" DockPanel.Dock="Top" IsVisible="{Binding IsLogDisplayEnabled}">
+      <Expander Name="LogExpander"
+               Header="Log"
+               ExpandDirection="Down"
+               IsExpanded="False"
+               DockPanel.Dock="Top"
+               HorizontalContentAlignment="Stretch"
+               VerticalContentAlignment="Stretch">
+        <ScrollViewer Name="LogScrollViewer"
+          VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Auto"
+                       AllowAutoHide="False"
+                      Margin="-10">
+          <TextBlock Margin="5,5,20,20" Name="LogText" Text="{Binding LogOutputString}"
+            TextWrapping="NoWrap" VerticalAlignment="Top">
+          </TextBlock>
+        </ScrollViewer>
+      </Expander>
     </Border>
-    
+
   </DockPanel>
 </Window>

@@ -3,11 +3,12 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:SerialDiskUI.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="400"
+        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="550"
         Width="400" Height="400"
         x:Class="SerialDiskUI.Views.SettingsWindow"
         WindowStartupLocation="CenterOwner"
-        Title="SettingsWindow">
+        Title="SettingsWindow"
+        SizeToContent="Height">
 
   <Window.Styles>
     <StyleInclude Source="/Assets/Styles/DefaultStyle.axaml" />
@@ -16,56 +17,112 @@
   <Design.DataContext>
     <vm:SettingsWindowViewModel/>
   </Design.DataContext>
-  
-  <StackPanel Margin="10">
-    <TextBlock>Baud rate</TextBlock>
-    <ComboBox Items="{Binding BaudRateChoices}" SelectedItem="{Binding SelectedBaud}">
-      <ComboBox.ItemTemplate>
-        <DataTemplate>
-          <TextBlock Text="{Binding Key}"/>
-        </DataTemplate>
-      </ComboBox.ItemTemplate>        
-    </ComboBox>
 
-    <TextBlock>Parity</TextBlock>
-    <ComboBox Items="{Binding ParityChoices}" SelectedItem="{Binding SelectedParity}">
-      <ComboBox.ItemTemplate>
-        <DataTemplate>
-          <TextBlock Text="{Binding Key}"/>
-        </DataTemplate>
-      </ComboBox.ItemTemplate>
-    </ComboBox>
+  <DockPanel Classes="AppDockPanel">
+    <TabControl DockPanel.Dock="Top" Grid.IsSharedSizeScope="True">
+      <TabItem Header="Serial">
+        <Grid >
+          <Grid.RowDefinitions>
+            <RowDefinition SharedSizeGroup="SettingsGrid"/>
+          </Grid.RowDefinitions>
+          <Border Classes="SectionContainer">
+            <StackPanel Margin="10">
+              <TextBlock>COM port</TextBlock>
+              <ComboBox Items="{Binding COMPortChoices}" SelectedItem="{Binding SelectedCOMPort}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding Key}"/>
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
 
-    <TextBlock>Data bits</TextBlock>
-    <ComboBox Items="{Binding DataBitsChoices}" SelectedItem="{Binding SelectedDataBits}">
-      <ComboBox.ItemTemplate>
-        <DataTemplate>
-          <TextBlock Text="{Binding Key}"/>
-        </DataTemplate>
-      </ComboBox.ItemTemplate>
-    </ComboBox>
+              <TextBlock>Baud rate</TextBlock>
+              <ComboBox Items="{Binding BaudRateChoices}" SelectedItem="{Binding SelectedBaud}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding Key}"/>
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
 
-    <TextBlock>Stop bits</TextBlock>
-    <ComboBox Items="{Binding StopBitsChoices}" SelectedItem="{Binding SelectedStopBits}">
-      <ComboBox.ItemTemplate>
-        <DataTemplate>
-          <TextBlock Text="{Binding Key}"/>
-        </DataTemplate>
-      </ComboBox.ItemTemplate>
-    </ComboBox>
+              <TextBlock>Parity</TextBlock>
+              <ComboBox Items="{Binding ParityChoices}" SelectedItem="{Binding SelectedParity}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding Key}"/>
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
 
-    <TextBlock>Flow control</TextBlock>
-    <ComboBox Items="{Binding HandshakeChoices}" SelectedItem="{Binding SelectedHandshake}">
-      <ComboBox.ItemTemplate>
-        <DataTemplate>
-          <TextBlock Text="{Binding Key}"/>
-        </DataTemplate>
-      </ComboBox.ItemTemplate>
-    </ComboBox>
+              <TextBlock>Data bits</TextBlock>
+              <ComboBox Items="{Binding DataBitsChoices}" SelectedItem="{Binding SelectedDataBits}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding Key}"/>
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
 
-    <TextBlock Text="{Binding SelectedFolder}"/>
-    <Button Command="{Binding ChooseFolderCommand}">Choose folder</Button>    
-    <Button Command="{Binding ApplySettingsCommand}">Apply</Button>
-  </StackPanel>
+              <TextBlock>Stop bits</TextBlock>
+              <ComboBox Items="{Binding StopBitsChoices}" SelectedItem="{Binding SelectedStopBits}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding Key}"/>
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
 
+              <TextBlock>Flow control</TextBlock>
+              <ComboBox Items="{Binding HandshakeChoices}" SelectedItem="{Binding SelectedHandshake}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding Key}"/>
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </TabItem>
+      <TabItem Header="Disk" IsSelected="False">
+        <Grid >
+          <Grid.RowDefinitions>
+            <RowDefinition SharedSizeGroup="SettingsGrid"/>
+          </Grid.RowDefinitions>
+          <Border Classes="SectionContainer">
+            <StackPanel Margin="10">
+              <TextBlock Text="{Binding SelectedFolder}"/>
+              <Button Command="{Binding ChooseFolderCommand}">Choose shared folder</Button>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </TabItem>
+      <TabItem Header="Logging" IsSelected="True">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition SharedSizeGroup="SettingsGrid"/>
+          </Grid.RowDefinitions>
+          <Border Classes="SectionContainer">
+            <StackPanel Margin="10">
+              <CheckBox IsChecked="{Binding IsLogDisplayEnabled}">Show log</CheckBox>
+              <CheckBox IsChecked="{Binding IsLogDisplayEnabled}">Log to file</CheckBox>
+              <Button Command="{Binding ChooseFolderCommand}">Choose log file</Button>
+              <TextBlock>Logging level</TextBlock>
+              <ComboBox Items="{Binding LogLevelChoices}" SelectedItem="{Binding SelectedLogLevel}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding Key}"/>
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>              
+            </StackPanel>
+          </Border>
+        </Grid>
+      </TabItem>
+    </TabControl>
+    <DockPanel Margin="10">      
+      <Button Command="{Binding ApplySettingsCommand}" DockPanel.Dock="Left">Save</Button>
+      <Button DockPanel.Dock="Right">Cancel</Button>
+    </DockPanel>
+  </DockPanel>
 </Window>

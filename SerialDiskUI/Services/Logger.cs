@@ -84,7 +84,7 @@ namespace SerialDiskUI.Services
                 .AppendLine(message)
                 .AppendLine(exception.StackTrace);
 
-            var logMessage = new LogMessage(LoggingLevel.Info, logText.ToString(), DateTime.Now);
+            var logMessage = new LogMessage(LoggingLevel.Info, logText.ToString(), DateTime.Now, LogMessageType.Exception);
 
             OutputLogMessage(logMessage);
         }

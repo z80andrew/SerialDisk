@@ -16,7 +16,7 @@ namespace SerialDiskUI
 {
     public class App : Application
     {
-        private ApplicationSettings _appSettings;
+        private UIApplicationSettings _appSettings;
 
         public override void Initialize()
         {
@@ -49,9 +49,11 @@ namespace SerialDiskUI
             }
         }
 
-        private ApplicationSettings GetApplicationSettings(string[] args)
+        private UIApplicationSettings GetApplicationSettings(string[] args)
         {
-            ApplicationSettings appSettings = ConfigurationHelper.GetDefaultApplicationSettings();
+            var defaultApplicationSettings = ConfigurationHelper.GetDefaultApplicationSettings();
+            
+            UIApplicationSettings appSettings = new UIApplicationSettings(defaultApplicationSettings);
 
             try
             {

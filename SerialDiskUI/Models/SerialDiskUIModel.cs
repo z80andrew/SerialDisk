@@ -7,7 +7,7 @@ namespace SerialDiskUI.Models
 {
     public class SerialDiskUIModel : ReactiveObject
     {
-        public ApplicationSettings ApplicationSettings { get; set; }
+        public UIApplicationSettings ApplicationSettings { get; set; }
 
         private string _virtualDiskFolder;
         public string VirtualDiskFolder
@@ -72,13 +72,6 @@ namespace SerialDiskUI.Models
             set => this.RaiseAndSetIfChanged(ref _handshake, value);
         }
 
-        //private bool _listening;
-        //public bool Listening
-        //{
-        //    get => _listening;
-        //    set => this.RaiseAndSetIfChanged(ref _listening, value);
-        //}
-
         private bool _isOutputCompressionEnabled;
         public bool IsOutputCompressionEnabled
         {
@@ -86,16 +79,22 @@ namespace SerialDiskUI.Models
             set => this.RaiseAndSetIfChanged(ref _isOutputCompressionEnabled, value);
         }
 
-        public SerialDiskUIModel(ApplicationSettings appSettings)
+        private bool _isLogDisplayEnabled;
+        public bool IsLogDisplayEnabled
+        {
+            get => _isLogDisplayEnabled;
+            set => this.RaiseAndSetIfChanged(ref _isLogDisplayEnabled, value);
+        }
+
+        public SerialDiskUIModel(UIApplicationSettings appSettings)
         {
             ApplySettings(appSettings);
         }
 
-        private void ApplySettings(ApplicationSettings settings)
+        private void ApplySettings(UIApplicationSettings settings)
         {
             if (settings != null)
             {
-                // TODO: don't store entire settings model if possible
                 ApplicationSettings = settings;
 
                 VirtualDiskFolder = settings.LocalDirectoryPath;
@@ -112,6 +111,8 @@ namespace SerialDiskUI.Models
                 Parity = settings.SerialSettings.Parity;
                 StopBits = settings.SerialSettings.StopBits;
                 Handshake = settings.SerialSettings.Handshake;
+
+                IsLogDisplayEnabled = settings.IsLogDisplayEnabled;
             }
         }
     }

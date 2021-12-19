@@ -53,6 +53,9 @@ namespace SerialDiskUI.ViewModels
         private readonly ObservableAsPropertyHelper<bool> _isOutputCompressionEnabled;
         public bool IsOutputCompressionEnabled => _isOutputCompressionEnabled.Value;
 
+        private readonly ObservableAsPropertyHelper<bool> _isLogDisplayEnabled;
+        public bool IsLogDisplayEnabled => _isLogDisplayEnabled.Value;
+
         // Status messages
         private readonly ObservableAsPropertyHelper<AtariST.SerialDisk.Common.Status.StatusKey> _status;
         public AtariST.SerialDisk.Common.Status.StatusKey Status => _status.Value;
@@ -124,6 +127,8 @@ namespace SerialDiskUI.ViewModels
             SendIconOpacity = ICON_DISABLED_OPACITY;
             ReceiveIconOpacity = ICON_DISABLED_OPACITY;
 
+            #region Configure model
+
             _comPortName = _model.WhenAnyValue(x => x.ComPortName).ToProperty(this, x => x.ComPortName);
             _baudRate = _model.WhenAnyValue(x => x.BaudRate).ToProperty(this, x => x.BaudRate);
             _dataBits = _model.WhenAnyValue(x => x.DataBits).ToProperty(this, x => x.DataBits);
@@ -149,6 +154,10 @@ namespace SerialDiskUI.ViewModels
             _totalBytes = statusService.WhenAnyValue(x => x.TotalBytes).ToProperty(this, x => x.TotalBytes);
 
             _isOutputCompressionEnabled = _model.WhenAnyValue(x => x.IsOutputCompressionEnabled).ToProperty(this, x => x.IsOutputCompressionEnabled);
+
+            _isLogDisplayEnabled = _model.WhenAnyValue(x => x.IsLogDisplayEnabled).ToProperty(this, x => x.IsLogDisplayEnabled);
+
+            #endregion
 
             HandleStatusChangeCommand = ReactiveCommand.CreateFromTask<AtariST.SerialDisk.Common.Status.StatusKey, Unit>(UpdateStatus);
 
