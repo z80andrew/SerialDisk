@@ -18,11 +18,11 @@ namespace AtariST.SerialDisk.Models
 
         public bool IsCompressionEnabled { get; set; }
 
-        public string LogFileName
-        {
-            get => _logfileName;
-            set => _logfileName = String.Join("_", value.Split(Path.GetInvalidFileNameChars()));
-        }
+        public string LogFileName { get; set; }
+        //{
+        //    get => _logfileName;
+        //    set => _logfileName = String.Join("_", value.Split(Path.GetInvalidFileNameChars()));
+        //}
 
         public ApplicationSettings()
         {

@@ -23,6 +23,13 @@ namespace SerialDiskUI.Models
             set => this.RaiseAndSetIfChanged(ref _loggingLevel, value);
         }
 
+        private bool _isLogFileEnabled;
+        public bool IsLogFileEnabled
+        {
+            get => _isLogFileEnabled;
+            set => this.RaiseAndSetIfChanged(ref _isLogFileEnabled, value);
+        }
+
         private string _logFileName;
         public string LogFileName
         {

@@ -3,7 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:SerialDiskUI.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="550"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="550"
         Width="400" Height="400"
         x:Class="SerialDiskUI.Views.SettingsWindow"
         WindowStartupLocation="CenterOwner"
@@ -28,13 +28,17 @@
           <Border Classes="SectionContainer">
             <StackPanel Margin="10">
               <TextBlock>COM port</TextBlock>
-              <ComboBox Items="{Binding COMPortChoices}" SelectedItem="{Binding SelectedCOMPort}">
-                <ComboBox.ItemTemplate>
-                  <DataTemplate>
-                    <TextBlock Text="{Binding Key}"/>
-                  </DataTemplate>
-                </ComboBox.ItemTemplate>
-              </ComboBox>
+              <StackPanel Orientation="Horizontal">
+                <ComboBox Items="{Binding COMPortChoices}" SelectedItem="{Binding SelectedCOMPort}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding Key}"/>
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <TextBox Text="{Binding OtherCOMPortName}" IsVisible="{Binding IsCOMPortTextBoxVisible}"></TextBox>
+              </StackPanel>
 
               <TextBlock>Baud rate</TextBlock>
               <ComboBox Items="{Binding BaudRateChoices}" SelectedItem="{Binding SelectedBaud}">
@@ -80,11 +84,13 @@
                   </DataTemplate>
                 </ComboBox.ItemTemplate>
               </ComboBox>
+
+              <CheckBox IsChecked="{Binding IsCompressionEnabled}">Data compression</CheckBox>
             </StackPanel>
           </Border>
         </Grid>
       </TabItem>
-      <TabItem Header="Disk" IsSelected="False">
+      <TabItem Header="Disk" IsSelected="True">
         <Grid >
           <Grid.RowDefinitions>
             <RowDefinition SharedSizeGroup="SettingsGrid"/>
@@ -93,11 +99,23 @@
             <StackPanel Margin="10">
               <TextBlock Text="{Binding SelectedFolder}"/>
               <Button Command="{Binding ChooseFolderCommand}">Choose shared folder</Button>
+              <TextBlock>Disk size</TextBlock>
+              <StackPanel Orientation="Horizontal" Spacing="10" >
+                <Slider Name="slValue" MinWidth="230"
+                        VerticalAlignment="Top"
+                         HorizontalAlignment="Left"
+                        Minimum="32" Maximum="512"
+                        Ticks="32, 64, 128, 256, 512" TickPlacement="BottomRight" IsSnapToTickEnabled="True"/>
+                <TextBox Text="{Binding ElementName=slValue, Path=Value}"
+                         TextAlignment="Right" IsReadOnly="True" VerticalContentAlignment="Center"
+                         Height="0"/>
+                <TextBlock VerticalAlignment="Center">MiB</TextBlock>
+              </StackPanel>
             </StackPanel>
           </Border>
         </Grid>
       </TabItem>
-      <TabItem Header="Logging" IsSelected="True">
+      <TabItem Header="Logging" IsSelected="False">
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition SharedSizeGroup="SettingsGrid"/>
@@ -105,8 +123,8 @@
           <Border Classes="SectionContainer">
             <StackPanel Margin="10">
               <CheckBox IsChecked="{Binding IsLogDisplayEnabled}">Show log</CheckBox>
-              <CheckBox IsChecked="{Binding IsLogDisplayEnabled}">Log to file</CheckBox>
-              <Button Command="{Binding ChooseFolderCommand}">Choose log file</Button>
+              <CheckBox IsChecked="{Binding IsLogFileEnabled}">Log to file</CheckBox>
+              <Button Command="{Binding ChooseFileCommand}">Choose log file</Button>
               <TextBlock>Logging level</TextBlock>
               <ComboBox Items="{Binding LogLevelChoices}" SelectedItem="{Binding SelectedLogLevel}">
                 <ComboBox.ItemTemplate>
@@ -114,15 +132,15 @@
                     <TextBlock Text="{Binding Key}"/>
                   </DataTemplate>
                 </ComboBox.ItemTemplate>
-              </ComboBox>              
+              </ComboBox>
             </StackPanel>
           </Border>
         </Grid>
       </TabItem>
     </TabControl>
-    <DockPanel Margin="10">      
+    <DockPanel Margin="10">
       <Button Command="{Binding ApplySettingsCommand}" DockPanel.Dock="Left">Save</Button>
-      <Button DockPanel.Dock="Right">Cancel</Button>
+      <Button Command="{Binding CloseSettingsCommand}" DockPanel.Dock="Right">Cancel</Button>
     </DockPanel>
   </DockPanel>
 </Window>

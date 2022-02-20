@@ -7,6 +7,7 @@ using ReactiveUI;
 using System;
 using System.Threading.Tasks;
 using System.Reactive;
+using System.IO;
 
 namespace SerialDiskUI.Views
 {
@@ -19,7 +20,9 @@ namespace SerialDiskUI.Views
             this.AttachDevTools();
 #endif
             this.WhenActivated(d => d(ViewModel.ApplySettingsCommand.Subscribe(Close)));
+            this.WhenActivated(d => d(ViewModel.CloseSettingsCommand.Subscribe(Close)));
             this.WhenActivated(d => d(ViewModel.ShowFolderDialog.RegisterHandler(WindowShowFolderDialog)));
+            this.WhenActivated(d => d(ViewModel.ShowFileDialog.RegisterHandler(WindowShowFileDialog)));
         }
 
         private void InitializeComponent()
@@ -27,11 +30,32 @@ namespace SerialDiskUI.Views
             AvaloniaXamlLoader.Load(this);
         }
 
-        private async Task WindowShowFolderDialog(InteractionContext<Unit, string?> interaction)
+        private async Task WindowShowFolderDialog(InteractionContext<string, string?> interaction)
         {
             var dialog = new OpenFolderDialog();
-            var folderName = await dialog.ShowAsync(this);
-            interaction.SetOutput(folderName);
+            dialog.Directory = !string.IsNullOrEmpty(interaction.Input) ? interaction.Input : AppDomain.CurrentDomain.BaseDirectory;
+            var folderPath = await dialog.ShowAsync(this);
+            interaction.SetOutput(folderPath);
+        }
+
+        private async Task WindowShowFileDialog(InteractionContext<string, string?> interaction)
+        {
+            var dialog = new SaveFileDialog();
+
+            if (!string.IsNullOrEmpty(interaction.Input))
+            { 
+                dialog.InitialFileName = Path.GetFileName(interaction.Input);
+                dialog.Directory = Path.GetFullPath(interaction.Input);
+            }
+
+            else
+            {
+                dialog.InitialFileName = "serialdisk.log";
+                dialog.Directory = AppDomain.CurrentDomain.BaseDirectory;
+            }
+
+            var filePath = await dialog.ShowAsync(this);
+            interaction.SetOutput(filePath);
         }
     }
 }

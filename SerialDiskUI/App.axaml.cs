@@ -28,6 +28,7 @@ namespace SerialDiskUI
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktop.Startup += Desktop_Startup;
+                desktop.ShutdownMode = Avalonia.Controls.ShutdownMode.OnMainWindowClose;
             }
 
             base.OnFrameworkInitializationCompleted();

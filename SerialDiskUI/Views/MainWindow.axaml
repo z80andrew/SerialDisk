@@ -6,8 +6,8 @@
         mc:Ignorable="d"
         d:DesignWidth="380" d:DesignHeight="480"
         Width="420" Height="388"
-        MinWidth="420" MinHeight="388"
-        MaxHeight="320"
+        MinWidth="420" MinHeight="0"
+        MaxHeight="400"
         SizeToContent="Height"
         x:Class="SerialDiskUI.Views.MainWindow"
         Title="SerialDisk"
@@ -73,6 +73,26 @@
       </DockPanel>
     </Border>
 
+    <!-- Virtual disk area -->
+    <Border Name="DiskBorder" Classes="SectionContainer"
+            DockPanel.Dock="Top" IsVisible="False">
+      <Expander Name="DiskExpander"
+               Header="Virtual disk"
+               ExpandDirection="Down"
+               IsExpanded="True"
+               DockPanel.Dock="Top"
+               HorizontalContentAlignment="Stretch"
+               VerticalContentAlignment="Stretch">
+          <Panel>
+            <ProgressBar Name="DiskUsageBar" Height="25"
+                        Maximum="32768" Value="8192"
+                        Foreground="#00DD00" Background="#BBB" />
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"
+                        FontSize="18" Text="25%" />
+          </Panel>
+      </Expander>
+    </Border>
+
     <!-- Center area -->
     <Border Classes="SectionContainer" DockPanel.Dock="Top">
       <StackPanel Margin="10">
@@ -109,7 +129,7 @@
             <TextBlock Grid.Row="0" Grid.Column="2" Classes="SettingsColumn">Stop bits</TextBlock>
             <TextBlock Grid.Row="0" Grid.Column="3" Classes="SettingsColumn" Text="{Binding StopBits}"></TextBlock>
             <TextBlock Grid.Row="1" Grid.Column="2" Classes="SettingsColumn">Compression</TextBlock>
-            <TextBlock Grid.Row="1" Grid.Column="3" Classes="SettingsColumn">Enabled</TextBlock>
+            <TextBlock Grid.Row="1" Grid.Column="3" Classes="SettingsColumn" Text="{Binding IsOutputCompressionEnabledText}"></TextBlock>
             <TextBlock Grid.Row="2" Grid.Column="2" Classes="SettingsColumn">Flow control</TextBlock>
             <TextBlock Grid.Row="2" Grid.Column="3" Classes="SettingsColumn" Text="{Binding Handshake}"></TextBlock>
           </Grid>
@@ -118,7 +138,8 @@
     </Border>
 
     <!-- Log area -->
-    <Border Classes="SectionContainer" DockPanel.Dock="Top" IsVisible="{Binding IsLogDisplayEnabled}">
+    <Border Name="LogBorder" Classes="SectionContainer" 
+            DockPanel.Dock="Top" IsVisible="{Binding IsLogDisplayEnabled}">
       <Expander Name="LogExpander"
                Header="Log"
                ExpandDirection="Down"

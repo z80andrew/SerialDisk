@@ -53,6 +53,9 @@ namespace SerialDiskUI.ViewModels
         private readonly ObservableAsPropertyHelper<bool> _isOutputCompressionEnabled;
         public bool IsOutputCompressionEnabled => _isOutputCompressionEnabled.Value;
 
+        private readonly ObservableAsPropertyHelper<string> _isOutputCompressionEnabledText;
+        public string IsOutputCompressionEnabledText => _isOutputCompressionEnabledText.Value;
+
         private readonly ObservableAsPropertyHelper<bool> _isLogDisplayEnabled;
         public bool IsLogDisplayEnabled => _isLogDisplayEnabled.Value;
 
@@ -109,10 +112,10 @@ namespace SerialDiskUI.ViewModels
         public ICommand ShowSettingsCommand { get; }
         public ICommand ExitCommand { get; }
         public ICommand HandleStatusChangeCommand  { get; }
-        public ICommand DisplayLogMessageCommand { get; }
+        //public ICommand DisplayLogMessageCommand { get; }
 
         public Interaction<SettingsWindowViewModel, SerialDiskUIModel?> ShowSettingsDialog { get; }
-        public Interaction<bool, Unit> ToggleLogVisibility { get; }
+        //public Interaction<bool, Unit> ToggleLogVisibility { get; }
 
         public MainWindowViewModel()
         {
@@ -154,8 +157,12 @@ namespace SerialDiskUI.ViewModels
             _totalBytes = statusService.WhenAnyValue(x => x.TotalBytes).ToProperty(this, x => x.TotalBytes);
 
             _isOutputCompressionEnabled = _model.WhenAnyValue(x => x.IsOutputCompressionEnabled).ToProperty(this, x => x.IsOutputCompressionEnabled);
+            _isOutputCompressionEnabledText = _model.WhenAnyValue(x => x.IsOutputCompressionEnabled)
+                .Select(x => x == true ? "Enabled" : "Disabled")
+                .ToProperty(this, x => x.IsOutputCompressionEnabledText);
 
             _isLogDisplayEnabled = _model.WhenAnyValue(x => x.IsLogDisplayEnabled).ToProperty(this, x => x.IsLogDisplayEnabled);
+            _model.IsLogDisplayEnabled = true;
 
             #endregion
 

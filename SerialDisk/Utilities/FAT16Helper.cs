@@ -101,7 +101,7 @@ namespace AtariST.SerialDisk.Utilities
         public static void ValidateLocalDirectory(string localDirectoryPath, int diskSizeBytes, int maxRootDirectoryEntries, int sectorsPerCluster, TOSVersion tosVersion)
         {
             DirectoryInfo directoryInfo = new DirectoryInfo(localDirectoryPath);
-            uint localDirectorySizeBytes = (uint)Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length));
+            var localDirectorySizeBytes = GetLocalDirectorySizeInBytes(directoryInfo);
 
             if (localDirectorySizeBytes > MaxDiskSizeBytes(tosVersion, sectorsPerCluster))
                 throw new InsufficientMemoryException($"Local directory size is {localDirectorySizeBytes / BytesPerMiB} MiB, which is larger than the maximum allowable virtual disk size ({MaxDiskSizeBytes(tosVersion, sectorsPerCluster) / BytesPerMiB} MiB)");
@@ -114,6 +114,17 @@ namespace AtariST.SerialDisk.Utilities
 
             if (rootDirectoryEntries > maxRootDirectoryEntries)
                 throw new InsufficientMemoryException($"The root directory has {rootDirectoryEntries} files/directories, which is more than the maximum ({maxRootDirectoryEntries} allowed");
+        }
+
+        public static uint GetLocalDirectorySizeInBytes(string directoryPath)
+        {
+            var directoryInfo = new DirectoryInfo(directoryPath);
+            return GetLocalDirectorySizeInBytes(directoryInfo);
+        }
+
+        public static uint GetLocalDirectorySizeInBytes(DirectoryInfo directoryInfo)
+        {
+            return (uint)Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length));
         }
 
         public static void WriteClusterToFile(ClusterInfo cluster)

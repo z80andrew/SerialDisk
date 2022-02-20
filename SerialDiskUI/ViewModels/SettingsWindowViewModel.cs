@@ -1,4 +1,5 @@
 ﻿using AtariST.SerialDisk.Models;
+using AtariST.SerialDisk.Utilities;
 using Avalonia.Controls;
 using ReactiveUI;
 using SerialDiskUI.Models;
@@ -16,22 +17,79 @@ namespace SerialDiskUI.ViewModels
 {
     public class SettingsWindowViewModel : ViewModelBase
     {
+        private const string COMPORT_OTHER = "Other";
+
         private SerialDiskUIModel _settings;
-        //private OpenFolderDialog _dialog = new OpenFolderDialog();
-        private string _selectedFolder;
+        private bool _isCOMPortTextBoxVisible;
+        private string _otherCOMPortName;
         private bool _isLogDisplayEnabled;
 
-        public KeyValuePair<string, string> SelectedCOMPort { get; set; }
+        private KeyValuePair<string, string> _selectedCOMPort;
+        public KeyValuePair<string, string> SelectedCOMPort
+        {
+            get => _selectedCOMPort;
+
+            set
+            {
+                _selectedCOMPort = value;
+                IsCOMPortTextBoxVisible = String.Equals(_selectedCOMPort.Value, COMPORT_OTHER, StringComparison.InvariantCultureIgnoreCase);
+            }
+        }
+
         public KeyValuePair<string, int> SelectedBaud { get; set; }
         public KeyValuePair<string, int> SelectedDataBits { get; set; }
         public KeyValuePair<string, StopBits> SelectedStopBits { get; set; }
         public KeyValuePair<string, Handshake> SelectedHandshake { get; set; }
         public KeyValuePair<string, Parity> SelectedParity { get; set; }
-        public string SelectedFolder 
+
+        private string _selectedFolder;
+        public string SelectedFolder
         {
             get => _selectedFolder;
-            set => this.RaiseAndSetIfChanged(ref _selectedFolder, value);
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _selectedFolder, value);
+            }
         }
+
+        private bool _isLogFileEnabled;
+
+        public bool IsLogFileEnabled
+        {
+            get => _isLogFileEnabled;
+            set => this.RaiseAndSetIfChanged(ref _isLogFileEnabled, value);
+        }
+
+        private string _selectedFile;
+        public string SelectedFile
+        {
+            get => _selectedFile;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _selectedFile, value);
+            }
+        }
+
+        public bool IsCOMPortTextBoxVisible
+        {
+            get => _isCOMPortTextBoxVisible;
+            set => this.RaiseAndSetIfChanged(ref _isCOMPortTextBoxVisible, value);
+        }
+
+        public string OtherCOMPortName
+        {
+            get => _otherCOMPortName;
+            set => this.RaiseAndSetIfChanged(ref _otherCOMPortName, value);
+        }
+
+        private bool _isCompressionEnabled;
+
+        public bool IsCompressionEnabled
+        {
+            get => _isCompressionEnabled;
+            set => this.RaiseAndSetIfChanged(ref _isCompressionEnabled, value);
+        }
+
         public KeyValuePair<string, LoggingLevel> SelectedLogLevel { get; set; }
 
         public KeyValuePair<string, string>[] COMPortChoices { get; set; }
@@ -55,10 +113,13 @@ namespace SerialDiskUI.ViewModels
         public SettingsWindowViewModel(SerialDiskUIModel settings)
         {
             _settings = settings;
-            ShowFolderDialog = new Interaction<Unit, string?>();
+            ShowFolderDialog = new Interaction<string, string?>();
+            ShowFileDialog = new Interaction<string, string?>();
 
             ChooseFolderCommand = ReactiveCommand.CreateFromTask(OpenFolderAsync);
+            ChooseFileCommand = ReactiveCommand.CreateFromTask(OpenFileAsync);
             ApplySettingsCommand = ReactiveCommand.CreateFromTask(ApplySettings);
+            CloseSettingsCommand = ReactiveCommand.CreateFromTask(CloseSettings);
 
             InitChoices();
             ApplySettingsValues(_settings);
@@ -71,7 +132,7 @@ namespace SerialDiskUI.ViewModels
             StopBitsChoices = StopBitz;
             HandshakeChoices = Handshakes;
             ParityChoices = Parities;
-            
+
 
             var logLevelChoices = new List<KeyValuePair<string, LoggingLevel>>();
             foreach (LoggingLevel logLevel in Enum.GetValues(typeof(LoggingLevel)))
@@ -91,14 +152,26 @@ namespace SerialDiskUI.ViewModels
                 portChoices.Add(portChoice);
             }
 
-            portChoices.Add(new KeyValuePair<string, string>("Other", "Other"));
+            portChoices.Add(new KeyValuePair<string, string>(COMPORT_OTHER, COMPORT_OTHER));
 
             COMPortChoices = portChoices.ToArray();
         }
 
         private void ApplySettingsValues(SerialDiskUIModel settings)
         {
-            SelectedCOMPort = COMPortChoices.Where(x => x.Value == settings.ComPortName).FirstOrDefault();
+            if (COMPortChoices.Where(x => x.Value == settings.ComPortName).Any())
+            {
+                SelectedCOMPort = COMPortChoices.Where(x => x.Value == settings.ComPortName).FirstOrDefault();
+                IsCOMPortTextBoxVisible = false;
+            }
+
+            else
+            {
+                SelectedCOMPort = COMPortChoices.Where(x => x.Value == COMPORT_OTHER).First();
+                IsCOMPortTextBoxVisible = true;
+                OtherCOMPortName = settings.ComPortName;
+            }
+
             SelectedBaud = BaudRateChoices.Where(x => x.Value == settings.BaudRate).FirstOrDefault();
             SelectedDataBits = DataBitsChoices.Where(x => x.Value == settings.DataBits).FirstOrDefault();
             SelectedStopBits = StopBitsChoices.Where(x => x.Value == settings.StopBits).FirstOrDefault();
@@ -108,18 +181,26 @@ namespace SerialDiskUI.ViewModels
             SelectedFolder = settings.VirtualDiskFolder;
             IsLogDisplayEnabled = settings.IsLogDisplayEnabled;
             SelectedLogLevel = LogLevelChoices.Where(x => x.Value == settings.LoggingLevel).FirstOrDefault();
+            IsLogFileEnabled = settings.IsLogFileEnabled;
+            SelectedFile = settings.LogFileName;
+
+            IsCompressionEnabled = _settings.IsOutputCompressionEnabled;
         }
 
         public ReactiveCommand<Unit, SerialDiskUIModel> ApplySettingsCommand { get; }
+        public ReactiveCommand<Unit, SerialDiskUIModel> CloseSettingsCommand { get; }
         public ReactiveCommand<Unit, Unit> ChooseFolderCommand { get; }
-        public Interaction<Unit, string?> ShowFolderDialog { get; }
+        public ReactiveCommand<Unit, Unit> ChooseFileCommand { get; }
+        public Interaction<string, string?> ShowFolderDialog { get; }
+        public Interaction<string, string?> ShowFileDialog { get; }
 
         private async Task<SerialDiskUIModel> ApplySettings()
         {
             if (_settings != null)
             {
-                //_settings.LogFileName = "This was set in the dialog";
-                _settings.ComPortName = _settings.ApplicationSettings.SerialSettings.PortName = SelectedCOMPort.Value;
+                var comPortName = String.Equals(SelectedCOMPort.Value, COMPORT_OTHER, StringComparison.CurrentCultureIgnoreCase) ? _otherCOMPortName : SelectedCOMPort.Value;
+
+                _settings.ComPortName = _settings.ApplicationSettings.SerialSettings.PortName = comPortName;
                 _settings.BaudRate = _settings.ApplicationSettings.SerialSettings.BaudRate = SelectedBaud.Value;
                 _settings.DataBits = _settings.ApplicationSettings.SerialSettings.DataBits = SelectedDataBits.Value;
                 _settings.StopBits = _settings.ApplicationSettings.SerialSettings.StopBits = SelectedStopBits.Value;
@@ -129,18 +210,37 @@ namespace SerialDiskUI.ViewModels
                 _settings.VirtualDiskFolder = _settings.ApplicationSettings.LocalDirectoryPath = SelectedFolder;
                 _settings.IsLogDisplayEnabled = IsLogDisplayEnabled;
                 _settings.LoggingLevel = _settings.ApplicationSettings.LoggingLevel = SelectedLogLevel.Value;
+                _settings.IsLogFileEnabled = IsLogFileEnabled;
+                _settings.LogFileName = _settings.ApplicationSettings.LogFileName = SelectedFile;
+
+                _settings.IsOutputCompressionEnabled = _settings.ApplicationSettings.IsCompressionEnabled = IsCompressionEnabled;
             }
 
             return _settings;
         }
 
-        private async Task OpenFolderAsync()
+        private async Task<SerialDiskUIModel> CloseSettings()
         {
-            var folderName = await ShowFolderDialog.Handle(Unit.Default);
+            return null;
+        }
+
+            private async Task OpenFolderAsync()
+        {
+            var folderName = await ShowFolderDialog.Handle(_settings.VirtualDiskFolder);
 
             if (folderName is object)
             {
                 SelectedFolder = folderName;
+            }
+        }
+
+        private async Task OpenFileAsync()
+        {
+            var fileName = await ShowFileDialog.Handle(_settings.LogFileName);
+
+            if (fileName is object)
+            {
+                SelectedFile = fileName;
             }
         }
     }
