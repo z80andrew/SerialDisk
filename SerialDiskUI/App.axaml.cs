@@ -42,10 +42,11 @@ namespace SerialDiskUI
             {
                 var model = new SerialDiskUIModel(_appSettings);
                 var statusService = new StatusService();
+                var logger = new Logger(_appSettings.LoggingLevel, statusService, _appSettings.LogFileName);
 
                 desktop.MainWindow = new MainWindow
                 {
-                    DataContext = new MainWindowViewModel(model, statusService),
+                    DataContext = new MainWindowViewModel(model, statusService, logger),
                 };
             }
         }

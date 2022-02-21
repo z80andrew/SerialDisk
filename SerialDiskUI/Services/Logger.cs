@@ -14,19 +14,19 @@ namespace SerialDiskUI.Services
     {
         private FileStream _fileStream;
         private string _logFilePath;
-        private readonly LoggingLevel _logLevel;
+        public LoggingLevel LogLevel { get; set; }
         private readonly StatusService _statusService;
 
         public Logger(LoggingLevel loggingLevel, StatusService statusService, string logFileName = null)
         {
-            _logLevel = loggingLevel;
+            LogLevel = loggingLevel;
             _statusService = statusService;
 
             if (logFileName != null)
             {
                 string folderPath = Path.GetDirectoryName(AppContext.BaseDirectory);
                 string logFolderPath = Path.Combine(folderPath, "log");
-                CreateLogFile(logFolderPath, logFileName);
+                SetLogFile(logFolderPath, logFileName);
             }
         }
 
@@ -43,7 +43,7 @@ namespace SerialDiskUI.Services
             //OutputLogMessage($"\rSent [{(sentBytes).ToString("D" + totalBytes.ToString().Length)} / {totalBytes} Bytes] {percentSent}% ");
         }
 
-        public void CreateLogFile(string folderPath, string fileName)
+        public void SetLogFile(string folderPath, string fileName)
         {
             try
             {
@@ -65,9 +65,14 @@ namespace SerialDiskUI.Services
             }
         }
 
+        public void UnsetLogFile()
+        {
+            _fileStream = null;
+        }
+
         public void Log(string message, LoggingLevel messageLogLevel)
         {
-            if (messageLogLevel <= _logLevel)
+            if (messageLogLevel <= LogLevel)
             {
                 var logMessage = new LogMessage(messageLogLevel, message, DateTime.Now);
                 OutputLogMessage(logMessage);

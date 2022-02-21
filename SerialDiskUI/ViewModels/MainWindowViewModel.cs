@@ -7,16 +7,15 @@ using System.Reactive;
 using System.Diagnostics;
 using Avalonia.Controls.ApplicationLifetimes;
 using SerialDiskUI.Services;
-using System.Threading;
 using SerialDiskUI.Models;
 using System.IO.Ports;
 using System.Globalization;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using AtariST.SerialDisk.Models;
-using System.Collections.ObjectModel;
 using DynamicData;
 using DynamicData.Binding;
+using AtariST.SerialDisk.Interfaces;
+using System.IO;
 
 namespace SerialDiskUI.ViewModels
 {
@@ -122,7 +121,7 @@ namespace SerialDiskUI.ViewModels
             // Just for designer
         }
 
-        public MainWindowViewModel(SerialDiskUIModel model, StatusService statusService)
+        public MainWindowViewModel(SerialDiskUIModel model, StatusService statusService, ILogger logger)
         {
             _model = model;
             _statusService = statusService;
@@ -160,6 +159,23 @@ namespace SerialDiskUI.ViewModels
             _isOutputCompressionEnabledText = _model.WhenAnyValue(x => x.IsOutputCompressionEnabled)
                 .Select(x => x == true ? "Enabled" : "Disabled")
                 .ToProperty(this, x => x.IsOutputCompressionEnabledText);
+
+            // Logger properties
+            _model.WhenAnyValue(m => m.IsLogFileEnabled).Subscribe(isLogEnabled =>
+            {
+                if (isLogEnabled) logger.SetLogFile(Path.GetDirectoryName(_model.LogFileName), Path.GetFileName(_model.LogFileName));
+                else logger.UnsetLogFile();
+            });
+
+            _model.WhenAnyValue(m => m.LoggingLevel).Subscribe(logLevel =>
+            {
+                logger.LogLevel = logLevel;
+            });
+
+            _model.WhenAnyValue(m => m.LogFileName).Subscribe(logFile =>
+            {
+                if(_model.IsLogFileEnabled) logger.SetLogFile(Path.GetDirectoryName(_model.LogFileName), Path.GetFileName(_model.LogFileName));
+            });
 
             _isLogDisplayEnabled = _model.WhenAnyValue(x => x.IsLogDisplayEnabled).ToProperty(this, x => x.IsLogDisplayEnabled);
             _model.IsLogDisplayEnabled = true;
@@ -204,7 +220,7 @@ namespace SerialDiskUI.ViewModels
             {
                 if (_statusService.Status == AtariST.SerialDisk.Common.Status.StatusKey.Stopped)
                 {
-                    _serialDiskService.BeginSerialDisk(_model.ApplicationSettings, _statusService);
+                    _serialDiskService.BeginSerialDisk(_model.ApplicationSettings, _statusService, logger);
                 }
 
                 else

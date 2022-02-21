@@ -37,7 +37,4 @@
   <ItemGroup>
     <ProjectReference Include="D:\repos\SerialDisk\SerialDisk\SerialDisk.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Interfaces\" />
-  </ItemGroup>
 </Project>

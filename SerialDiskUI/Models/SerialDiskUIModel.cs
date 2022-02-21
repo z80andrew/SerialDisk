@@ -120,6 +120,8 @@ namespace SerialDiskUI.Models
                 Handshake = settings.SerialSettings.Handshake;
 
                 IsLogDisplayEnabled = settings.IsLogDisplayEnabled;
+
+                IsLogFileEnabled = false;
             }
         }
     }

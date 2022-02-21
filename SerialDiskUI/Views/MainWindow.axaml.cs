@@ -1,16 +1,12 @@
-using System;
-using System.ComponentModel;
-using System.Reactive;
-using System.Threading.Tasks;
-using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.ReactiveUI;
 using ReactiveUI;
 using SerialDiskUI.Models;
 using SerialDiskUI.ViewModels;
+using System;
+using System.Threading.Tasks;
 
 namespace SerialDiskUI.Views
 {
@@ -63,15 +59,8 @@ namespace SerialDiskUI.Views
 
             if (e.Property.Name == nameof(logBorder.IsVisible))
             {
-                if (!logBorder.IsVisible)
-                {
-                    DisableWindowResize();
-                }
-
-                else
-                {
-                    EnableWindowResize();
-                }
+                if (!logBorder.IsVisible) DisableWindowResize();
+                else EnableWindowResize();
             }
 
             else if (e.Property.Name == nameof(logBorder.TransformedBounds))

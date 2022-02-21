@@ -12,14 +12,19 @@ namespace SerialDiskUI.Models
     public class UIApplicationSettings : ApplicationSettings
     {
         public bool IsLogDisplayEnabled { get; set; }
+        public bool IsLogFileEnabled { get; set; }
         public uint LocalDirectorySizeInBytes { get; set; }
 
         public UIApplicationSettings(ApplicationSettings appSettings)
         {
-            IsLogDisplayEnabled = true;
+            IsLogDisplayEnabled = false;
+            IsLogFileEnabled = false;
+            
+            var logfile = !string.IsNullOrEmpty(appSettings.LogFileName) ? appSettings.LogFileName : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", "serialdisk.log");
+            LogFileName = logfile;
 
-            if (!string.IsNullOrEmpty(appSettings.LocalDirectoryPath)) LocalDirectorySizeInBytes = FAT16Helper.GetLocalDirectorySizeInBytes(appSettings.LocalDirectoryPath);
-            else LocalDirectorySizeInBytes = 0;
+            //if (!string.IsNullOrEmpty(appSettings.LocalDirectoryPath)) LocalDirectorySizeInBytes = FAT16Helper.GetLocalDirectorySizeInBytes(appSettings.LocalDirectoryPath);
+            LocalDirectorySizeInBytes = 0;
 
             SerialSettings = appSettings.SerialSettings;
             DiskSettings = appSettings.DiskSettings;

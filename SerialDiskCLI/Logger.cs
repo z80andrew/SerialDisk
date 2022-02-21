@@ -11,11 +11,11 @@ namespace AtariST.SerialDiskCLI
     {
         private FileStream _fileStream;
         private string _logFilePath;
-        private readonly LoggingLevel _logLevel;
+        public LoggingLevel LogLevel { get; set; }
 
         public Logger(LoggingLevel loggingLevel, string logFileName = null)
         {
-            _logLevel = loggingLevel;
+            LogLevel = loggingLevel;
 
             if (logFileName != null)
             {
@@ -23,15 +23,15 @@ namespace AtariST.SerialDiskCLI
 
                 string logFolderPath = Path.Combine(folderPath, "log");
 
-                CreateLogFile(logFolderPath, logFileName);
+                SetLogFile(logFolderPath, logFileName);
             }
         }
 
         public void Log(string message, LoggingLevel messageLogLevel)
         {
-            if (messageLogLevel <= _logLevel)
+            if (messageLogLevel <= LogLevel)
             {
-                if (_logLevel >= LoggingLevel.Debug) Console.Write($"{DateTime.Now}\t");
+                if (LogLevel >= LoggingLevel.Debug) Console.Write($"{DateTime.Now}\t");
                 Console.Write($"{message}\r\n");
                 LogToFile(message);
             }
@@ -45,7 +45,7 @@ namespace AtariST.SerialDiskCLI
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"{DateTime.Now}\t{message}");
             Console.ResetColor();
-            if (_logLevel > LoggingLevel.Info)
+            if (LogLevel > LoggingLevel.Info)
             {
                 Console.WriteLine(exception);
                 Console.WriteLine(exception.StackTrace);
@@ -75,7 +75,7 @@ namespace AtariST.SerialDiskCLI
             if (_fileStream != null) _fileStream.Dispose();
         }
 
-        private void CreateLogFile(string folderPath, string fileName)
+        public void SetLogFile(string folderPath, string fileName)
         {
             try
             {
@@ -92,6 +92,11 @@ namespace AtariST.SerialDiskCLI
                 Console.WriteLine($"WARNING! Unable to create log file.");
                 Console.WriteLine(logException.Message);
             }
+        }
+
+        public void UnsetLogFile()
+        {
+            throw new NotImplementedException();
         }
     }
 }

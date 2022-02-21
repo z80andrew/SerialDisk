@@ -9,7 +9,7 @@ namespace SerialDiskUI.Services
 {
     public class SerialDiskService
     {
-        public ILogger _logger;
+        //public ILogger _logger;
         IDisk _disk;
         ISerial _serial;
         DiskParameters _diskParameters;
@@ -19,16 +19,16 @@ namespace SerialDiskUI.Services
         {
         }
 
-        public void BeginSerialDisk(ApplicationSettings appSettings, StatusService statusService)
+        public void BeginSerialDisk(ApplicationSettings appSettings, StatusService statusService, ILogger logger)
         {
-            _logger = new Logger(appSettings.LoggingLevel, statusService, appSettings.LogFileName);
+            //_logger = logger;
 
-            _diskParameters = new DiskParameters(appSettings.LocalDirectoryPath, appSettings.DiskSettings, _logger);
-            _logger.Log($"Importing local directory contents from {appSettings.LocalDirectoryPath}", Constants.LoggingLevel.Debug);
-            _disk = new Disk(_diskParameters, _logger);
+            _diskParameters = new DiskParameters(appSettings.LocalDirectoryPath, appSettings.DiskSettings, logger);
+            logger.Log($"Importing local directory contents from {appSettings.LocalDirectoryPath}", Constants.LoggingLevel.Debug);
+            _disk = new Disk(_diskParameters, logger);
 
             _cancellationToken = new CancellationTokenSource();
-            _serial = new Serial(appSettings.SerialSettings, _disk, _logger, statusService, _cancellationToken, appSettings.IsCompressionEnabled);
+            _serial = new Serial(appSettings.SerialSettings, _disk, logger, statusService, _cancellationToken, appSettings.IsCompressionEnabled);
         }
 
         public void EndSerialDisk()
