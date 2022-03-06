@@ -283,10 +283,13 @@ _rw:
 _rw_write:
 	movem.l	d3/a4,-(sp)															| Push buffer address and data length to the stack
 
-	move.b	flags,d0
-	jbsr	write_serial
-	btst	#0,flags
+	jbsr	read_serial															| Receive serial data flags
+	tst.w	d0
+	jmi		99f
+
+	btst	#compression_isenabled,d0											| Check for compression flag
 	jeq		_rw_write_uncompressed
+
 	.include "../src/RLE.asm"
 	jmp	_rw_write_crc32
 _rw_write_uncompressed:
@@ -630,8 +633,6 @@ write_serial:
 read_config_file:
 	move	#0x4d,disk_identifier												| Set default disk id as ASCII 'M'
 	move	#0x0d,sector_size_shift_value										| Set default sector size shift
-	clr.w	flags
-	bset	#0,flags															| Set default compression (enabled)
 
 	Fopen	const_config_filename,#0											| Attempt to open config file
 	tst.w	d0																	| Check return value
@@ -666,15 +667,6 @@ read_config_file:
 
 	move	d1,sector_size_shift_value
 
-	| Read compression flag
-
-	clr		d1
-	move.b	temp_long+2,d1
-
-	cmp		#0x30,d1															| Compare read byte with ASCII '0'
-	jne		1f																	| Not 0, keep compression default (enabled)
-
-	bclr	#0,flags															| Clear compression flag
 1:
 	clr.l	d0																	| Success return value
 	jmp		99f																	| No problems encountered, jump to end
@@ -850,10 +842,6 @@ old_hdv_mediach:
 
 crc32_table:
 	ds.l	0x100
-
-| 00000000 00000001 - Output compression enable flag
-flags:
-	ds.w	0x01
 
 refresh_rate:
 	ds.w	0x01

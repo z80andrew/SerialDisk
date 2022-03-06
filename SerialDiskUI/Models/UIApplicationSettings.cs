@@ -5,7 +5,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+using SerialDiskUI.Common;
 
 namespace SerialDiskUI.Models
 {
@@ -31,6 +33,12 @@ namespace SerialDiskUI.Models
             LoggingLevel = appSettings.LoggingLevel;
             LocalDirectoryPath = appSettings.LocalDirectoryPath;
             IsCompressionEnabled = appSettings.IsCompressionEnabled;
+        }
+
+        public void WriteSettingsToDisk()
+        {
+            var settingsJson = JsonSerializer.Serialize(this, typeof(UIApplicationSettings), new JsonSerializerOptions { WriteIndented = true});
+            File.WriteAllTextAsync(Settings.ConfigFilePath, settingsJson);
         }
     }
 }

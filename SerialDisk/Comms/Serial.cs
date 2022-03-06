@@ -20,7 +20,6 @@ namespace AtariST.SerialDisk.Comms
         private readonly IDisk _localDisk;
         private readonly IStatusService _statusService;
 
-        private bool _receiveCompressedData;
         private int _receivedDataCounter;
 
         private UInt32 _receivedSectorIndex;
@@ -64,7 +63,8 @@ namespace AtariST.SerialDisk.Comms
 
             catch (Exception portException) when (portException is IOException || portException is UnauthorizedAccessException)
             {
-                _logger.LogException(portException, $"Error opening serial port {serialPortSettings.PortName}");
+                var message = $"Could not open serial port {serialPortSettings.PortName}";
+                _logger.LogException(portException, message);
                 throw;
             }
 
@@ -294,6 +294,9 @@ namespace AtariST.SerialDisk.Comms
                             case 1:
                                 _receivedSectorCount = (_receivedSectorCount << 8) + Data;
                                 _logger.Log($"Received write sector count command  - {_receivedSectorCount} sector(s)", LoggingLevel.Debug);
+
+                                ProcessReceiveDataFlags();
+
                                 SetReceiverState(ReceiverState.ReceiveData);
                                 _receivedDataCounter = -1;
                                 break;
@@ -301,9 +304,10 @@ namespace AtariST.SerialDisk.Comms
 
                         break;
 
+
+
                     case ReceiverState.ReceiveData:
-                        if (_receivedDataCounter == 0) ProcessReceiveDataFlags(Data);
-                        else if (_receiverDataIndex != _receivedSectorCount * _localDisk.Parameters.BytesPerSector) ReceiveData(Data);
+                        ReceiveData(Data);
                         break;
 
                     case ReceiverState.ReceiveCRC32:
@@ -372,14 +376,19 @@ namespace AtariST.SerialDisk.Comms
             }
         }
 
-        private void ProcessReceiveDataFlags(byte data)
+        private void ProcessReceiveDataFlags()
         {
-            _receiveCompressedData = (data & Flags.RLECompressionEnabled) == 1;
+            SerialFlags serialFlags = SerialFlags.None;
+
+            if (_compressionIsEnabled) serialFlags |= SerialFlags.Compression;
+
+            _logger.Log($"Sending serial flags: {serialFlags} ({Convert.ToByte(serialFlags)})...", LoggingLevel.Debug);
+            _serialPort.BaseStream.WriteByte(Convert.ToByte(serialFlags));
         }
 
         private void ReceiveData(byte Data)
         {
-            if (_receivedDataCounter == 1)
+            if (_receivedDataCounter == 0)
             {
                 if (_receivedSectorCount == 1)
                     _logger.Log("Writing sector " + _receivedSectorIndex + " (" + _localDisk.Parameters.BytesPerSector + " bytes)... ", LoggingLevel.Debug);
@@ -397,7 +406,7 @@ namespace AtariST.SerialDisk.Comms
                 _previousByte = null;
             }
 
-            if (_receiveCompressedData)
+            if (_compressionIsEnabled)
             {
                 //decompress RLE data
                 if (_isRLERun)

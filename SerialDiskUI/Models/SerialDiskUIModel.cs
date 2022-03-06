@@ -16,6 +16,13 @@ namespace SerialDiskUI.Models
             set => this.RaiseAndSetIfChanged(ref _virtualDiskFolder, value);
         }
 
+        private int _virtualDiskSizeMB;
+        public int VirtualDiskSizeMB
+        {
+            get => _virtualDiskSizeMB;
+            set => this.RaiseAndSetIfChanged(ref _virtualDiskSizeMB, value);
+        }
+
         private LoggingLevel _loggingLevel;
         public LoggingLevel LoggingLevel
         {
@@ -106,8 +113,7 @@ namespace SerialDiskUI.Models
 
                 VirtualDiskFolder = settings.LocalDirectoryPath;
 
-                //LoggingLevel = settings.LoggingLevel;
-                LoggingLevel = LoggingLevel.All;
+                LoggingLevel = settings.LoggingLevel;
                 LogFileName = settings.LogFileName;
 
                 IsOutputCompressionEnabled = settings.IsCompressionEnabled;
@@ -121,7 +127,9 @@ namespace SerialDiskUI.Models
 
                 IsLogDisplayEnabled = settings.IsLogDisplayEnabled;
 
-                IsLogFileEnabled = false;
+                VirtualDiskSizeMB = settings.DiskSettings.DiskSizeMiB;
+
+                IsLogFileEnabled = settings.IsLogFileEnabled;
             }
         }
     }

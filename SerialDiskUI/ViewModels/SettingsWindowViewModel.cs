@@ -2,6 +2,9 @@
 using AtariST.SerialDisk.Utilities;
 using Avalonia.Controls;
 using ReactiveUI;
+using ReactiveUI.Validation.Abstractions;
+using ReactiveUI.Validation.Contexts;
+using ReactiveUI.Validation.Extensions;
 using SerialDiskUI.Models;
 using System;
 using System.Collections.Generic;
@@ -15,7 +18,7 @@ using static SerialDiskUI.Common.Settings;
 
 namespace SerialDiskUI.ViewModels
 {
-    public class SettingsWindowViewModel : ViewModelBase
+    public class SettingsWindowViewModel : ViewModelBase, IValidatableViewModel
     {
         private const string COMPORT_OTHER = "Other";
 
@@ -46,10 +49,14 @@ namespace SerialDiskUI.ViewModels
         public string SelectedFolder
         {
             get => _selectedFolder;
-            set
-            {
-                this.RaiseAndSetIfChanged(ref _selectedFolder, value);
-            }
+            set =>  this.RaiseAndSetIfChanged(ref _selectedFolder, value);
+        }
+
+        private int _virtualDiskSizeMB;
+        public int VirtualDiskSizeMB
+        {
+            get => _virtualDiskSizeMB;
+            set => this.RaiseAndSetIfChanged(ref _virtualDiskSizeMB, value);
         }
 
         private bool _isLogFileEnabled;
@@ -64,10 +71,7 @@ namespace SerialDiskUI.ViewModels
         public string SelectedFile
         {
             get => _selectedFile;
-            set
-            {
-                this.RaiseAndSetIfChanged(ref _selectedFile, value);
-            }
+            set => this.RaiseAndSetIfChanged(ref _selectedFile, value);
         }
 
         public bool IsCOMPortTextBoxVisible
@@ -179,6 +183,8 @@ namespace SerialDiskUI.ViewModels
             SelectedParity = ParityChoices.Where(x => x.Value == settings.Parity).FirstOrDefault();
 
             SelectedFolder = settings.VirtualDiskFolder;
+            VirtualDiskSizeMB = settings.VirtualDiskSizeMB;
+
             IsLogDisplayEnabled = settings.IsLogDisplayEnabled;
             SelectedLogLevel = LogLevelChoices.Where(x => x.Value == settings.LoggingLevel).FirstOrDefault();
             IsLogFileEnabled = settings.IsLogFileEnabled;
@@ -194,6 +200,8 @@ namespace SerialDiskUI.ViewModels
         public Interaction<string, string?> ShowFolderDialog { get; }
         public Interaction<string, string?> ShowFileDialog { get; }
 
+        public ValidationContext ValidationContext { get; } = new ValidationContext();
+
         private async Task<SerialDiskUIModel> ApplySettings()
         {
             if (_settings != null)
@@ -208,12 +216,16 @@ namespace SerialDiskUI.ViewModels
                 _settings.Parity = _settings.ApplicationSettings.SerialSettings.Parity = SelectedParity.Value;
 
                 _settings.VirtualDiskFolder = _settings.ApplicationSettings.LocalDirectoryPath = SelectedFolder;
+                _settings.VirtualDiskSizeMB = _settings.ApplicationSettings.DiskSettings.DiskSizeMiB = VirtualDiskSizeMB;
+
                 _settings.IsLogDisplayEnabled = IsLogDisplayEnabled;
                 _settings.LoggingLevel = _settings.ApplicationSettings.LoggingLevel = SelectedLogLevel.Value;
                 _settings.IsLogFileEnabled = IsLogFileEnabled;
                 _settings.LogFileName = _settings.ApplicationSettings.LogFileName = SelectedFile;
 
                 _settings.IsOutputCompressionEnabled = _settings.ApplicationSettings.IsCompressionEnabled = IsCompressionEnabled;
+
+                _settings.ApplicationSettings.WriteSettingsToDisk();
             }
 
             return _settings;
@@ -224,7 +236,7 @@ namespace SerialDiskUI.ViewModels
             return null;
         }
 
-            private async Task OpenFolderAsync()
+        private async Task OpenFolderAsync()
         {
             var folderName = await ShowFolderDialog.Handle(_settings.VirtualDiskFolder);
 

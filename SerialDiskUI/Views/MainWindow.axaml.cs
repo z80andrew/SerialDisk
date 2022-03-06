@@ -33,7 +33,7 @@ namespace SerialDiskUI.Views
 
             var logExpander = this.FindControl<Expander>("LogExpander");
 
-            logExpander.PropertyChanged += LogExpander_PropertyChanged;
+            // logExpander.PropertyChanged += LogExpander_PropertyChanged;
 
             var logBorder = this.FindControl<Border>("LogBorder");
             
@@ -50,7 +50,7 @@ namespace SerialDiskUI.Views
 
             _logScrollViewer.PropertyChanged += _logScrollViewer_PropertyChanged;
 
-            SavedWindowHeight = this.Height + 100;
+            // SavedWindowHeight = this.Height + 100;
         }
 
         private void LogBorder_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
@@ -78,6 +78,7 @@ namespace SerialDiskUI.Views
             if (e.Property.Name == nameof(_logScrollViewer.Extent))
             {
                 _logScrollViewer.ScrollToEnd();
+                _logScrollViewer.LineDown();
             }
         }
 

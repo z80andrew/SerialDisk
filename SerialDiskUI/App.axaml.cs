@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.Configuration;
+using SerialDiskUI.Common;
 using SerialDiskUI.Models;
 using SerialDiskUI.Services;
 using SerialDiskUI.ViewModels;
@@ -61,7 +62,7 @@ namespace SerialDiskUI
             {
                 var configBuilder = new ConfigurationBuilder();
 
-                configBuilder.AddJsonFile(Constants.configFileName, true, false)
+                configBuilder.AddJsonFile(Settings.ConfigFilePath, true, false)
                     .Build()
                     .Bind(appSettings);
 

@@ -7,157 +7,124 @@
         d:DesignWidth="380" d:DesignHeight="480"
         Width="420" Height="388"
         MinWidth="420" MinHeight="0"
-        MaxHeight="400"
+        MaxHeight="1400"
         SizeToContent="Height"
         x:Class="SerialDiskUI.Views.MainWindow"
         Title="SerialDisk"
         TransparencyLevelHint="None">
 
-  <Window.Styles>
-    <StyleInclude Source="/Assets/Styles/DefaultStyle.axaml" />
-  </Window.Styles>
+	<Window.Styles>
+		<StyleInclude Source="/Assets/Styles/DefaultStyle.axaml" />
+	</Window.Styles>
 
-  <Design.DataContext>
-    <vm:MainWindowViewModel />
-  </Design.DataContext>
+	<Design.DataContext>
+		<vm:MainWindowViewModel />
+	</Design.DataContext>
 
-  <DockPanel Classes="AppDockPanel">
-    <DockPanel DockPanel.Dock="Top">
-      <Menu DockPanel.Dock="Top">
-        <MenuItem Header="_File">
-          <MenuItem Header="_Open..."/>
-          <Separator/>
-          <MenuItem Header="_Exit" Command="{Binding ExitCommand}">
-          </MenuItem>
-        </MenuItem>
+	<DockPanel Classes="AppDockPanel" LastChildFill="True">
+		<DockPanel DockPanel.Dock="Top">
+			<Menu DockPanel.Dock="Top">
+				<MenuItem Header="_File">
+					<MenuItem Header="_Open..."/>
+					<Separator/>
+					<MenuItem Header="_Exit" Command="{Binding ExitCommand}">
+					</MenuItem>
+				</MenuItem>
 
-        <MenuItem Header="_Tools">
-          <MenuItem Header="Atari config builder" />
-          <MenuItem Header="Configuration" Command="{Binding ShowSettingsCommand}"/>
-        </MenuItem>
-      </Menu>
-    </DockPanel>
+				<MenuItem Header="_Tools">
+					<MenuItem Header="_Configuration" Command="{Binding ShowSettingsCommand}"/>
+				</MenuItem>
 
-    <Border Classes="SectionContainer" DockPanel.Dock="Top">
-      <DockPanel Margin="10">
-        <DockPanel DockPanel.Dock="Top">
-          <Image Height="28" Margin="0,0,5,0" Opacity="{Binding ReceiveIconOpacity}" Source="/Assets/Images/data-in.png"/>
-          <Image Height="28" Margin="0,0,5,0" Opacity="{Binding SendIconOpacity}" Source="/Assets/Images/data-out.png"/>
+				<MenuItem Header="_Help">
+					<MenuItem Header="_About" Command="{Binding ShowHelpCommand}" />
+				</MenuItem>
+			</Menu>
+		</DockPanel>
 
-          <Border DockPanel.Dock="Top" BorderThickness="4" BorderBrush="Gray">
-            <Panel>
-              <ProgressBar Name="TransferProgressBar" Height="25"
-                          Maximum="{Binding TotalBytes}" Value="{Binding TransferredBytes}"
-                          Foreground="#00DD00" Background="#BBB" />
-              <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"
-                          FontSize="18" Text="{Binding TransferPercent}" />
-            </Panel>
-          </Border>
-        </DockPanel>
+		<Border Classes="SectionContainer" DockPanel.Dock="Top">
+				<DockPanel Margin="10">
+					<DockPanel DockPanel.Dock="Top">
+						<Image Height="28" Margin="0,0,5,0" Opacity="{Binding ReceiveIconOpacity}" Source="/Assets/Images/data-in.png"/>
+						<Image Height="28" Margin="0,0,5,0" Opacity="{Binding SendIconOpacity}" Source="/Assets/Images/data-out.png"/>
 
-        <DockPanel DockPanel.Dock="Top" Margin="0,10,0,0">
-          <Button Margin="0,0,30,0" Command="{Binding StartSerialDiskCommand}" >
-            <ContentControl>
-              <Panel>
-                <Image Height="18" Source="/Assets/Images/play.png" IsVisible="{Binding !SerialPortOpen}"/>
-                <Image Height="18" Source="/Assets/Images/square.png" IsVisible="{Binding SerialPortOpen}"/>
-              </Panel>
-            </ContentControl>
-          </Button>
-          <Border BorderBrush="White" BorderThickness="2" VerticalAlignment="Center">
-            <DockPanel Background="White">
-              <TextBlock Margin="5,0,0,0" Text="{Binding StatusText}"></TextBlock>
-            </DockPanel>
-          </Border>
-        </DockPanel>
-      </DockPanel>
-    </Border>
+						<Border DockPanel.Dock="Top" BorderThickness="4" BorderBrush="Gray">
+							<Panel>
+								<ProgressBar Name="TransferProgressBar" Height="25"
+											Maximum="{Binding TotalBytes}" Value="{Binding TransferredBytes}"
+											Foreground="#00DD00" Background="#BBB" />
+								<TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"
+											FontSize="18" Text="{Binding TransferPercent}" />
+							</Panel>
+						</Border>
+					</DockPanel>
 
-    <!-- Virtual disk area -->
-    <Border Name="DiskBorder" Classes="SectionContainer"
-            DockPanel.Dock="Top" IsVisible="False">
-      <Expander Name="DiskExpander"
-               Header="Virtual disk"
-               ExpandDirection="Down"
-               IsExpanded="True"
-               DockPanel.Dock="Top"
-               HorizontalContentAlignment="Stretch"
-               VerticalContentAlignment="Stretch">
-          <Panel>
-            <ProgressBar Name="DiskUsageBar" Height="25"
-                        Maximum="32768" Value="8192"
-                        Foreground="#00DD00" Background="#BBB" />
-            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"
-                        FontSize="18" Text="25%" />
-          </Panel>
-      </Expander>
-    </Border>
+					<DockPanel DockPanel.Dock="Top" Margin="0,10,0,0">
+						<Button Margin="0,0,30,0" Command="{Binding StartSerialDiskCommand}" >
+							<ContentControl>
+								<Panel>
+									<Image Height="18" Source="/Assets/Images/play.png" IsVisible="{Binding !SerialPortOpen}"/>
+									<Image Height="18" Source="/Assets/Images/square.png" IsVisible="{Binding SerialPortOpen}"/>
+								</Panel>
+							</ContentControl>
+						</Button>
+						<Border BorderBrush="White" BorderThickness="2" VerticalAlignment="Center">
+							<DockPanel Background="White">
+								<TextBlock Margin="5,0,0,0" Text="{Binding StatusText}"></TextBlock>
+							</DockPanel>
+						</Border>
+					</DockPanel>
+				</DockPanel>
+		</Border>
 
-    <!-- Center area -->
-    <Border Classes="SectionContainer" DockPanel.Dock="Top">
-      <StackPanel Margin="10">
-        <DockPanel Margin="0,0,10,10">
-          <Button Command="{Binding ShowVirtualDiskFolderCommand}" VerticalContentAlignment="Center" >
-            <Image Height="18" Source="/Assets/Images/folder.png"/>
-          </Button>
-          <TextBlock TextTrimming="CharacterEllipsis" FontSize="18" Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding VirtualDiskFolder}"/>
-        </DockPanel>
+		<!-- Virtual disk area -->
+		<Border Name="DiskBorder" Classes="SectionContainer"
+				DockPanel.Dock="Top" IsVisible="False">
+			<Panel>
+				<ProgressBar Name="DiskUsageBar" Height="25"
+							Maximum="32768" Value="8192"
+							Foreground="#00DD00" Background="#BBB" />
+				<TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"
+							FontSize="18" Text="25%" />
+			</Panel>
+		</Border>
 
-        <Border BorderThickness="2" BorderBrush="White">
-          <Grid ShowGridLines="False" DockPanel.Dock="Top" Background="White">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="auto"></ColumnDefinition>
-              <ColumnDefinition Width="auto"></ColumnDefinition>
-              <ColumnDefinition Width="auto"></ColumnDefinition>
-              <ColumnDefinition Width="auto"></ColumnDefinition>
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-              <RowDefinition Height="auto"></RowDefinition>
-              <RowDefinition Height="auto"></RowDefinition>
-              <RowDefinition Height="auto"></RowDefinition>
-              <RowDefinition Height="auto"></RowDefinition>
-            </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" Grid.Column="0" Classes="SettingsColumn" >Port</TextBlock>
-            <TextBlock Grid.Row="0" Grid.Column="1" Classes="SettingsColumn" Text="{Binding ComPortName}"></TextBlock>
-            <TextBlock Grid.Row="1" Grid.Column="0" Classes="SettingsColumn">Baud rate</TextBlock>
-            <TextBlock Grid.Row="1" Grid.Column="1" Classes="SettingsColumn" Text="{Binding BaudRate}" ></TextBlock>
-            <TextBlock Grid.Row="2" Grid.Column="0" Classes="SettingsColumn">Data bits</TextBlock>
-            <TextBlock Grid.Row="2" Grid.Column="1" Classes="SettingsColumn" Text="{Binding DataBits}"></TextBlock>
-            <TextBlock Grid.Row="3" Grid.Column="0" Classes="SettingsColumn">Parity</TextBlock>
-            <TextBlock Grid.Row="3" Grid.Column="1" Classes="SettingsColumn" Text="{Binding Parity}"></TextBlock>
+		<!-- Center area -->
+		<Border Classes="SectionContainer" DockPanel.Dock="Top">
+				<StackPanel Margin="10">
+				<DockPanel Margin="0,0,0,0">
+					<Button Command="{Binding ShowVirtualDiskFolderCommand}" VerticalContentAlignment="Center" >
+						<Image Height="18" Source="/Assets/Images/folder.png"/>
+					</Button>
+					<Button Command="{Binding RefreshVirtualDiskFolderCommand}" VerticalContentAlignment="Center" 
+							IsEnabled="{Binding SerialPortOpen}">
+						<Image Height="18" Source="/Assets/Images/refresh.png"/>
+					</Button>
+					<TextBlock TextTrimming="CharacterEllipsis" FontSize="18" Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding VirtualDiskFolder}"/>
+				</DockPanel>
+			</StackPanel>
+		</Border>
 
-            <TextBlock Grid.Row="0" Grid.Column="2" Classes="SettingsColumn">Stop bits</TextBlock>
-            <TextBlock Grid.Row="0" Grid.Column="3" Classes="SettingsColumn" Text="{Binding StopBits}"></TextBlock>
-            <TextBlock Grid.Row="1" Grid.Column="2" Classes="SettingsColumn">Compression</TextBlock>
-            <TextBlock Grid.Row="1" Grid.Column="3" Classes="SettingsColumn" Text="{Binding IsOutputCompressionEnabledText}"></TextBlock>
-            <TextBlock Grid.Row="2" Grid.Column="2" Classes="SettingsColumn">Flow control</TextBlock>
-            <TextBlock Grid.Row="2" Grid.Column="3" Classes="SettingsColumn" Text="{Binding Handshake}"></TextBlock>
-          </Grid>
-        </Border>
-      </StackPanel>
-    </Border>
+		<!-- Log area -->
+		<Border Name="LogBorder" Classes="SectionContainer"
+				DockPanel.Dock="Top" IsVisible="{Binding IsLogDisplayEnabled}">
+			<Expander Name="LogExpander"
+					 Header="Log"
+					 ExpandDirection="Down"
+					 IsExpanded="False"
+					 DockPanel.Dock="Top"
+					 HorizontalContentAlignment="Stretch"
+					 VerticalContentAlignment="Stretch">
+				<ScrollViewer Name="LogScrollViewer"
+				  VerticalScrollBarVisibility="Auto"
+							  HorizontalScrollBarVisibility="Auto"
+							   AllowAutoHide="False"
+							  Margin="-10">
+					<TextBlock Margin="5,5,20,20" Name="LogText" Text="{Binding LogOutputString}"
+					  TextWrapping="NoWrap" VerticalAlignment="Top">
+					</TextBlock>
+				</ScrollViewer>
+			</Expander>
+		</Border>
 
-    <!-- Log area -->
-    <Border Name="LogBorder" Classes="SectionContainer" 
-            DockPanel.Dock="Top" IsVisible="{Binding IsLogDisplayEnabled}">
-      <Expander Name="LogExpander"
-               Header="Log"
-               ExpandDirection="Down"
-               IsExpanded="False"
-               DockPanel.Dock="Top"
-               HorizontalContentAlignment="Stretch"
-               VerticalContentAlignment="Stretch">
-        <ScrollViewer Name="LogScrollViewer"
-          VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Auto"
-                       AllowAutoHide="False"
-                      Margin="-10">
-          <TextBlock Margin="5,5,20,20" Name="LogText" Text="{Binding LogOutputString}"
-            TextWrapping="NoWrap" VerticalAlignment="Top">
-          </TextBlock>
-        </ScrollViewer>
-      </Expander>
-    </Border>
-
-  </DockPanel>
+	</DockPanel>
 </Window>

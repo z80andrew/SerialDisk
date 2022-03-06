@@ -77,11 +77,11 @@ namespace AtariST.SerialDiskCLI
 
         public void SetLogFile(string folderPath, string fileName)
         {
+            _logFilePath = Path.Combine(folderPath, fileName);
+
             try
             {
                 if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
-
-                _logFilePath = Path.Combine(folderPath, fileName);
 
                 if (File.Exists(_logFilePath)) _fileStream = new FileStream(_logFilePath, FileMode.Append);
                 else _fileStream = new FileStream(_logFilePath, FileMode.OpenOrCreate);
@@ -89,8 +89,7 @@ namespace AtariST.SerialDiskCLI
 
             catch (Exception logException)
             {
-                Console.WriteLine($"WARNING! Unable to create log file.");
-                Console.WriteLine(logException.Message);
+                LogException(logException, $"ERROR: Unable to create log file {_logFilePath}");
             }
         }
 

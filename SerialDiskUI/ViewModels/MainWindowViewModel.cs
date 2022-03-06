@@ -16,6 +16,7 @@ using DynamicData;
 using DynamicData.Binding;
 using AtariST.SerialDisk.Interfaces;
 using System.IO;
+using AtariST.SerialDisk.Common;
 
 namespace SerialDiskUI.ViewModels
 {
@@ -108,6 +109,8 @@ namespace SerialDiskUI.ViewModels
         public ICommand StartSerialDiskCommand { get; }
         public ICommand ShowVirtualDiskFolderCommand { get; }
 
+        public ICommand RefreshVirtualDiskFolderCommand { get; }
+
         public ICommand ShowSettingsCommand { get; }
         public ICommand ExitCommand { get; }
         public ICommand HandleStatusChangeCommand  { get; }
@@ -150,7 +153,7 @@ namespace SerialDiskUI.ViewModels
                 .ToProperty(this, x => x.TransferPercent);
 
             _serialPortOpen = statusService.WhenAnyValue(x => x.Status)
-                .Select(x => x != AtariST.SerialDisk.Common.Status.StatusKey.Stopped)
+                .Select(x => x != AtariST.SerialDisk.Common.Status.StatusKey.Stopped && x != AtariST.SerialDisk.Common.Status.StatusKey.Error)
                 .ToProperty(this, x => x.SerialPortOpen);
 
             _totalBytes = statusService.WhenAnyValue(x => x.TotalBytes).ToProperty(this, x => x.TotalBytes);
@@ -216,9 +219,15 @@ namespace SerialDiskUI.ViewModels
                 var process = Process.Start(startInfo);
             });
 
+            RefreshVirtualDiskFolderCommand = ReactiveCommand.CreateFromTask(async () =>
+            {
+                _serialDiskService.ReimportLocalDirectoryContents();
+            });
+
             StartSerialDiskCommand = ReactiveCommand.CreateFromTask(async () =>
             {
-                if (_statusService.Status == AtariST.SerialDisk.Common.Status.StatusKey.Stopped)
+                if (_statusService.Status == AtariST.SerialDisk.Common.Status.StatusKey.Stopped
+                        || _statusService.Status == AtariST.SerialDisk.Common.Status.StatusKey.Error)
                 {
                     _serialDiskService.BeginSerialDisk(_model.ApplicationSettings, _statusService, logger);
                 }
@@ -232,9 +241,9 @@ namespace SerialDiskUI.ViewModels
 
         private void LogOutput_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            var hello = sender as ObservableCollectionExtended<LogMessage>;
-            var lastLogMessage = hello[hello.Count - 1];
-            LogOutputString += $"{lastLogMessage.TimeStamp}: [{lastLogMessage.MessageType}] {lastLogMessage.Message} \n";
+            var logMessages = sender as ObservableCollectionExtended<LogMessage>;
+            var lastLogMessage = logMessages[logMessages.Count - 1];
+            LogOutputString += $"{lastLogMessage.TimeStamp.ToString(Constants.TIME_FORMAT)}: [{lastLogMessage.MessageType}] {lastLogMessage.Message} \n";
         }
 
         private Task<Unit> UpdateStatus(AtariST.SerialDisk.Common.Status.StatusKey status)

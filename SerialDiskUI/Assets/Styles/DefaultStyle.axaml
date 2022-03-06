@@ -44,8 +44,16 @@
       <Setter Property="FontFamily" Value="/Assets/Fonts/NotoSans.ttf#Noto Sans"/>
     </Style>
 
-  <Style Selector="TextBlock.SettingsColumn">
-    <Setter Property="Margin" Value="10,5,10,0"/>
+	<Style Selector="TextBlock.SettingsLabel">
+		<Setter Property="Margin" Value="0,7,0,3"/>
+	</Style>
+
+	<Style Selector="TextBlock.SettingsLabelFirst">
+		<Setter Property="Margin" Value="0,0,0,3"/>
+	</Style>
+
+	<Style Selector="TextBlock.SettingsColumn">
+    <Setter Property="Margin" Value="5,5,10,0"/>
   </Style>
 
   <Style Selector="TextBox">

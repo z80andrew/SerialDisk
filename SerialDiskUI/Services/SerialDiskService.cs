@@ -3,6 +3,7 @@ using AtariST.SerialDisk.Comms;
 using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Storage;
+using System;
 using System.Threading;
 
 namespace SerialDiskUI.Services
@@ -21,14 +22,26 @@ namespace SerialDiskUI.Services
 
         public void BeginSerialDisk(ApplicationSettings appSettings, StatusService statusService, ILogger logger)
         {
-            //_logger = logger;
-
             _diskParameters = new DiskParameters(appSettings.LocalDirectoryPath, appSettings.DiskSettings, logger);
             logger.Log($"Importing local directory contents from {appSettings.LocalDirectoryPath}", Constants.LoggingLevel.Debug);
-            _disk = new Disk(_diskParameters, logger);
 
-            _cancellationToken = new CancellationTokenSource();
-            _serial = new Serial(appSettings.SerialSettings, _disk, logger, statusService, _cancellationToken, appSettings.IsCompressionEnabled);
+            try
+            {
+                _disk = new Disk(_diskParameters, logger);
+
+                _cancellationToken = new CancellationTokenSource();
+                _serial = new Serial(appSettings.SerialSettings, _disk, logger, statusService, _cancellationToken, appSettings.IsCompressionEnabled);
+            }
+
+            catch (Exception ex)
+            {
+                statusService.SetStatus(Status.StatusKey.Error, ex.Message);
+            }
+        }
+
+        public void ReimportLocalDirectoryContents()
+        {
+            _disk.ReimportLocalDirectoryContents();
         }
 
         public void EndSerialDisk()
