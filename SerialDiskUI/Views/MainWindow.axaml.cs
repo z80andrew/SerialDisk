@@ -6,6 +6,7 @@ using ReactiveUI;
 using SerialDiskUI.Models;
 using SerialDiskUI.ViewModels;
 using System;
+using System.Reactive;
 using System.Threading.Tasks;
 
 namespace SerialDiskUI.Views
@@ -30,6 +31,9 @@ namespace SerialDiskUI.Views
 
             this.WhenActivated(d =>
                 d(ViewModel.ShowSettingsDialog.RegisterHandler(DoShowSettingsDialogAsync)));
+
+            this.WhenActivated(d =>
+                d(ViewModel.ShowAboutDialog.RegisterHandler(DoShowAboutDialogAsync)));
 
             var logExpander = this.FindControl<Expander>("LogExpander");
 
@@ -129,6 +133,17 @@ namespace SerialDiskUI.Views
             };
 
             var result = await dialog.ShowDialog<SerialDiskUIModel>(this);
+            interaction.SetOutput(result);
+        }
+
+        private async Task DoShowAboutDialogAsync(InteractionContext<AboutWindowViewModel, SimpleDialogModel> interaction)
+        {
+            var dialog = new AboutWindow
+            {
+                DataContext = interaction.Input
+            };
+
+            var result = await dialog.ShowDialog<SimpleDialogModel>(this);
             interaction.SetOutput(result);
         }
 

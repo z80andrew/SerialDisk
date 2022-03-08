@@ -112,12 +112,13 @@ namespace SerialDiskUI.ViewModels
         public ICommand RefreshVirtualDiskFolderCommand { get; }
 
         public ICommand ShowSettingsCommand { get; }
+        public ICommand ShowAboutCommand { get; }
         public ICommand ExitCommand { get; }
         public ICommand HandleStatusChangeCommand  { get; }
-        //public ICommand DisplayLogMessageCommand { get; }
 
         public Interaction<SettingsWindowViewModel, SerialDiskUIModel?> ShowSettingsDialog { get; }
-        //public Interaction<bool, Unit> ToggleLogVisibility { get; }
+
+        public Interaction<AboutWindowViewModel, SimpleDialogModel> ShowAboutDialog { get; }
 
         public MainWindowViewModel()
         {
@@ -181,7 +182,6 @@ namespace SerialDiskUI.ViewModels
             });
 
             _isLogDisplayEnabled = _model.WhenAnyValue(x => x.IsLogDisplayEnabled).ToProperty(this, x => x.IsLogDisplayEnabled);
-            _model.IsLogDisplayEnabled = true;
 
             #endregion
 
@@ -196,6 +196,14 @@ namespace SerialDiskUI.ViewModels
                 var settingsViewModel = new SettingsWindowViewModel(_model);
                 var result = await ShowSettingsDialog.Handle(settingsViewModel);
                 if (result != null) _model = result;
+            });
+
+            ShowAboutDialog = new Interaction<AboutWindowViewModel, SimpleDialogModel>();
+
+            ShowAboutCommand = ReactiveCommand.CreateFromTask(async () =>
+            {
+                var aboutViewModel = new AboutWindowViewModel();
+                var result = await ShowAboutDialog.Handle(aboutViewModel);
             });
 
             // Logging output

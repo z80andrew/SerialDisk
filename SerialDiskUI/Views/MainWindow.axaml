@@ -36,7 +36,7 @@
 				</MenuItem>
 
 				<MenuItem Header="_Help">
-					<MenuItem Header="_About" Command="{Binding ShowHelpCommand}" />
+					<MenuItem Header="_About" Command="{Binding ShowAboutCommand}" />
 				</MenuItem>
 			</Menu>
 		</DockPanel>
@@ -107,23 +107,23 @@
 		<!-- Log area -->
 		<Border Name="LogBorder" Classes="SectionContainer"
 				DockPanel.Dock="Top" IsVisible="{Binding IsLogDisplayEnabled}">
-			<Expander Name="LogExpander"
-					 Header="Log"
-					 ExpandDirection="Down"
-					 IsExpanded="False"
-					 DockPanel.Dock="Top"
-					 HorizontalContentAlignment="Stretch"
-					 VerticalContentAlignment="Stretch">
-				<ScrollViewer Name="LogScrollViewer"
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto"></RowDefinition>
+					<RowDefinition></RowDefinition>
+				</Grid.RowDefinitions>
+
+				<TextBlock Padding="10" Grid.Row="0" Background="White">Log</TextBlock>
+				
+				<ScrollViewer Grid.Row="1" Name="LogScrollViewer"
 				  VerticalScrollBarVisibility="Auto"
 							  HorizontalScrollBarVisibility="Auto"
-							   AllowAutoHide="False"
-							  Margin="-10">
+							   AllowAutoHide="False">
 					<TextBlock Margin="5,5,20,20" Name="LogText" Text="{Binding LogOutputString}"
 					  TextWrapping="NoWrap" VerticalAlignment="Top">
 					</TextBlock>
 				</ScrollViewer>
-			</Expander>
+			</Grid>
 		</Border>
 
 	</DockPanel>

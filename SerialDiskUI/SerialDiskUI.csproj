@@ -20,6 +20,7 @@
     <None Remove="Assets\Images\data-out.png" />
     <None Remove="Assets\Images\folder.png" />
     <None Remove="Assets\Images\play.png" />
+    <None Remove="Assets\Images\serialdisk_logo.png" />
     <None Remove="Assets\Images\square.png" />
     <None Remove="Assets\SerialDisk.ico" />
   </ItemGroup>

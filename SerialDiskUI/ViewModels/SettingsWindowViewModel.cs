@@ -18,7 +18,7 @@ using static SerialDiskUI.Common.Settings;
 
 namespace SerialDiskUI.ViewModels
 {
-    public class SettingsWindowViewModel : ViewModelBase, IValidatableViewModel
+    public class SettingsWindowViewModel : ViewModelBase
     {
         private const string COMPORT_OTHER = "Other";
 
@@ -208,6 +208,8 @@ namespace SerialDiskUI.ViewModels
             {
                 var comPortName = String.Equals(SelectedCOMPort.Value, COMPORT_OTHER, StringComparison.CurrentCultureIgnoreCase) ? _otherCOMPortName : SelectedCOMPort.Value;
 
+
+                // TODO: Remove the use of _settings properties if everything is in _settings.ApplicationSettings
                 _settings.ComPortName = _settings.ApplicationSettings.SerialSettings.PortName = comPortName;
                 _settings.BaudRate = _settings.ApplicationSettings.SerialSettings.BaudRate = SelectedBaud.Value;
                 _settings.DataBits = _settings.ApplicationSettings.SerialSettings.DataBits = SelectedDataBits.Value;
@@ -218,9 +220,9 @@ namespace SerialDiskUI.ViewModels
                 _settings.VirtualDiskFolder = _settings.ApplicationSettings.LocalDirectoryPath = SelectedFolder;
                 _settings.VirtualDiskSizeMB = _settings.ApplicationSettings.DiskSettings.DiskSizeMiB = VirtualDiskSizeMB;
 
-                _settings.IsLogDisplayEnabled = IsLogDisplayEnabled;
+                _settings.IsLogDisplayEnabled = _settings.ApplicationSettings.IsLogDisplayEnabled = IsLogDisplayEnabled;
                 _settings.LoggingLevel = _settings.ApplicationSettings.LoggingLevel = SelectedLogLevel.Value;
-                _settings.IsLogFileEnabled = IsLogFileEnabled;
+                _settings.IsLogFileEnabled = _settings.ApplicationSettings.IsLogFileEnabled = IsLogFileEnabled;
                 _settings.LogFileName = _settings.ApplicationSettings.LogFileName = SelectedFile;
 
                 _settings.IsOutputCompressionEnabled = _settings.ApplicationSettings.IsCompressionEnabled = IsCompressionEnabled;
