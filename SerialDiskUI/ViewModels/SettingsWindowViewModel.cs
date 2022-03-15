@@ -8,6 +8,7 @@ using ReactiveUI.Validation.Extensions;
 using SerialDiskUI.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Reactive;
@@ -112,11 +113,21 @@ namespace SerialDiskUI.ViewModels
 
         public SettingsWindowViewModel()
         {
+            ShowFolderDialog = new Interaction<string, string?>();
+            ShowFileDialog = new Interaction<string, string?>();
+
+            ChooseFolderCommand = ReactiveCommand.CreateFromTask(OpenFolderAsync);
+            ChooseFileCommand = ReactiveCommand.CreateFromTask(OpenFileAsync);
+            ApplySettingsCommand = ReactiveCommand.CreateFromTask(ApplySettings);
+            CloseSettingsCommand = ReactiveCommand.CreateFromTask(CloseSettings);
+
+            InitChoices();
         }
 
         public SettingsWindowViewModel(SerialDiskUIModel settings)
         {
             _settings = settings;
+
             ShowFolderDialog = new Interaction<string, string?>();
             ShowFileDialog = new Interaction<string, string?>();
 
@@ -200,8 +211,6 @@ namespace SerialDiskUI.ViewModels
         public Interaction<string, string?> ShowFolderDialog { get; }
         public Interaction<string, string?> ShowFileDialog { get; }
 
-        public ValidationContext ValidationContext { get; } = new ValidationContext();
-
         private async Task<SerialDiskUIModel> ApplySettings()
         {
             if (_settings != null)
@@ -240,7 +249,8 @@ namespace SerialDiskUI.ViewModels
 
         private async Task OpenFolderAsync()
         {
-            var folderName = await ShowFolderDialog.Handle(_settings.VirtualDiskFolder);
+            var currentFolder = Directory.Exists(SelectedFolder) ? SelectedFolder : Common.Settings.DefaultPath;
+            var folderName = await ShowFolderDialog.Handle(currentFolder);
 
             if (folderName is object)
             {
@@ -250,7 +260,7 @@ namespace SerialDiskUI.ViewModels
 
         private async Task OpenFileAsync()
         {
-            var fileName = await ShowFileDialog.Handle(_settings.LogFileName);
+            var fileName = await ShowFileDialog.Handle(SelectedFile);
 
             if (fileName is object)
             {

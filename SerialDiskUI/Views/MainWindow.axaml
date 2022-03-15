@@ -3,6 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:SerialDiskUI.ViewModels"
+		xmlns:res="using:SerialDiskUI.Properties"
         mc:Ignorable="d"
         d:DesignWidth="380" d:DesignHeight="480"
         Width="420" Height="388"
@@ -12,7 +13,6 @@
         x:Class="SerialDiskUI.Views.MainWindow"
         Title="SerialDisk"
         TransparencyLevelHint="None">
-
 	<Window.Styles>
 		<StyleInclude Source="/Assets/Styles/DefaultStyle.axaml" />
 	</Window.Styles>
@@ -62,8 +62,8 @@
 						<Button Margin="0,0,30,0" Command="{Binding StartSerialDiskCommand}" >
 							<ContentControl>
 								<Panel>
-									<Image Height="18" Source="/Assets/Images/play.png" IsVisible="{Binding !SerialPortOpen}"/>
-									<Image Height="18" Source="/Assets/Images/square.png" IsVisible="{Binding SerialPortOpen}"/>
+									<Image ToolTip.Tip="Start virtual disk" Height="18" Source="/Assets/Images/play.png" IsVisible="{Binding !SerialPortOpen}"/>
+									<Image ToolTip.Tip="Stop virtual disk" Height="18" Source="/Assets/Images/square.png" IsVisible="{Binding SerialPortOpen}"/>
 								</Panel>
 							</ContentControl>
 						</Button>
@@ -72,36 +72,40 @@
 								<TextBlock Margin="5,0,0,0" Text="{Binding StatusText}"></TextBlock>
 							</DockPanel>
 						</Border>
+						<Border BorderBrush="White" BorderThickness="2" VerticalAlignment="Center">
+							<DockPanel Background="White">
+								<TextBlock Margin="5,0,0,0" Text="{Binding DiskObjectText}"></TextBlock>
+							</DockPanel>
+						</Border>
 					</DockPanel>
 				</DockPanel>
 		</Border>
 
-		<!-- Virtual disk area -->
-		<Border Name="DiskBorder" Classes="SectionContainer"
-				DockPanel.Dock="Top" IsVisible="False">
-			<Panel>
-				<ProgressBar Name="DiskUsageBar" Height="25"
-							Maximum="32768" Value="8192"
-							Foreground="#00DD00" Background="#BBB" />
-				<TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"
-							FontSize="18" Text="25%" />
-			</Panel>
-		</Border>
-
 		<!-- Center area -->
 		<Border Classes="SectionContainer" DockPanel.Dock="Top">
-				<StackPanel Margin="10">
-				<DockPanel Margin="0,0,0,0">
-					<Button Command="{Binding ShowVirtualDiskFolderCommand}" VerticalContentAlignment="Center" >
+			<StackPanel Margin="0">
+				<TextBlock Padding="10" Background="AntiqueWhite">Virtual disk</TextBlock>
+				<DockPanel Margin="10">
+					<Button ToolTip.Tip="Open virtual disk folder in system explorer" Command="{Binding ShowVirtualDiskFolderCommand}" VerticalContentAlignment="Center" >
 						<Image Height="18" Source="/Assets/Images/folder.png"/>
 					</Button>
-					<Button Command="{Binding RefreshVirtualDiskFolderCommand}" VerticalContentAlignment="Center" 
-							IsEnabled="{Binding SerialPortOpen}">
-						<Image Height="18" Source="/Assets/Images/refresh.png"/>
-					</Button>
+					<Panel>
+						<Panel Background="Transparent" IsEnabled="{Binding !SerialPortOpen}" ZIndex="100" ToolTip.Tip="Refresh virtual disk contents from folder (unavailable when virtual disk stopped)"></Panel>
+						<Button ToolTip.Tip="Refresh virtual disk contents from folder" Command="{Binding RefreshVirtualDiskFolderCommand}" VerticalContentAlignment="Center" 
+								IsEnabled="{Binding SerialPortOpen}">
+							<Image Opacity="{Binding ReloadIconOpacity}" Height="18" Source="/Assets/Images/refresh.png"/>
+						</Button>
+					</Panel>
 					<TextBlock TextTrimming="CharacterEllipsis" FontSize="18" Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding VirtualDiskFolder}"/>
 				</DockPanel>
-			</StackPanel>
+				<Panel Margin="0,10,0,0" IsVisible="False">
+					<ProgressBar Name="DiskUsageBar" Height="25"
+								Maximum="32768" Value="8192"
+								Foreground="#00DD00" Background="#BBB" />
+					<TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"
+								FontSize="18" Text="25% used of 256MiB" />
+				</Panel>
+				</StackPanel>
 		</Border>
 
 		<!-- Log area -->
@@ -111,11 +115,17 @@
 				<Grid.RowDefinitions>
 					<RowDefinition Height="Auto"></RowDefinition>
 					<RowDefinition></RowDefinition>
+					<RowDefinition Height="Auto"></RowDefinition>
 				</Grid.RowDefinitions>
 
-				<TextBlock Padding="10" Grid.Row="0" Background="White">Log</TextBlock>
+				<StackPanel Grid.Row="0" Orientation="Horizontal" Background="AntiqueWhite">
+					<TextBlock Padding="10">Log</TextBlock>
+					<Button Margin="5,5,5,5" ToolTip.Tip="Clear all log messages"  Height="NaN" Command="{Binding ClearLogMessagesCommand}">
+						<Image Height="18" Source="/Assets/Images/clear-log.png"/>
+					</Button>
+				</StackPanel>
 				
-				<ScrollViewer Grid.Row="1" Name="LogScrollViewer"
+				<ScrollViewer Background="White" Grid.Row="1" Name="LogScrollViewer"
 				  VerticalScrollBarVisibility="Auto"
 							  HorizontalScrollBarVisibility="Auto"
 							   AllowAutoHide="False">

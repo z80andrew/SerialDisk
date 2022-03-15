@@ -502,7 +502,6 @@ namespace AtariST.SerialDisk.Comms
             for (int i = 0; i < sendDataBuffer.Length; i++)
             {
                 _serialPort.BaseStream.WriteByte(sendDataBuffer[i]);
-
                 _statusService.SetTransferProgress(sendDataBuffer.Length, i+1);
             }
             
@@ -544,20 +543,32 @@ namespace AtariST.SerialDisk.Comms
             switch (state)
             {
                 case ReceiverState.ReceiveStartMagic:
-                    _statusService.SetStatus(Status.StatusKey.Listening, "on " + _serialPort.PortName);
+                    _statusService.SetStatus(Status.StatusKey.Listening, _serialPort.PortName);
                     break;
                 case ReceiverState.ReceiveData:
+                    _statusService.SetStatus(Status.StatusKey.Receiving, "data");
+                    break;
                 case ReceiverState.ReceiveCRC32:
+                    _statusService.SetStatus(Status.StatusKey.Receiving, "CRC32");
+                    break;
                 case ReceiverState.ReceiveReadSectorIndex:
+                    _statusService.SetStatus(Status.StatusKey.Receiving, "read sector index");
+                    break;
                 case ReceiverState.ReceiveReadSectorCount:
+                    _statusService.SetStatus(Status.StatusKey.Receiving, "read sector count");
+                    break;
                 case ReceiverState.ReceiveWriteSectorIndex:
+                    _statusService.SetStatus(Status.StatusKey.Receiving, "write sector index");
+                    break;
                 case ReceiverState.ReceiveWriteSectorCount:
-                    _statusService.SetStatus(Status.StatusKey.Receiving);
+                    _statusService.SetStatus(Status.StatusKey.Receiving, "write sector count");
                     break;
                 case ReceiverState.SendData:
+                    _statusService.SetStatus(Status.StatusKey.Sending, "data");
+                    break;
                 case ReceiverState.SendBiosParameterBlock:
                 case ReceiverState.SendMediaChangeStatus:
-                    _statusService.SetStatus(Status.StatusKey.Sending);
+                    _statusService.SetStatus(Status.StatusKey.Sending, "disk configuration info");
                     break;
             }
         }

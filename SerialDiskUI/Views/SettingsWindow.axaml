@@ -20,7 +20,7 @@
 
 	<DockPanel Classes="AppDockPanel">
 		<TabControl DockPanel.Dock="Top" Grid.IsSharedSizeScope="True">
-			<TabItem Header="Serial" IsSelected="True">
+			<TabItem Header="Serial" IsSelected="False">
 				<Grid >
 					<Grid.RowDefinitions>
 						<RowDefinition SharedSizeGroup="SettingsGrid"/>
@@ -90,7 +90,7 @@
 					</Border>
 				</Grid>
 			</TabItem>
-			<TabItem Header="Disk" IsSelected="False">
+			<TabItem Header="Disk" IsSelected="True">
 				<Grid >
 					<Grid.RowDefinitions>
 						<RowDefinition SharedSizeGroup="SettingsGrid"/>
@@ -99,11 +99,11 @@
 						<StackPanel Margin="10">
 							<TextBlock Classes="SettingsLabelFirst" Text="Virtual disk folder"/>
 							<DockPanel>
-								<Button DockPanel.Dock="Right" Margin="5,0,0,0">Browse...</Button>
-								<TextBox FontSize="16" VerticalAlignment="Center"
+								<Button DockPanel.Dock="Right" Margin="5,0,0,0" Command="{Binding ChooseFolderCommand}">Browse...</Button>
+								<TextBox FontSize="16" Name="SelectedFolderTextBox" VerticalAlignment="Center"
 										 Text="{Binding SelectedFolder}"></TextBox>
 							</DockPanel>
-							<TextBlock Classes="SettingsLabel">Disk size</TextBlock>
+							<TextBlock Classes="SettingsLabel">Virtual disk size</TextBlock>
 							<StackPanel Orientation="Horizontal" Spacing="10">
 								<NumericUpDown Name="DiskSizeInput" Minimum="1" Maximum="512"
 												ClipValueToMinMax="True" ShowButtonSpinner="False"

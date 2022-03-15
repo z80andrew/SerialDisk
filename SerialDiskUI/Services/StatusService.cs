@@ -24,6 +24,15 @@ namespace SerialDiskUI.Services
             private set => this.RaiseAndSetIfChanged(ref _statusWithMessage, value);
         }
 
+        private string _diskObjectName;
+
+        private string _diskObject;
+        public string DiskObject
+        {
+            get => _diskObject;
+            private set => this.RaiseAndSetIfChanged(ref _diskObject, value);
+        }
+
         private int _totalBytes;
         public int TotalBytes
         {
@@ -60,20 +69,32 @@ namespace SerialDiskUI.Services
             Status = status;
 
             // Reset progressbar values if not transferring
-            if(status != AtariST.SerialDisk.Common.Status.StatusKey.Sending
+            if (status != AtariST.SerialDisk.Common.Status.StatusKey.Sending
                 || status != AtariST.SerialDisk.Common.Status.StatusKey.Receiving
                 || status != AtariST.SerialDisk.Common.Status.StatusKey.Error)
             {
                 TotalBytes = Int32.MaxValue;
                 TransferredBytes = Int32.MinValue;
+                DiskObject = string.Empty;
             }
 
             var statusString = new StringBuilder()
                 .Append("Status: ")
                 .Append(AtariST.SerialDisk.Common.Status.Statuses.Find(x => x.Key == status).Value);
 
-            if (!String.IsNullOrEmpty(message))
-                statusString.Append(" ").Append(message);
+            if (status == AtariST.SerialDisk.Common.Status.StatusKey.Reading ||
+                status == AtariST.SerialDisk.Common.Status.StatusKey.Writing)
+            {
+                _diskObjectName = message;
+            }
+
+            else if (!String.IsNullOrEmpty(message)) statusString.Append(" ").Append(message);
+
+            if (status == AtariST.SerialDisk.Common.Status.StatusKey.Receiving
+                || status == AtariST.SerialDisk.Common.Status.StatusKey.Reading)
+            {
+                DiskObject = _diskObjectName;
+            }
 
             StatusWithMessage = statusString.ToString();
         }

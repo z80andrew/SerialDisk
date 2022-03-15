@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.IO.Ports;
+using System.Resources;
 
 namespace SerialDiskUI.Common
 {
     public static class Settings
     {
+        public static string DefaultPath => AppDomain.CurrentDomain.BaseDirectory;
         public static string ConfigFilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"serialdiskui.config");
 
         public static KeyValuePair<string, int>[] BaudRates

@@ -24,20 +24,12 @@ namespace SerialDiskUI.Views
 #if DEBUG
             this.AttachDevTools();
 #endif
-            //LogCommand = ReactiveCommand.CreateFromTask(async () =>
-            //{
-            //    (Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime).Shutdown(0);
-            //});
-
             this.WhenActivated(d =>
                 d(ViewModel.ShowSettingsDialog.RegisterHandler(DoShowSettingsDialogAsync)));
 
             this.WhenActivated(d =>
                 d(ViewModel.ShowAboutDialog.RegisterHandler(DoShowAboutDialogAsync)));
 
-            var logExpander = this.FindControl<Expander>("LogExpander");
-
-            // logExpander.PropertyChanged += LogExpander_PropertyChanged;
 
             var logBorder = this.FindControl<Border>("LogBorder");
             
@@ -53,8 +45,6 @@ namespace SerialDiskUI.Views
             _logTextBlock = this.FindControl<TextBlock>("LogText");
 
             _logScrollViewer.PropertyChanged += _logScrollViewer_PropertyChanged;
-
-            // SavedWindowHeight = this.Height + 100;
         }
 
         private void LogBorder_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
@@ -98,31 +88,6 @@ namespace SerialDiskUI.Views
             this.MinHeight = 0;
             SavedWindowHeight = this.Height;
             this.SizeToContent = SizeToContent.Height;
-        }
-
-        private void LogExpander_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
-        {
-            var logExpander = sender as Expander;
-
-            if (logExpander != null)
-            {
-                if (e.Property.Name == nameof(logExpander.IsExpanded))
-                {
-                    if (logExpander.IsExpanded) EnableWindowResize();
-                    else DisableWindowResize();
-                }
-
-                else if (e.Property.Name == nameof(logExpander.Bounds))
-                {
-                    // Need to set this after bounds have changed, which is after IsExpanded has been changed
-                    if (!logExpander.IsExpanded)
-                    {
-                        this.SizeToContent = SizeToContent.Height;
-                        this.MaxHeight = this.Height;
-                        this.MinHeight = this.Height;
-                    }
-                }
-            }
         }
 
         private async Task DoShowSettingsDialogAsync(InteractionContext<SettingsWindowViewModel, SerialDiskUIModel> interaction)

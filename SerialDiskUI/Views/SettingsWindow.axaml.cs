@@ -11,16 +11,15 @@ using System.IO;
 using ReactiveUI.Validation.Extensions;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using System.Text.RegularExpressions;
+using System.Diagnostics;
+using Avalonia.Input.TextInput;
 
 namespace SerialDiskUI.Views
 {
     public class SettingsWindow : ReactiveWindow<SettingsWindowViewModel>
     {
-        private static Key[] NumericKeys = { Key.D0, Key.D1, Key.D2, Key.D3, Key.D4, Key.D5, Key.D6, Key.D7, Key.D8, Key.D9,
-            Key.NumPad0, Key.NumPad1, Key.NumPad2, Key.NumPad3, Key.NumPad4, Key.NumPad5, Key.NumPad6, Key.NumPad7, Key.NumPad8, Key.NumPad9,
-            Key.Delete, Key.Back };
-
-        private static Key[] ControlKeys = { Key.Delete, Key.Back, Key.Clear, Key.Left, Key.Right };
+        string inputDiskSize = string.Empty;
 
         public SettingsWindow()
         {
@@ -36,23 +35,28 @@ namespace SerialDiskUI.Views
 
             var diskSizeInput = this.FindControl<NumericUpDown>("DiskSizeInput");
             diskSizeInput.AddHandler(InputElement.KeyDownEvent, TextBox_KeyDown, RoutingStrategies.Tunnel);
+            diskSizeInput.AddHandler(InputElement.KeyUpEvent, TextBox_KeyUp, RoutingStrategies.Tunnel);
+
+            inputDiskSize = diskSizeInput.Value.ToString();
+        }
+
+        private void TextBox_KeyUp(object? sender, KeyEventArgs e)
+        {
+            var textInput = sender as NumericUpDown;
+
+            var regex = @"^[0-9]*$";
+            if (!Regex.Match(textInput.Text, regex).Success)
+            {
+                textInput.Text = inputDiskSize;
+            }
+
+            else inputDiskSize = textInput.Value.ToString();
         }
 
         private void TextBox_KeyDown(object? sender, KeyEventArgs e)
         {
             var textInput = sender as NumericUpDown;
-
-            var bob = (char)e.Key;
-
-            if (!Array.Exists(NumericKeys, k => k == e.Key) && !Array.Exists(ControlKeys, k => k == e.Key))
-            {
-                e.Handled = true;
-            }
-
-            else if(textInput.Text.Length >= 3 && !Array.Exists(ControlKeys, k => k == e.Key))
-            {
-                e.Handled = true;
-            }
+            if (textInput.Text.Length > 2) textInput.Text = textInput.Text.Substring(0, 2);
         }
 
         private void InitializeComponent()
@@ -63,7 +67,8 @@ namespace SerialDiskUI.Views
         private async Task WindowShowFolderDialog(InteractionContext<string, string?> interaction)
         {
             var dialog = new OpenFolderDialog();
-            dialog.Directory = !string.IsNullOrEmpty(interaction.Input) ? interaction.Input : AppDomain.CurrentDomain.BaseDirectory;
+            dialog.Directory = !string.IsNullOrEmpty(interaction?.Input) ? interaction.Input : AppDomain.CurrentDomain.BaseDirectory;
+
             var folderPath = await dialog.ShowAsync(this);
             interaction.SetOutput(folderPath);
         }
@@ -72,7 +77,7 @@ namespace SerialDiskUI.Views
         {
             var dialog = new SaveFileDialog();
 
-            if (!string.IsNullOrEmpty(interaction.Input))
+            if (!string.IsNullOrEmpty(interaction?.Input))
             { 
                 dialog.InitialFileName = Path.GetFileName(interaction.Input);
                 dialog.Directory = Path.GetFullPath(interaction.Input);

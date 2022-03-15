@@ -46,8 +46,10 @@ namespace AtariST.SerialDiskCLI
 
             _logger.Log($"Importing local directory contents from {applicationSettings.LocalDirectoryPath}", Constants.LoggingLevel.Debug);
 
-            _disk = new Disk(diskParameters, _logger);
             _statusService = new StatusService();
+
+            _disk = new Disk(diskParameters, _logger, _statusService);
+
             //if (applicationSettings.LoggingLevel > LoggingLevel.Info) _statusService.ShowDateTime = true;
 
             _serial = new Serial(applicationSettings.SerialSettings, _disk, _logger, _statusService, _cancelTokenSource, applicationSettings.IsCompressionEnabled);

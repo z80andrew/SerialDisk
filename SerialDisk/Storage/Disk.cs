@@ -23,10 +23,12 @@ namespace AtariST.SerialDisk.Storage
 
         public DiskParameters Parameters { get; }
         private readonly ILogger _logger;
+        private readonly IStatusService _statusService;
 
-        public Disk(DiskParameters diskParams, ILogger logger)
+        public Disk(DiskParameters diskParams, ILogger logger, IStatusService statusService)
         {
             _logger = logger;
+            _statusService = statusService;
             Parameters = diskParams;
             _rootDirectoryClusterIndex = 0;
 
@@ -176,7 +178,11 @@ namespace AtariST.SerialDisk.Storage
 
                     else if (_clusterInfos[clusterIndex]?.LocalDirectoryContent?.LocalPath != null)
                     {
-                        if (firstSector == sector) _logger.Log($"Reading local file {_clusterInfos[clusterIndex].LocalDirectoryContent.LocalPath}", Constants.LoggingLevel.Info);
+                        if (firstSector == sector)
+                        {
+                            _logger.Log($"Reading local file {_clusterInfos[clusterIndex].LocalDirectoryContent.LocalPath}", Constants.LoggingLevel.Info);
+                            _statusService.SetStatus(Status.StatusKey.Reading, _clusterInfos[clusterIndex].LocalDirectoryContent.LocalPath);
+                        }
 
                         byte[] fileClusterDataBuffer = new byte[Parameters.BytesPerCluster];
 
@@ -197,7 +203,8 @@ namespace AtariST.SerialDisk.Storage
 
                         catch (Exception ex)
                         {
-                            _logger.LogException(ex, "Error reading sectors");
+                            _logger.LogException(ex, "Error reading disk sectors");
+                            _statusService.SetStatus(Status.StatusKey.Error, "Error reading disk sectors");
                         }
                     }
                 }
@@ -460,6 +467,7 @@ namespace AtariST.SerialDisk.Storage
                     if (entryStartClusterIndex != 0)
                     {
                         _logger.Log("Creating local directory \"" + newContentPath + "\"", Constants.LoggingLevel.Info);
+                        _statusService.SetStatus(Status.StatusKey.Writing, newContentName);
 
                         var CreatedLocalDirectory = Directory.CreateDirectory(GetAbsolutePath(newContentPath));
 
@@ -500,7 +508,10 @@ namespace AtariST.SerialDisk.Storage
                     if (localDirectoryContent == null)
                     {
                         _logger.Log($"Creating local file: {newContentPath}", Constants.LoggingLevel.Info);
+                        _statusService.SetStatus(Status.StatusKey.Writing, newContentPath);
+
                         File.Create(GetAbsolutePath(newContentPath)).Dispose();
+                        _statusService.SetStatus(Status.StatusKey.Writing, newContentPath);
 
                         var newLocalDirectoryContent = new LocalDirectoryContentInfo
                         {
@@ -559,6 +570,7 @@ namespace AtariST.SerialDisk.Storage
 
 
                                 _logger.Log("Writing to local file \"" + newContentPath + "\".", Constants.LoggingLevel.Info);
+                                _statusService.SetStatus(Status.StatusKey.Writing, newContentName);
 
                                 using (BinaryWriter FileBinaryWriter = new BinaryWriter(File.OpenWrite(GetAbsolutePath(newContentPath))))
                                 {
