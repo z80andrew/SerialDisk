@@ -29,10 +29,21 @@ namespace SerialDiskUI
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktop.Startup += Desktop_Startup;
+                desktop.ShutdownRequested += Desktop_ShutdownRequested;
                 desktop.ShutdownMode = Avalonia.Controls.ShutdownMode.OnMainWindowClose;
             }
 
             base.OnFrameworkInitializationCompleted();
+        }
+
+        private void Desktop_ShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
+        {
+            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            {
+                _appSettings.MainWindowHeight = Convert.ToUInt32(desktop.MainWindow.Height);
+                _appSettings.MainWindowWidth = Convert.ToUInt32(desktop.MainWindow.Width);
+                _appSettings.WriteSettingsToDisk();
+            }
         }
 
         private void Desktop_Startup(object? sender, ControlledApplicationLifetimeStartupEventArgs e)
@@ -48,6 +59,8 @@ namespace SerialDiskUI
                 desktop.MainWindow = new MainWindow
                 {
                     DataContext = new MainWindowViewModel(model, statusService, logger),
+                    Height = Convert.ToDouble(_appSettings.MainWindowHeight),
+                    Width = Convert.ToDouble(_appSettings.MainWindowWidth)
                 };
             }
         }

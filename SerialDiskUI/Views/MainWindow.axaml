@@ -7,9 +7,8 @@
         mc:Ignorable="d"
         d:DesignWidth="380" d:DesignHeight="480"
         Width="420" Height="388"
-        MinWidth="420" MinHeight="0"
-        MaxHeight="1400"
-        SizeToContent="Height"
+        MinWidth="420" MinHeight="250"        
+        SizeToContent="Manual"
         x:Class="SerialDiskUI.Views.MainWindow"
         Title="SerialDisk"
         TransparencyLevelHint="None">
@@ -72,11 +71,6 @@
 								<TextBlock Margin="5,0,0,0" Text="{Binding StatusText}"></TextBlock>
 							</DockPanel>
 						</Border>
-						<Border BorderBrush="White" BorderThickness="2" VerticalAlignment="Center">
-							<DockPanel Background="White">
-								<TextBlock Margin="5,0,0,0" Text="{Binding DiskObjectText}"></TextBlock>
-							</DockPanel>
-						</Border>
 					</DockPanel>
 				</DockPanel>
 		</Border>
@@ -84,7 +78,7 @@
 		<!-- Center area -->
 		<Border Classes="SectionContainer" DockPanel.Dock="Top">
 			<StackPanel Margin="0">
-				<TextBlock Padding="10" Background="AntiqueWhite">Virtual disk</TextBlock>
+				<TextBlock Padding="10" Background="White">Virtual disk</TextBlock>
 				<DockPanel Margin="10">
 					<Button ToolTip.Tip="Open virtual disk folder in system explorer" Command="{Binding ShowVirtualDiskFolderCommand}" VerticalContentAlignment="Center" >
 						<Image Height="18" Source="/Assets/Images/folder.png"/>
@@ -118,20 +112,25 @@
 					<RowDefinition Height="Auto"></RowDefinition>
 				</Grid.RowDefinitions>
 
-				<StackPanel Grid.Row="0" Orientation="Horizontal" Background="AntiqueWhite">
+				<StackPanel Grid.Row="0" Orientation="Horizontal" Background="White">
 					<TextBlock Padding="10">Log</TextBlock>
 					<Button Margin="5,5,5,5" ToolTip.Tip="Clear all log messages"  Height="NaN" Command="{Binding ClearLogMessagesCommand}">
 						<Image Height="18" Source="/Assets/Images/clear-log.png"/>
 					</Button>
 				</StackPanel>
-				
-				<ScrollViewer Background="White" Grid.Row="1" Name="LogScrollViewer"
-				  VerticalScrollBarVisibility="Auto"
+
+				<ScrollViewer Name="LogScrollViewer" Grid.Row="1"
+							  VerticalScrollBarVisibility="Auto"
 							  HorizontalScrollBarVisibility="Auto"
-							   AllowAutoHide="False">
-					<TextBlock Margin="5,5,20,20" Name="LogText" Text="{Binding LogOutputString}"
-					  TextWrapping="NoWrap" VerticalAlignment="Top">
-					</TextBlock>
+							  AllowAutoHide="False"
+							  Padding="5">
+					<ItemsControl Items="{Binding LogItems}" Margin="5,5,12,12">
+						<ItemsControl.DataTemplates>
+							<DataTemplate>
+								<TextBlock Text="{Binding}"/>
+							</DataTemplate>
+						</ItemsControl.DataTemplates>
+					</ItemsControl>
 				</ScrollViewer>
 			</Grid>
 		</Border>

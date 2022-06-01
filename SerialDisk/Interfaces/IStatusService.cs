@@ -11,7 +11,6 @@ namespace AtariST.SerialDisk.Interfaces
     {
         public Status.StatusKey Status { get; }
         public string StatusWithMessage { get; }
-        public string DiskObject { get; }
         public int TotalBytes { get; }
         public int TransferredBytes { get; }
         void SetTransferProgress(int totalBytes, int transferredBytes);

@@ -546,7 +546,7 @@ namespace AtariST.SerialDisk.Comms
                     _statusService.SetStatus(Status.StatusKey.Listening, _serialPort.PortName);
                     break;
                 case ReceiverState.ReceiveData:
-                    _statusService.SetStatus(Status.StatusKey.Receiving, "data");
+                    _statusService.SetStatus(Status.StatusKey.Receiving);
                     break;
                 case ReceiverState.ReceiveCRC32:
                     _statusService.SetStatus(Status.StatusKey.Receiving, "CRC32");

@@ -16,6 +16,8 @@ namespace SerialDiskUI.Models
         public bool IsLogDisplayEnabled { get; set; }
         public bool IsLogFileEnabled { get; set; }
         public uint LocalDirectorySizeInBytes { get; set; }
+        public uint MainWindowHeight { get; set; }
+        public uint MainWindowWidth { get; set; }
 
         public UIApplicationSettings(ApplicationSettings appSettings)
         {
@@ -27,6 +29,8 @@ namespace SerialDiskUI.Models
 
             //if (!string.IsNullOrEmpty(appSettings.LocalDirectoryPath)) LocalDirectorySizeInBytes = FAT16Helper.GetLocalDirectorySizeInBytes(appSettings.LocalDirectoryPath);
             LocalDirectorySizeInBytes = 0;
+            MainWindowHeight = 0;
+            MainWindowWidth = 0;
 
             SerialSettings = appSettings.SerialSettings;
             DiskSettings = appSettings.DiskSettings;

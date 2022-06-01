@@ -13,7 +13,14 @@ namespace SerialDiskUI.Views
 {
     public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
     {
-        private double SavedWindowHeight;
+        private double SavedWindowHeight { get; set; }
+
+        private double _windowMinHeight;
+        private double WindowMinHeight
+        {
+            get => _logScrollViewer.IsVisible ? _windowMinHeight + 50 : _windowMinHeight;
+            set => _windowMinHeight = value;
+        }
 
         private TextBlock _logTextBlock;
         private ScrollViewer _logScrollViewer;
@@ -78,6 +85,7 @@ namespace SerialDiskUI.Views
 
         private void EnableWindowResize()
         {
+            this.MinHeight = WindowMinHeight;
             this.MaxHeight = double.PositiveInfinity;
             this.SizeToContent = SizeToContent.Manual;
             this.Height = SavedWindowHeight;
@@ -85,6 +93,7 @@ namespace SerialDiskUI.Views
 
         private void DisableWindowResize()
         {
+            WindowMinHeight = this.MinHeight;
             this.MinHeight = 0;
             SavedWindowHeight = this.Height;
             this.SizeToContent = SizeToContent.Height;

@@ -156,12 +156,14 @@ namespace AtariST.SerialDisk.Storage
                         readSector -= Parameters.SectorsPerFat;
 
                     Array.Copy(_fatBuffer, readSector * Parameters.BytesPerSector, dataBuffer, dataOffset, Parameters.BytesPerSector);
+                    _statusService.SetStatus(Status.StatusKey.Reading, "directory data");
                 }
 
                 // Root directory
                 else if (sector < Parameters.SectorsPerFat * 2 + Parameters.RootDirectorySectors)
                 {
                     Array.Copy(_rootDirectoryBuffer, (sector - Parameters.SectorsPerFat * 2) * Parameters.BytesPerSector, dataBuffer, dataOffset, Parameters.BytesPerSector);
+                    _statusService.SetStatus(Status.StatusKey.Reading, "root directory data");
                 }
 
                 // DATA area
@@ -231,6 +233,8 @@ namespace AtariST.SerialDisk.Storage
                 {
                     int WriteSector = sector;
 
+                    _statusService.SetStatus(Status.StatusKey.Writing, "directory data");
+
                     // Force all writes to the first FAT
                     if (WriteSector >= Parameters.SectorsPerFat) WriteSector -= Parameters.SectorsPerFat;
 
@@ -267,6 +271,8 @@ namespace AtariST.SerialDisk.Storage
                 // Root directory area?
                 else if (sector < Parameters.SectorsPerFat * 2 + Parameters.RootDirectorySectors)
                 {
+                    _statusService.SetStatus(Status.StatusKey.Writing, "root directory data");
+
                     _logger.Log($"Updating ROOT directory sector {sector}", Constants.LoggingLevel.All);
 
                     Array.Copy(dataBuffer, dataOffset, _rootDirectoryBuffer, (sector - Parameters.SectorsPerFat * 2) * Parameters.BytesPerSector, Parameters.BytesPerSector);

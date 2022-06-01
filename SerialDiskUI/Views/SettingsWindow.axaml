@@ -29,7 +29,7 @@
 						<StackPanel Margin="10">
 							<TextBlock Classes="SettingsLabelFirst">COM port</TextBlock>
 							<StackPanel Orientation="Horizontal">
-								<ComboBox Items="{Binding COMPortChoices}" SelectedItem="{Binding SelectedCOMPort}">
+								<ComboBox ToolTip.Tip="Serial port to use for communication" Items="{Binding COMPortChoices}" SelectedItem="{Binding SelectedCOMPort}">
 									<ComboBox.ItemTemplate>
 										<DataTemplate>
 											<TextBlock Text="{Binding Key}"/>
@@ -40,8 +40,9 @@
 								<TextBox Text="{Binding OtherCOMPortName}" IsVisible="{Binding IsCOMPortTextBoxVisible}"></TextBox>
 							</StackPanel>
 
+							<!-- Teeeechnically this isn't baud rate (hence clarification in the tooltip), but label kept for consistency with C# and Atari nomenclature -->
 							<TextBlock Classes="SettingsLabel">Baud rate</TextBlock>
-							<ComboBox Items="{Binding BaudRateChoices}" SelectedItem="{Binding SelectedBaud}">
+							<ComboBox ToolTip.Tip="Data transmission rate in bits per second" Items="{Binding BaudRateChoices}" SelectedItem="{Binding SelectedBaud}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
 										<TextBlock Text="{Binding Key}"/>
@@ -50,7 +51,7 @@
 							</ComboBox>
 
 							<TextBlock Classes="SettingsLabel">Parity</TextBlock>
-							<ComboBox Items="{Binding ParityChoices}" SelectedItem="{Binding SelectedParity}">
+							<ComboBox ToolTip.Tip="Parity to use for simple error-checking" Items="{Binding ParityChoices}" SelectedItem="{Binding SelectedParity}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
 										<TextBlock Text="{Binding Key}"/>
@@ -59,7 +60,7 @@
 							</ComboBox>
 
 							<TextBlock Classes="SettingsLabel">Data bits</TextBlock>
-							<ComboBox Items="{Binding DataBitsChoices}" SelectedItem="{Binding SelectedDataBits}">
+							<ComboBox ToolTip.Tip="Number of data bits to send per transmission unit" Items="{Binding DataBitsChoices}" SelectedItem="{Binding SelectedDataBits}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
 										<TextBlock Text="{Binding Key}"/>
@@ -68,7 +69,7 @@
 							</ComboBox>
 
 							<TextBlock Classes="SettingsLabel">Stop bits</TextBlock>
-							<ComboBox Items="{Binding StopBitsChoices}" SelectedItem="{Binding SelectedStopBits}">
+							<ComboBox ToolTip.Tip="Number of bits to use to signal end of data transmission" Items="{Binding StopBitsChoices}" SelectedItem="{Binding SelectedStopBits}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
 										<TextBlock Text="{Binding Key}"/>
@@ -77,7 +78,7 @@
 							</ComboBox>
 
 							<TextBlock Classes="SettingsLabel">Flow control</TextBlock>
-							<ComboBox Items="{Binding HandshakeChoices}" SelectedItem="{Binding SelectedHandshake}">
+							<ComboBox ToolTip.Tip="Data flow control method" Items="{Binding HandshakeChoices}" SelectedItem="{Binding SelectedHandshake}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
 										<TextBlock Text="{Binding Key}"/>
@@ -85,12 +86,12 @@
 								</ComboBox.ItemTemplate>
 							</ComboBox>
 
-							<CheckBox Margin="0,7,0,0" IsChecked="{Binding IsCompressionEnabled}">Data compression</CheckBox>
+							<CheckBox ToolTip.Tip="Enable or disable data compression when sending and receiving over serial." Margin="0,7,0,0" IsChecked="{Binding IsCompressionEnabled}">Data compression</CheckBox>
 						</StackPanel>
 					</Border>
 				</Grid>
 			</TabItem>
-			<TabItem Header="Disk" IsSelected="True">
+			<TabItem Header="Disk" IsSelected="False">
 				<Grid >
 					<Grid.RowDefinitions>
 						<RowDefinition SharedSizeGroup="SettingsGrid"/>
@@ -100,12 +101,12 @@
 							<TextBlock Classes="SettingsLabelFirst" Text="Virtual disk folder"/>
 							<DockPanel>
 								<Button DockPanel.Dock="Right" Margin="5,0,0,0" Command="{Binding ChooseFolderCommand}">Browse...</Button>
-								<TextBox FontSize="16" Name="SelectedFolderTextBox" VerticalAlignment="Center"
+								<TextBox ToolTip.Tip="PC folder to use as a virtual disk" FontSize="16" Name="SelectedFolderTextBox" VerticalAlignment="Center"
 										 Text="{Binding SelectedFolder}"></TextBox>
 							</DockPanel>
 							<TextBlock Classes="SettingsLabel">Virtual disk size</TextBlock>
 							<StackPanel Orientation="Horizontal" Spacing="10">
-								<NumericUpDown Name="DiskSizeInput" Minimum="1" Maximum="512"
+								<NumericUpDown ToolTip.Tip="Size of the virtual disk, 1 - 512MiB" Name="DiskSizeInput" Minimum="1" Maximum="512"
 												ClipValueToMinMax="True" ShowButtonSpinner="False"
 											  AllowSpin="True" Value="{Binding VirtualDiskSizeMB}"></NumericUpDown>
 								<TextBlock VerticalAlignment="Center">MiB</TextBlock>
@@ -115,25 +116,25 @@
 				</Grid>
 			</TabItem>
 
-			<TabItem Header="Logging" IsSelected="False">
+			<TabItem Header="Logging" IsSelected="True">
 				<Grid>
 					<Grid.RowDefinitions>
 						<RowDefinition SharedSizeGroup="SettingsGrid"/>
 					</Grid.RowDefinitions>
 					<Border Classes="SectionContainer">
 						<StackPanel Margin="10">
-							<CheckBox IsChecked="{Binding IsLogDisplayEnabled}">Show log</CheckBox>
-							<CheckBox IsChecked="{Binding IsLogFileEnabled}">Log to file</CheckBox>
+							<CheckBox ToolTip.Tip="Show or hide log messages on the main application window" IsChecked="{Binding IsLogDisplayEnabled}">Show log</CheckBox>
+							<CheckBox ToolTip.Tip="Enable or disable writing log messages to a file" IsChecked="{Binding IsLogFileEnabled}">Log to file</CheckBox>
 
 							<DockPanel>
 								<Button DockPanel.Dock="Right" Command="{Binding ChooseFileCommand}"
 										Margin="5,0,0,0" IsEnabled="{Binding IsLogFileEnabled}">Browse...</Button>
-								<TextBox DockPanel.Dock="Left" VerticalAlignment="Center" Text="{Binding SelectedFile}"
+								<TextBox ToolTip.Tip="File to write log messages to" DockPanel.Dock="Left" VerticalAlignment="Center" Text="{Binding SelectedFile}"
 										 IsEnabled="{Binding IsLogFileEnabled}"></TextBox>
 							</DockPanel>
 
 							<TextBlock Classes="SettingsLabel">Logging level</TextBlock>
-							<ComboBox Items="{Binding LogLevelChoices}" SelectedItem="{Binding SelectedLogLevel}">
+							<ComboBox ToolTip.Tip="Log message detail level, from Info (lowest) to All (highest)" Items="{Binding LogLevelChoices}" SelectedItem="{Binding SelectedLogLevel}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
 										<TextBlock Text="{Binding Key}"/>
