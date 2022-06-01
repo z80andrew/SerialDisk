@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="using:SerialDiskUI.ViewModels"
+		xmlns:vm="using:SerialDiskUI.ViewModels"
 		xmlns:res="using:SerialDiskUI.Properties"
         mc:Ignorable="d"
         d:DesignWidth="380" d:DesignHeight="480"
@@ -17,7 +17,13 @@
 	</Window.Styles>
 
 	<Design.DataContext>
-		<vm:MainWindowViewModel />
+		<vm:MainWindowViewModel>
+			<x:Arguments>
+				<x:Null></x:Null>
+				<x:Null></x:Null>
+				<x:Null></x:Null>
+			</x:Arguments>
+		</vm:MainWindowViewModel>
 	</Design.DataContext>
 
 	<DockPanel Classes="AppDockPanel" LastChildFill="True">

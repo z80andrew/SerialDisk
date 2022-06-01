@@ -27,7 +27,6 @@ namespace SerialDiskUI.Models
             var logfile = !string.IsNullOrEmpty(appSettings.LogFileName) ? appSettings.LogFileName : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", "serialdisk.log");
             LogFileName = logfile;
 
-            //if (!string.IsNullOrEmpty(appSettings.LocalDirectoryPath)) LocalDirectorySizeInBytes = FAT16Helper.GetLocalDirectorySizeInBytes(appSettings.LocalDirectoryPath);
             LocalDirectorySizeInBytes = 0;
             MainWindowHeight = 0;
             MainWindowWidth = 0;
