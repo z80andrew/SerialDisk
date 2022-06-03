@@ -15,12 +15,17 @@ namespace SerialDiskUI.Services
         private FileStream _fileStream;
         private string _logFilePath;
         public LoggingLevel LogLevel { get; set; }
-        private readonly StatusService _statusService;
 
-        public Logger(LoggingLevel loggingLevel, StatusService statusService, string logFileName = null)
+        private LogMessage _logMessage;
+        public LogMessage LogMessage
+        {
+            get => _logMessage;
+            private set => this.RaiseAndSetIfChanged(ref _logMessage, value);
+        }
+
+        public Logger(LoggingLevel loggingLevel, string logFileName = null)
         {
             LogLevel = loggingLevel;
-            _statusService = statusService;
 
             if (logFileName != null)
             {
@@ -28,19 +33,6 @@ namespace SerialDiskUI.Services
                 string logFolderPath = Path.Combine(folderPath, "log");
                 SetLogFile(logFolderPath, logFileName);
             }
-        }
-
-        public void LogReceiveProgress(int totalBytes, int receivedBytes)
-        {
-            //string percentReceived = ((Convert.ToDecimal(receivedBytes) / totalBytes) * 100).ToString("00.00");
-            //string formattedBytesReceived = receivedBytes.ToString().PadLeft(totalBytes.ToString().Length, '0');
-            //OutputLogMessage($"\rReceived [{formattedBytesReceived} / {totalBytes}] bytes {percentReceived}% ");
-        }
-
-        public void LogSendProgress(int totalBytes, int sentBytes)
-        {
-            //string percentSent = ((Convert.ToDecimal(sentBytes) / totalBytes) * 100).ToString("00.00");
-            //OutputLogMessage($"\rSent [{(sentBytes).ToString("D" + totalBytes.ToString().Length)} / {totalBytes} Bytes] {percentSent}% ");
         }
 
         public void SetLogFile(string folderPath, string fileName)
@@ -72,52 +64,50 @@ namespace SerialDiskUI.Services
 
         public void Log(string message, LoggingLevel messageLogLevel)
         {
-            if (messageLogLevel <= LogLevel)
+            var logMessage = new LogMessage(messageLogLevel, message, DateTime.Now);
+
+            if (logMessage.LogLevel <= LogLevel)
             {
-                var logMessage = new LogMessage(messageLogLevel, message, DateTime.Now);
                 OutputLogMessage(logMessage);
-                LogToFile(message);
+                LogToFile(logMessage);
             }
         }
 
         public void LogException(Exception exception, string message = "")
         {
             if (String.IsNullOrEmpty(message)) message = exception.Message;
-            if (_fileStream != null) LogToFile($"{message}: {exception.StackTrace}");
+            message += $": {exception.StackTrace}";
 
-            var logText = new StringBuilder()
-                .AppendLine(message)
-                .AppendLine(exception.StackTrace);
+            var logMessage = new LogMessage(LoggingLevel.Info, message, DateTime.Now);
 
-            var logMessage = new LogMessage(LoggingLevel.Info, logText.ToString(), DateTime.Now, LogMessageType.Exception);
+            if (_fileStream != null) LogToFile(logMessage);
 
             OutputLogMessage(logMessage);
         }
 
-        public void LogToFile(string message)
+        private void LogToFile(LogMessage logMessage)
         {
             if (_fileStream != null)
             {
                 try
                 {
                     using StreamWriter fileWriter = new StreamWriter(_fileStream, Encoding.UTF8, 1024, true);
-                    fileWriter.WriteLineAsync($"{DateTime.Now.ToString(Constants.DATE_FORMAT)}\t{DateTime.Now.ToString(Constants.TIME_FORMAT)}\t{message}");
+                    fileWriter.WriteLineAsync($"{logMessage.TimeStamp.ToString(Constants.DATE_FORMAT)}\t{logMessage.TimeStamp.ToString(Constants.TIME_FORMAT)}\t{logMessage.Message}");
                 }
 
                 catch (Exception logException)
                 {
-                    var logText = new StringBuilder()
-                        .AppendLine($"WARNING! Unable to write to log file {_logFilePath}.")
-                        .AppendLine(logException.Message);
+                    Console.WriteLine($"WARNING! Unable to write to log file {_logFilePath}.");
+                    Console.WriteLine(logException.Message);
                 }
             }
         }
 
         private void OutputLogMessage(LogMessage logMessage)
         {
-            _statusService.AddLogEntry(logMessage);
+            LogMessage = logMessage;
 #if DEBUG
-            Debug.Write(logMessage.Message);
+            Debug.WriteLine(logMessage.Message);
 #endif
         }
 

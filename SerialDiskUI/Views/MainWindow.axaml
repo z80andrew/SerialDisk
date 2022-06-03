@@ -11,7 +11,7 @@
         SizeToContent="Manual"
         x:Class="SerialDiskUI.Views.MainWindow"
         Title="SerialDisk"
-        TransparencyLevelHint="None">
+		Icon="/Assets/SerialDisk.ico">
 	<Window.Styles>
 		<StyleInclude Source="/Assets/Styles/DefaultStyle.axaml" />
 	</Window.Styles>
@@ -131,11 +131,14 @@
 							  AllowAutoHide="False"
 							  Padding="5">
 					<ItemsControl Items="{Binding LogItems}" Margin="5,5,12,12">
-						<ItemsControl.DataTemplates>
+						<ItemsControl.ItemTemplate>
 							<DataTemplate>
-								<TextBlock Text="{Binding}"/>
+								<StackPanel Orientation="Horizontal">
+									<TextBlock Text="{Binding TimeStampTime}" Margin="0,0,5,0"/>
+									<TextBlock Text="{Binding Message}"/>
+								</StackPanel>
 							</DataTemplate>
-						</ItemsControl.DataTemplates>
+						</ItemsControl.ItemTemplate>
 					</ItemsControl>
 				</ScrollViewer>
 			</Grid>

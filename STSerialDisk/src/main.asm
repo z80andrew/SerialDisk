@@ -790,7 +790,7 @@ const_config_filename:
 | Messages
 
 msg_welcome:
-	.asciz	"SerialDisk v2.6\r\n"
+	.asciz	"SerialDisk v3.0 beta\r\n"
 
 msg_config_found:
 	.asciz	"Found config file\r\n"

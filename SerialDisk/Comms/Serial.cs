@@ -391,9 +391,9 @@ namespace AtariST.SerialDisk.Comms
             if (_receivedDataCounter == 0)
             {
                 if (_receivedSectorCount == 1)
-                    _logger.Log("Writing sector " + _receivedSectorIndex + " (" + _localDisk.Parameters.BytesPerSector + " bytes)... ", LoggingLevel.Debug);
+                    _logger.Log("Receiving sector " + _receivedSectorIndex + " (" + _localDisk.Parameters.BytesPerSector + " bytes)... ", LoggingLevel.Debug);
                 else
-                    _logger.Log("Writing sectors " + _receivedSectorIndex + " - " + (_receivedSectorIndex + _receivedSectorCount - 1) + " (" + (_receivedSectorCount * _localDisk.Parameters.BytesPerSector) + " Bytes)... ", LoggingLevel.Debug);
+                    _logger.Log("Receiving sectors " + _receivedSectorIndex + " - " + (_receivedSectorIndex + _receivedSectorCount - 1) + " (" + (_receivedSectorCount * _localDisk.Parameters.BytesPerSector) + " Bytes)... ", LoggingLevel.Debug);
 
 
                 _receiverDataBuffer = new byte[_receivedSectorCount * _localDisk.Parameters.BytesPerSector];
@@ -543,13 +543,13 @@ namespace AtariST.SerialDisk.Comms
             switch (state)
             {
                 case ReceiverState.ReceiveStartMagic:
-                    _statusService.SetStatus(Status.StatusKey.Listening, _serialPort.PortName);
+                    _statusService.SetStatus(Status.StatusKey.Listening);
                     break;
                 case ReceiverState.ReceiveData:
-                    _statusService.SetStatus(Status.StatusKey.Receiving);
+                    _statusService.SetStatus(Status.StatusKey.Receiving, "data");
                     break;
                 case ReceiverState.ReceiveCRC32:
-                    _statusService.SetStatus(Status.StatusKey.Receiving, "CRC32");
+                    _statusService.SetStatus(Status.StatusKey.Receiving, "checksum");
                     break;
                 case ReceiverState.ReceiveReadSectorIndex:
                     _statusService.SetStatus(Status.StatusKey.Receiving, "read sector index");

@@ -11,16 +11,13 @@ using SerialDiskUI.Models;
 using System.IO.Ports;
 using System.Globalization;
 using System.Threading.Tasks;
-using AtariST.SerialDisk.Models;
-using DynamicData;
-using DynamicData.Binding;
 using AtariST.SerialDisk.Interfaces;
 using System.IO;
 using AtariST.SerialDisk.Common;
 using AtariST.SerialDisk.Utilities;
-using System.Text;
 using System.Collections.ObjectModel;
 using System.Linq;
+using AtariST.SerialDisk.Models;
 
 namespace SerialDiskUI.ViewModels
 {
@@ -31,7 +28,7 @@ namespace SerialDiskUI.ViewModels
 
         private SerialDiskService _serialDiskService;
         private SerialDiskUIModel _model;
-        private StatusService _statusService;
+        private IStatusService _statusService;
 
         private readonly ObservableAsPropertyHelper<string> _comPortName;
         public string ComPortName => _comPortName.Value;
@@ -64,8 +61,8 @@ namespace SerialDiskUI.ViewModels
         public bool IsLogDisplayEnabled => _isLogDisplayEnabled.Value;
 
         // Status messages
-        private readonly ObservableAsPropertyHelper<AtariST.SerialDisk.Common.Status.StatusKey> _status;
-        public AtariST.SerialDisk.Common.Status.StatusKey Status => _status.Value;
+        private readonly ObservableAsPropertyHelper<Status.StatusKey> _status;
+        public Status.StatusKey Status => _status.Value;
 
         private readonly ObservableAsPropertyHelper<string> _statusText;
         public string StatusText => _statusText.Value;
@@ -83,7 +80,7 @@ namespace SerialDiskUI.ViewModels
         public bool SerialPortOpen => _serialPortOpen.Value;
 
 
-        public ObservableCollection<string> LogItems { get; }
+        public ObservableCollection<LogMessage> LogItems { get; }
         public int MaxLogLines = 512;
 
         
@@ -116,7 +113,6 @@ namespace SerialDiskUI.ViewModels
         public ICommand ShowSettingsCommand { get; }
         public ICommand ShowAboutCommand { get; }
         public ICommand ExitCommand { get; }
-        public ICommand HandleStatusChangeCommand  { get; }
 
         public ICommand ClearLogMessagesCommand { get; }
 
@@ -124,13 +120,13 @@ namespace SerialDiskUI.ViewModels
 
         public Interaction<AboutWindowViewModel, SimpleDialogModel> ShowAboutDialog { get; }
 
-        public MainWindowViewModel(SerialDiskUIModel model, StatusService statusService, ILogger logger)
+        public MainWindowViewModel(SerialDiskUIModel model, IStatusService statusService, ILogger logger)
         {
-            LogItems = new ObservableCollection<string>();
+            LogItems = new ObservableCollection<LogMessage>();
             SendIconOpacity = ICON_DISABLED_OPACITY;
             ReceiveIconOpacity = ICON_DISABLED_OPACITY;
 
-            // Settings are null at design-time
+            // Parameters are null at design-time
             if(model == null)
             {
                 var defaultApplicationSettings = ConfigurationHelper.GetDefaultApplicationSettings();
@@ -147,7 +143,7 @@ namespace SerialDiskUI.ViewModels
 
             if(logger == null)
             {
-                logger = new Logger(Constants.LoggingLevel.All, statusService);
+                logger = new Logger(Constants.LoggingLevel.All);
             }
 
             _model = model;
@@ -177,7 +173,7 @@ namespace SerialDiskUI.ViewModels
                 .Select(x => x != AtariST.SerialDisk.Common.Status.StatusKey.Stopped && x != AtariST.SerialDisk.Common.Status.StatusKey.Error)
                 .ToProperty(this, x => x.SerialPortOpen);
 
-            statusService.WhenAnyValue(x => x.Status)
+            _statusService.WhenAnyValue(x => x.Status)
                 .Subscribe(x => {
                     var isPortOpen = x != AtariST.SerialDisk.Common.Status.StatusKey.Stopped && x != AtariST.SerialDisk.Common.Status.StatusKey.Error;
                     ReloadIconOpacity = isPortOpen ? ICON_ENABLED_OPACITY : ICON_DISABLED_OPACITY;
@@ -213,8 +209,6 @@ namespace SerialDiskUI.ViewModels
 
             #region Configure commands
 
-            HandleStatusChangeCommand = ReactiveCommand.CreateFromTask<AtariST.SerialDisk.Common.Status.StatusKey, Unit>(UpdateStatus);
-
             _serialDiskService = new SerialDiskService();
 
             ShowSettingsDialog = new Interaction<SettingsWindowViewModel, SerialDiskUIModel?>();
@@ -235,10 +229,15 @@ namespace SerialDiskUI.ViewModels
             });
 
             // Logging output
-            _statusService.WhenAnyValue(x => x.StatusWithMessage).
+            logger.WhenAnyValue(x => x.LogMessage).
                 Subscribe(x => {
                     if (LogItems.Count() > MaxLogLines) LogItems.RemoveAt(0);
-                    LogItems.Add(DateTime.Now.ToString("G") + " " + x);
+                    LogItems.Add(x);
+                });
+
+            _statusService.WhenAnyValue(x => x.Status).
+                Subscribe(x => {
+                    UpdateStatus(x);
                 });
 
             ExitCommand = ReactiveCommand.CreateFromTask(async () =>
@@ -279,7 +278,7 @@ namespace SerialDiskUI.ViewModels
             #endregion
         }
 
-        private Task<Unit> UpdateStatus(AtariST.SerialDisk.Common.Status.StatusKey status)
+        private Task<Unit> UpdateStatus(Status.StatusKey status)
         {
             switch (status)
             {

@@ -54,7 +54,7 @@ namespace SerialDiskUI
             {
                 var model = new SerialDiskUIModel(_appSettings);
                 var statusService = new StatusService();
-                var logger = new Logger(_appSettings.LoggingLevel, statusService, _appSettings.LogFileName);
+                var logger = new Logger(_appSettings.LoggingLevel, _appSettings.LogFileName);
 
                 desktop.MainWindow = new MainWindow
                 {

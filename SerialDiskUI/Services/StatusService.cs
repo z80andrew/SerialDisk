@@ -24,8 +24,6 @@ namespace SerialDiskUI.Services
             private set => this.RaiseAndSetIfChanged(ref _statusWithMessage, value);
         }
 
-        private string _diskObjectName;
-
         private int _totalBytes;
         public int TotalBytes
         {
@@ -49,6 +47,13 @@ namespace SerialDiskUI.Services
         {
             TotalBytes = totalBytes;
             TransferredBytes = receivedBytes;
+            
+            var statusString = new StringBuilder()
+                .Append("Status: ")
+                .Append(AtariST.SerialDisk.Common.Status.Statuses.Find(x => x.Key == Status).Value)
+                .Append($" ({TransferredBytes}/{TotalBytes} bytes)");
+            
+            StatusWithMessage = statusString.ToString();
         }
 
         public void SetStatus(Status.StatusKey status, string message = null!)
@@ -68,26 +73,23 @@ namespace SerialDiskUI.Services
                 .Append("Status: ")
                 .Append(AtariST.SerialDisk.Common.Status.Statuses.Find(x => x.Key == status).Value);
 
-            if (status == AtariST.SerialDisk.Common.Status.StatusKey.Reading ||
-                status == AtariST.SerialDisk.Common.Status.StatusKey.Writing)
-            {
-                _diskObjectName = message;
-            }
+            //if (status == AtariST.SerialDisk.Common.Status.StatusKey.Reading ||
+            //    status == AtariST.SerialDisk.Common.Status.StatusKey.Writing)
+            //{
+            //    _diskObjectName = message;
+            //}
 
-            else if (!String.IsNullOrEmpty(message)) statusString.Append(" ").Append(message);
+            if (!String.IsNullOrEmpty(message)) statusString.Append(" ").Append(message);
 
-            if (status == AtariST.SerialDisk.Common.Status.StatusKey.Receiving
-                || status == AtariST.SerialDisk.Common.Status.StatusKey.Reading)
-            {
-                statusString.Append($" {_diskObjectName}");
-            }
+            //if (status == AtariST.SerialDisk.Common.Status.StatusKey.Receiving
+            //    || status == AtariST.SerialDisk.Common.Status.StatusKey.Reading)
+            //{
+            //    statusString.Append($" {_diskObjectName}");
+            //}
 
             StatusWithMessage = statusString.ToString();
         }
 
-        internal void AddLogEntry(LogMessage logMessage)
-        {
-            StatusWithMessage = logMessage.Message;
-        }
+
     }
 }

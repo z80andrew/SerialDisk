@@ -29,7 +29,7 @@
     <None Remove="Atari\hello_l.txt" />
     <None Remove="Atari\hello_m.txt" />
     <None Remove="Atari\SERDISK.CFG" />
-    <None Remove="Atari\SERDISK2.TOS" />
+    <None Remove="Atari\SERDISK3.TOS" />
     <None Remove="Resources\default_config_osx.json" />
     <None Remove="serialdisk.config" />
   </ItemGroup>
@@ -44,7 +44,7 @@
     <Content Include="Atari\SERDISK.CFG">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Atari\SERDISK2.TOS">
+    <Content Include="Atari\SERDISK3.TOS">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <EmbeddedResource Include="Resources\default_config_osx.json">
