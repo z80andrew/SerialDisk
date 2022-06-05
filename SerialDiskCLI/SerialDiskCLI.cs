@@ -48,7 +48,7 @@ namespace AtariST.SerialDiskCLI
 
             _statusService = new StatusService();
 
-            _disk = new Disk(diskParameters, _logger, _statusService);
+            _disk = new Disk(diskParameters, _logger);
 
             //if (applicationSettings.LoggingLevel > LoggingLevel.Info) _statusService.ShowDateTime = true;
 

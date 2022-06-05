@@ -15,6 +15,8 @@ namespace SerialDiskUI.Views
     {
         private double SavedWindowHeight { get; set; }
 
+        public PixelPoint SavedWindowPosition { get; set; }
+
         private double _windowMinHeight;
         private double WindowMinHeight
         {
@@ -37,6 +39,7 @@ namespace SerialDiskUI.Views
             this.WhenActivated(d =>
                 d(ViewModel.ShowAboutDialog.RegisterHandler(DoShowAboutDialogAsync)));
 
+            this.PositionChanged += MainWindow_PositionChanged;
 
             var logBorder = this.FindControl<Border>("LogBorder");
             
@@ -52,6 +55,11 @@ namespace SerialDiskUI.Views
             _logTextBlock = this.FindControl<TextBlock>("LogText");
 
             _logScrollViewer.PropertyChanged += _logScrollViewer_PropertyChanged;
+        }
+
+        private void MainWindow_PositionChanged(object? sender, PixelPointEventArgs e)
+        {
+            SavedWindowPosition = Position;
         }
 
         private void LogBorder_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)

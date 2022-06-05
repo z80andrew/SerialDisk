@@ -20,7 +20,7 @@
 
 	<DockPanel Classes="AppDockPanel">
 		<TabControl DockPanel.Dock="Top" Grid.IsSharedSizeScope="True">
-			<TabItem Header="Serial" IsSelected="False">
+			<TabItem Header="Serial" IsSelected="True">
 				<Grid >
 					<Grid.RowDefinitions>
 						<RowDefinition SharedSizeGroup="SettingsGrid"/>
@@ -105,18 +105,23 @@
 										 Text="{Binding SelectedFolder}"></TextBox>
 							</DockPanel>
 							<TextBlock Classes="SettingsLabel">Virtual disk size</TextBlock>
-							<StackPanel Orientation="Horizontal" Spacing="10">
-								<NumericUpDown ToolTip.Tip="Size of the virtual disk, 1 - 512MiB" Name="DiskSizeInput" Minimum="1" Maximum="512"
-												ClipValueToMinMax="True" ShowButtonSpinner="False"
-											  AllowSpin="True" Value="{Binding VirtualDiskSizeMB}"></NumericUpDown>
-								<TextBlock VerticalAlignment="Center">MiB</TextBlock>
-							</StackPanel>
+								<Slider Minimum="1" Maximum="512" Orientation="Horizontal"
+										Ticks="32,64,128,256,512" IsSnapToTickEnabled="True"
+										Width="NaN" Value="{Binding VirtualDiskSizeMB}"
+										Margin="0,-13,0,-3"/>
+								<StackPanel Orientation="Horizontal" Spacing="5">
+									<TextBox Text="{Binding VirtualDiskSizeMB}" Focusable="False"
+											 IsReadOnly="True">
+
+									</TextBox>
+									<TextBlock VerticalAlignment="Center">MiB</TextBlock>
+								</StackPanel>
 						</StackPanel>
 					</Border>
 				</Grid>
 			</TabItem>
 
-			<TabItem Header="Logging" IsSelected="True">
+			<TabItem Header="Logging" IsSelected="False">
 				<Grid>
 					<Grid.RowDefinitions>
 						<RowDefinition SharedSizeGroup="SettingsGrid"/>

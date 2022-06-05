@@ -1,12 +1,9 @@
-﻿using Avalonia.Controls;
+﻿using AtariST.SerialDisk.Common;
 using ReactiveUI;
 using SerialDiskUI.Models;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reactive;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
@@ -17,13 +14,15 @@ namespace SerialDiskUI.ViewModels
         public ReactiveCommand<Unit, SimpleDialogModel> CloseAboutCommand { get; }
         public ICommand ShowWebsiteCommand { get; }
 
+        public string WebsiteButtonText => Constants.PROJECT_URL.Replace(@"https://www.", String.Empty);
+
         public AboutWindowViewModel()
         {
             CloseAboutCommand = ReactiveCommand.CreateFromTask(CloseAbout);
 
             ShowWebsiteCommand = ReactiveCommand.CreateFromTask(async () =>
             {
-                var startInfo = new ProcessStartInfo { UseShellExecute = true, FileName = "https://www.github.com/z80andrew/serialdisk" };
+                var startInfo = new ProcessStartInfo { UseShellExecute = true, FileName = Constants.PROJECT_URL };
                 var process = Process.Start(startInfo);
             });
         }

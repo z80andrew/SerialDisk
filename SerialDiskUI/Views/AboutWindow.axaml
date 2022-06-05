@@ -7,13 +7,15 @@
         mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="250"
 		Width="400"
 		Height="250"
-		Title="About">
+		Title="About"
+		WindowStartupLocation="CenterOwner">
 	
 	<Window.Styles>
 		<StyleInclude Source="/Assets/Styles/DefaultStyle.axaml" />
 
-		<Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+		<Style Selector="Button.URL:pointerover /template/ ContentPresenter#PART_ContentPresenter">
 			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="Cursor" Value="Hand"/>
 			<Setter Property="TextBlock.Foreground" Value="Blue"/>
 		</Style>
 	</Window.Styles>
@@ -28,13 +30,13 @@
 				<Border BorderBrush="White" BorderThickness="3" DockPanel.Dock="Top">
 					<DockPanel DockPanel.Dock="Top" Background="White">
 						<TextBlock DockPanel.Dock="Right" VerticalAlignment="Bottom"
-							   Margin="0,0,10,0">v3.0</TextBlock>
+							   Margin="0,0,10,0">v3.0β</TextBlock>
 						<Image VerticalAlignment="Top" DockPanel.Dock="Left" Source="avares://SerialDiskUI/Assets/Images/serialdisk_logo.png"/>
 					</DockPanel>
 				</Border>
 				<TextBlock Margin="10" DockPanel.Dock="Top" HorizontalAlignment="Center">by z80andrew</TextBlock>
-				<Button Background="Transparent" Foreground="Blue" DockPanel.Dock="Top" 
-						HorizontalAlignment="Center" Command="{Binding ShowWebsiteCommand}">github.com/z80andrew/serialdisk</Button>
+				<Button Classes="URL" Background="Transparent" Foreground="Blue" DockPanel.Dock="Top" 
+						HorizontalAlignment="Center" Command="{Binding ShowWebsiteCommand}" Content="{Binding WebsiteButtonText}" ></Button>
 				<TextBlock Margin="0,10,0,0" DockPanel.Dock="Top" HorizontalAlignment="Center">Thanks to</TextBlock>
 				<TextBlock DockPanel.Dock="Top" HorizontalAlignment="Center">Natalia Gruzdeva</TextBlock>
 				<Button DockPanel.Dock="Bottom" HorizontalAlignment="Center" Command="{Binding CloseAboutCommand}">Close</Button>

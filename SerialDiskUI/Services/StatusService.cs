@@ -4,6 +4,7 @@ using AtariST.SerialDisk.Models;
 using DynamicData;
 using ReactiveUI;
 using System;
+using System.IO;
 using System.Text;
 
 namespace SerialDiskUI.Services
@@ -47,7 +48,7 @@ namespace SerialDiskUI.Services
         {
             TotalBytes = totalBytes;
             TransferredBytes = receivedBytes;
-            
+
             var statusString = new StringBuilder()
                 .Append("Status: ")
                 .Append(AtariST.SerialDisk.Common.Status.Statuses.Find(x => x.Key == Status).Value)
@@ -73,19 +74,7 @@ namespace SerialDiskUI.Services
                 .Append("Status: ")
                 .Append(AtariST.SerialDisk.Common.Status.Statuses.Find(x => x.Key == status).Value);
 
-            //if (status == AtariST.SerialDisk.Common.Status.StatusKey.Reading ||
-            //    status == AtariST.SerialDisk.Common.Status.StatusKey.Writing)
-            //{
-            //    _diskObjectName = message;
-            //}
-
             if (!String.IsNullOrEmpty(message)) statusString.Append(" ").Append(message);
-
-            //if (status == AtariST.SerialDisk.Common.Status.StatusKey.Receiving
-            //    || status == AtariST.SerialDisk.Common.Status.StatusKey.Reading)
-            //{
-            //    statusString.Append($" {_diskObjectName}");
-            //}
 
             StatusWithMessage = statusString.ToString();
         }

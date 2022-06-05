@@ -40,8 +40,11 @@ namespace SerialDiskUI
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                _appSettings.MainWindowHeight = Convert.ToUInt32(desktop.MainWindow.Height);
-                _appSettings.MainWindowWidth = Convert.ToUInt32(desktop.MainWindow.Width);
+                var mainWindow = desktop.MainWindow as MainWindow;
+                _appSettings.MainWindowHeight = Convert.ToInt32(desktop.MainWindow.Height);
+                _appSettings.MainWindowWidth = Convert.ToInt32(desktop.MainWindow.Width);
+                _appSettings.MainWindowX = mainWindow.SavedWindowPosition.X;
+                _appSettings.MainWindowY = mainWindow.SavedWindowPosition.Y;
                 _appSettings.WriteSettingsToDisk();
             }
         }
@@ -59,9 +62,15 @@ namespace SerialDiskUI
                 desktop.MainWindow = new MainWindow
                 {
                     DataContext = new MainWindowViewModel(model, statusService, logger),
-                    Height = Convert.ToDouble(_appSettings.MainWindowHeight),
-                    Width = Convert.ToDouble(_appSettings.MainWindowWidth)
                 };
+
+                if (_appSettings.MainWindowHeight > -1) desktop.MainWindow.Height = Convert.ToDouble(_appSettings.MainWindowHeight);
+                if (_appSettings.MainWindowWidth > -1) desktop.MainWindow.Width = Convert.ToDouble(_appSettings.MainWindowWidth);
+                if (_appSettings.MainWindowX > -1 && _appSettings.MainWindowY > -1)
+                {
+                    desktop.MainWindow.WindowStartupLocation = Avalonia.Controls.WindowStartupLocation.Manual;
+                    desktop.MainWindow.Position = new PixelPoint(_appSettings.MainWindowX, _appSettings.MainWindowY);
+                }
             }
         }
 

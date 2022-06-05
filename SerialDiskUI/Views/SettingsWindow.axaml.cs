@@ -32,31 +32,6 @@ namespace SerialDiskUI.Views
             this.WhenActivated(d => d(ViewModel.CloseSettingsCommand.Subscribe(Close)));
             this.WhenActivated(d => d(ViewModel.ShowFolderDialog.RegisterHandler(WindowShowFolderDialog)));
             this.WhenActivated(d => d(ViewModel.ShowFileDialog.RegisterHandler(WindowShowFileDialog)));
-
-            var diskSizeInput = this.FindControl<NumericUpDown>("DiskSizeInput");
-            diskSizeInput.AddHandler(InputElement.KeyDownEvent, TextBox_KeyDown, RoutingStrategies.Tunnel);
-            diskSizeInput.AddHandler(InputElement.KeyUpEvent, TextBox_KeyUp, RoutingStrategies.Tunnel);
-
-            inputDiskSize = diskSizeInput.Value.ToString();
-        }
-
-        private void TextBox_KeyUp(object? sender, KeyEventArgs e)
-        {
-            var textInput = sender as NumericUpDown;
-
-            var regex = @"^[0-9]*$";
-            if (!Regex.Match(textInput.Text, regex).Success)
-            {
-                textInput.Text = inputDiskSize;
-            }
-
-            else inputDiskSize = textInput.Value.ToString();
-        }
-
-        private void TextBox_KeyDown(object? sender, KeyEventArgs e)
-        {
-            var textInput = sender as NumericUpDown;
-            if (textInput.Text.Length > 2) textInput.Text = textInput.Text.Substring(0, 2);
         }
 
         private void InitializeComponent()

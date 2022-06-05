@@ -11,7 +11,8 @@
         SizeToContent="Manual"
         x:Class="SerialDiskUI.Views.MainWindow"
         Title="SerialDisk"
-		Icon="/Assets/SerialDisk.ico">
+		Icon="/Assets/SerialDisk.ico"
+		WindowStartupLocation="CenterScreen">
 	<Window.Styles>
 		<StyleInclude Source="/Assets/Styles/DefaultStyle.axaml" />
 	</Window.Styles>

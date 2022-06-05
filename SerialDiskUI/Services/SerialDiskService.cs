@@ -27,7 +27,7 @@ namespace SerialDiskUI.Services
 
             try
             {
-                _disk = new Disk(_diskParameters, logger, statusService);
+                _disk = new Disk(_diskParameters, logger);
 
                 _cancellationToken = new CancellationTokenSource();
                 _serial = new Serial(appSettings.SerialSettings, _disk, logger, statusService, _cancellationToken, appSettings.IsCompressionEnabled);
