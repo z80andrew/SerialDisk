@@ -6,6 +6,7 @@ using ReactiveUI;
 using SerialDiskUI.Models;
 using SerialDiskUI.ViewModels;
 using System;
+using System.Collections.Generic;
 using System.Reactive;
 using System.Threading.Tasks;
 
@@ -17,17 +18,15 @@ namespace SerialDiskUI.Views
 
         public PixelPoint SavedWindowPosition { get; set; }
 
-        private double _windowMinHeight;
-        private double WindowMinHeight
-        {
-            get => _logScrollViewer.IsVisible ? _windowMinHeight + 50 : _windowMinHeight;
-            set => _windowMinHeight = value;
-        }
-
         private TextBlock _logTextBlock;
         private ScrollViewer _logScrollViewer;
 
         public MainWindow()
+        {
+            InitializeComponent();
+        }
+
+        public MainWindow(int width, int height, int xPos, int yPos)
         {
             InitializeComponent();
 #if DEBUG
@@ -35,14 +34,18 @@ namespace SerialDiskUI.Views
 #endif
             this.WhenActivated(d =>
                 d(ViewModel.ShowSettingsDialog.RegisterHandler(DoShowSettingsDialogAsync)));
-
             this.WhenActivated(d =>
                 d(ViewModel.ShowAboutDialog.RegisterHandler(DoShowAboutDialogAsync)));
+            this.WhenActivated(d =>
+                SetPosition(xPos, yPos));
 
             this.PositionChanged += MainWindow_PositionChanged;
 
             var logBorder = this.FindControl<Border>("LogBorder");
-            
+
+            this.WhenActivated(d =>
+                SetSize(width, height, logBorder));
+
             this.WhenActivated(d =>
                 d(ViewModel.WhenAnyValue(m => m.IsLogDisplayEnabled).Subscribe(isLogDisplayed =>
                 {
@@ -55,6 +58,32 @@ namespace SerialDiskUI.Views
             _logTextBlock = this.FindControl<TextBlock>("LogText");
 
             _logScrollViewer.PropertyChanged += _logScrollViewer_PropertyChanged;
+        }
+
+        private void SetSize(int width, int height, Border logBorder)
+        {
+            if (width > -1) Width = Convert.ToDouble(width);
+            
+            if (height > -1 && logBorder.IsVisible)
+            {
+                this.SizeToContent = SizeToContent.Manual;
+                Height = Convert.ToDouble(height);
+            }
+
+            else
+            {
+                this.MinHeight = Height;
+                this.MaxHeight = Height;
+            }
+        }
+
+        private void SetPosition(int xPos, int yPos)
+        {
+            if (xPos > -1 && yPos > -1)
+            {
+                this.WindowStartupLocation = WindowStartupLocation.Manual;
+                this.Position = new PixelPoint(xPos, yPos);
+            }
         }
 
         private void MainWindow_PositionChanged(object? sender, PixelPointEventArgs e)
@@ -93,7 +122,6 @@ namespace SerialDiskUI.Views
 
         private void EnableWindowResize()
         {
-            this.MinHeight = WindowMinHeight;
             this.MaxHeight = double.PositiveInfinity;
             this.SizeToContent = SizeToContent.Manual;
             this.Height = SavedWindowHeight;
@@ -101,8 +129,6 @@ namespace SerialDiskUI.Views
 
         private void DisableWindowResize()
         {
-            WindowMinHeight = this.MinHeight;
-            this.MinHeight = 0;
             SavedWindowHeight = this.Height;
             this.SizeToContent = SizeToContent.Height;
         }

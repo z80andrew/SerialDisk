@@ -3,6 +3,7 @@ using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Storage;
 using AtariST.SerialDisk.Utilities;
+using AtariST.SerialDiskCLI.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;

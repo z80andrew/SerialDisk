@@ -46,7 +46,7 @@ namespace SerialDiskUI.Models
         public void WriteSettingsToDisk()
         {
             var settingsJson = JsonSerializer.Serialize(this, typeof(UIApplicationSettings), new JsonSerializerOptions { WriteIndented = true});
-            File.WriteAllTextAsync(Settings.ConfigFilePath, settingsJson);
+            File.WriteAllTextAsync(Constants.ConfigFilePath, settingsJson);
         }
     }
 }

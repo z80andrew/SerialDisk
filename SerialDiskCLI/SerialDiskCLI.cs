@@ -3,6 +3,7 @@ using AtariST.SerialDisk.Comms;
 using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Storage;
+using AtariST.SerialDiskCLI.Services;
 using System;
 using System.Reflection;
 using System.Text.Json;

@@ -7,7 +7,7 @@ using System.IO;
 using System.Text;
 using static AtariST.SerialDisk.Common.Constants;
 
-namespace AtariST.SerialDiskCLI
+namespace AtariST.SerialDiskCLI.Services
 {
     public class Logger : IDisposable, ILogger
     {
@@ -43,7 +43,7 @@ namespace AtariST.SerialDiskCLI
 
         public void LogException(Exception exception, string message = "")
         {
-            if (String.IsNullOrEmpty(message)) message = exception.Message;
+            if (string.IsNullOrEmpty(message)) message = exception.Message;
             message += $": {exception.StackTrace}";
 
             var logMessage = new LogMessage(LoggingLevel.Info, message, DateTime.Now);
@@ -62,7 +62,7 @@ namespace AtariST.SerialDiskCLI
                 try
                 {
                     using StreamWriter fileWriter = new StreamWriter(_fileStream, Encoding.UTF8, 1024, true);
-                    fileWriter.WriteLineAsync($"{logMessage.TimeStamp.ToString(Constants.DATE_FORMAT)}\t{logMessage.TimeStamp.ToString(Constants.TIME_FORMAT)}\t{logMessage.Message}");
+                    fileWriter.WriteLineAsync($"{logMessage.TimeStamp.ToString(DATE_FORMAT)}\t{logMessage.TimeStamp.ToString(TIME_FORMAT)}\t{logMessage.Message}");
                 }
 
                 catch (Exception logException)
@@ -103,10 +103,10 @@ namespace AtariST.SerialDiskCLI
 
         private void OutputLogMessage(LogMessage logMessage)
         {
-            var message = String.Empty;
-            if (LogLevel > LoggingLevel.Info) message = $"{LogMessage.TimeStamp}\t";
+            var message = string.Empty;
+            if (LogLevel > LoggingLevel.Info) message = $"{logMessage.TimeStamp}\t";
             message += logMessage.Message;
-            Console.Write(message);
+            Console.WriteLine(message);
 #if DEBUG
             Debug.WriteLine(message);
 #endif

@@ -1,11 +1,9 @@
-using AtariST.SerialDisk.Common;
-using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Utilities;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.Configuration;
-using SerialDiskUI.Common;
 using SerialDiskUI.Models;
 using SerialDiskUI.Services;
 using SerialDiskUI.ViewModels;
@@ -59,18 +57,11 @@ namespace SerialDiskUI
                 var statusService = new StatusService();
                 var logger = new Logger(_appSettings.LoggingLevel, _appSettings.LogFileName);
 
-                desktop.MainWindow = new MainWindow
+                desktop.MainWindow = new MainWindow(_appSettings.MainWindowWidth, _appSettings.MainWindowHeight, _appSettings.MainWindowX, _appSettings.MainWindowY)
                 {
                     DataContext = new MainWindowViewModel(model, statusService, logger),
+                    
                 };
-
-                if (_appSettings.MainWindowHeight > -1) desktop.MainWindow.Height = Convert.ToDouble(_appSettings.MainWindowHeight);
-                if (_appSettings.MainWindowWidth > -1) desktop.MainWindow.Width = Convert.ToDouble(_appSettings.MainWindowWidth);
-                if (_appSettings.MainWindowX > -1 && _appSettings.MainWindowY > -1)
-                {
-                    desktop.MainWindow.WindowStartupLocation = Avalonia.Controls.WindowStartupLocation.Manual;
-                    desktop.MainWindow.Position = new PixelPoint(_appSettings.MainWindowX, _appSettings.MainWindowY);
-                }
             }
         }
 
@@ -84,11 +75,11 @@ namespace SerialDiskUI
             {
                 var configBuilder = new ConfigurationBuilder();
 
-                configBuilder.AddJsonFile(Settings.ConfigFilePath, true, false)
+                configBuilder.AddJsonFile(Common.Constants.ConfigFilePath, true, false)
                     .Build()
                     .Bind(appSettings);
 
-                configBuilder.AddCommandLine(args, Constants.ConsoleParameterMappings)
+                configBuilder.AddCommandLine(args, AtariST.SerialDisk.Common.Constants.ConsoleParameterMappings)
                     .Build()
                     .Bind(appSettings);
 

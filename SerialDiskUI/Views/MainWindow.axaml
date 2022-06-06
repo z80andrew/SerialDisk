@@ -8,11 +8,12 @@
         d:DesignWidth="380" d:DesignHeight="480"
         Width="420" Height="388"
         MinWidth="420" MinHeight="250"        
-        SizeToContent="Manual"
+        SizeToContent="Height"
         x:Class="SerialDiskUI.Views.MainWindow"
         Title="SerialDisk"
 		Icon="/Assets/SerialDisk.ico"
 		WindowStartupLocation="CenterScreen">
+	
 	<Window.Styles>
 		<StyleInclude Source="/Assets/Styles/DefaultStyle.axaml" />
 	</Window.Styles>

@@ -2,9 +2,6 @@
 using AtariST.SerialDisk.Utilities;
 using Avalonia.Controls;
 using ReactiveUI;
-using ReactiveUI.Validation.Abstractions;
-using ReactiveUI.Validation.Contexts;
-using ReactiveUI.Validation.Extensions;
 using SerialDiskUI.Models;
 using System;
 using System.Collections.Generic;
@@ -15,7 +12,7 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 using static AtariST.SerialDisk.Common.Constants;
-using static SerialDiskUI.Common.Settings;
+using static SerialDiskUI.Common.Constants;
 
 namespace SerialDiskUI.ViewModels
 {
@@ -249,7 +246,7 @@ namespace SerialDiskUI.ViewModels
 
         private async Task OpenFolderAsync()
         {
-            var currentFolder = Directory.Exists(SelectedFolder) ? SelectedFolder : Common.Settings.DefaultPath;
+            var currentFolder = Directory.Exists(SelectedFolder) ? SelectedFolder : Common.Constants.DefaultPath;
             var folderName = await ShowFolderDialog.Handle(currentFolder);
 
             if (folderName is object)

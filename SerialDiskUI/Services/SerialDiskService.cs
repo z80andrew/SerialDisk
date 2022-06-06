@@ -10,7 +10,6 @@ namespace SerialDiskUI.Services
 {
     public class SerialDiskService
     {
-        //public ILogger _logger;
         IDisk _disk;
         ISerial _serial;
         DiskParameters _diskParameters;

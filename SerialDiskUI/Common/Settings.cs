@@ -7,7 +7,7 @@ using System.Resources;
 
 namespace SerialDiskUI.Common
 {
-    public static class Settings
+    public static class Constants
     {
         public static string DefaultPath => AppDomain.CurrentDomain.BaseDirectory;
         public static string ConfigFilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"serialdiskui.config");
