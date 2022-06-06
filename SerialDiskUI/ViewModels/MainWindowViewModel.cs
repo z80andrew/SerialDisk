@@ -242,7 +242,7 @@ namespace SerialDiskUI.ViewModels
 
             ExitCommand = ReactiveCommand.CreateFromTask(async () =>
             {
-                (Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime).Shutdown(0);
+                (Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime).MainWindow.Close();
             });
 
             ShowVirtualDiskFolderCommand = ReactiveCommand.CreateFromTask(async () =>
