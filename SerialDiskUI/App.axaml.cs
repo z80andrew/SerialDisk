@@ -28,7 +28,7 @@ namespace SerialDiskUI
             {
                 desktop.Startup += Desktop_Startup;
                 desktop.ShutdownRequested += Desktop_ShutdownRequested;
-                desktop.ShutdownMode = Avalonia.Controls.ShutdownMode.OnMainWindowClose;
+                desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
             }
 
             base.OnFrameworkInitializationCompleted();

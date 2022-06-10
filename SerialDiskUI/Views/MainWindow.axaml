@@ -12,6 +12,7 @@
         x:Class="SerialDiskUI.Views.MainWindow"
         Title="SerialDisk"
 		Icon="/Assets/SerialDisk.ico"
+		 SystemDecorations="Full"
 		WindowStartupLocation="CenterScreen">
 	
 	<Window.Styles>
@@ -32,8 +33,6 @@
 		<DockPanel DockPanel.Dock="Top">
 			<Menu DockPanel.Dock="Top">
 				<MenuItem Header="_File">
-					<MenuItem Header="_Open..."/>
-					<Separator/>
 					<MenuItem Header="_Exit" Command="{Binding ExitCommand}">
 					</MenuItem>
 				</MenuItem>
@@ -51,8 +50,10 @@
 		<Border Classes="SectionContainer" DockPanel.Dock="Top">
 				<DockPanel Margin="10">
 					<DockPanel DockPanel.Dock="Top">
-						<Image Height="28" Margin="0,0,5,0" Opacity="{Binding ReceiveIconOpacity}" Source="/Assets/Images/data-in.png"/>
-						<Image Height="28" Margin="0,0,5,0" Opacity="{Binding SendIconOpacity}" Source="/Assets/Images/data-out.png"/>
+						<Image Height="28" Margin="0,0,5,0" Opacity="{Binding ReceiveIconOpacity}" 
+							   Source="/Assets/Images/data-in.png" ToolTip.Tip="Receiving"/>
+						<Image Height="28" Margin="0,0,5,0" Opacity="{Binding SendIconOpacity}" 
+							   Source="/Assets/Images/data-out.png" ToolTip.Tip="Sending"/>
 
 						<Border DockPanel.Dock="Top" BorderThickness="4" BorderBrush="Gray">
 							<Panel>

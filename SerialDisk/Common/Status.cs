@@ -13,6 +13,7 @@ namespace AtariST.SerialDisk.Common
             Receiving,
             Writing,
             Reading,
+            OperationComplete,
             Error
         }
 
@@ -28,6 +29,7 @@ namespace AtariST.SerialDisk.Common
                 statusList.Add(new KeyValuePair<StatusKey, string>(StatusKey.Receiving, "Receiving"));
                 statusList.Add(new KeyValuePair<StatusKey, string>(StatusKey.Writing, "Writing"));
                 statusList.Add(new KeyValuePair<StatusKey, string>(StatusKey.Reading, "Reading"));
+                statusList.Add(new KeyValuePair<StatusKey, string>(StatusKey.OperationComplete, "Completed"));
                 statusList.Add(new KeyValuePair<StatusKey, string>(StatusKey.Error, "Error"));
 
                 return statusList;

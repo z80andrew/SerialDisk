@@ -7,11 +7,18 @@
         mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="550"
         Width="400" Height="400"
         WindowStartupLocation="CenterOwner"
-        Title="SettingsWindow"
-        SizeToContent="Height">
+        Title="Configuration"
+		Icon="/Assets/config.ico"
+        SizeToContent="Height"
+		CanResize="False">
 
 	<Window.Styles>
 		<StyleInclude Source="/Assets/Styles/DefaultStyle.axaml" />
+
+		<Style Selector="TabItem">
+			<Setter Property="TextBlock.FontSize" Value="25"/>
+			<Setter Property="Margin" Value="10,0,0,0"/>
+		</Style>
 	</Window.Styles>
 
 	<Design.DataContext>
@@ -21,7 +28,7 @@
 	<DockPanel Classes="AppDockPanel">
 		<TabControl DockPanel.Dock="Top" Grid.IsSharedSizeScope="True">
 			<TabItem Header="Serial" IsSelected="True">
-				<Grid >
+				<Grid>
 					<Grid.RowDefinitions>
 						<RowDefinition SharedSizeGroup="SettingsGrid"/>
 					</Grid.RowDefinitions>
@@ -104,7 +111,7 @@
 								<TextBox ToolTip.Tip="PC folder to use as a virtual disk" FontSize="16" Name="SelectedFolderTextBox" VerticalAlignment="Center"
 										 Text="{Binding SelectedFolder}"></TextBox>
 							</DockPanel>
-							<TextBlock Classes="SettingsLabel">Virtual disk size</TextBlock>
+							<TextBlock Classes="SettingsLabel" Margin="0,10,0,0">Virtual disk size</TextBlock>
 								<Slider Minimum="1" Maximum="512" Orientation="Horizontal"
 										Ticks="32,64,128,256,512" IsSnapToTickEnabled="True"
 										Width="NaN" Value="{Binding VirtualDiskSizeMB}"
@@ -152,9 +159,9 @@
 			</TabItem>
 		</TabControl>
 
-		<DockPanel Margin="10">
+		<StackPanel Margin="15,0,0,10" Orientation="Horizontal" Spacing="5">
 			<Button Command="{Binding ApplySettingsCommand}" DockPanel.Dock="Left">Save</Button>
 			<Button Command="{Binding CloseSettingsCommand}" DockPanel.Dock="Right">Cancel</Button>
-		</DockPanel>
+		</StackPanel>
 	</DockPanel>
 </Window>

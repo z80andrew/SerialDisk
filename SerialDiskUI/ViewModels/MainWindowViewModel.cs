@@ -189,8 +189,16 @@ namespace SerialDiskUI.ViewModels
             // Logger properties
             _model.WhenAnyValue(m => m.IsLogFileEnabled).Subscribe(isLogEnabled =>
             {
-                if (isLogEnabled) logger.SetLogFile(Path.GetDirectoryName(_model.LogFileName), Path.GetFileName(_model.LogFileName));
-                else logger.UnsetLogFile();
+                try
+                {
+                    if (isLogEnabled) logger.SetLogFile(Path.GetDirectoryName(_model.LogFileName), Path.GetFileName(_model.LogFileName));
+                    else logger.UnsetLogFile();
+                }
+
+                catch(Exception logException)
+                {
+                    _statusService.SetStatus(AtariST.SerialDisk.Common.Status.StatusKey.Error, logException.Message);
+                }
             });
 
             _model.WhenAnyValue(m => m.LoggingLevel).Subscribe(logLevel =>
@@ -200,7 +208,15 @@ namespace SerialDiskUI.ViewModels
 
             _model.WhenAnyValue(m => m.LogFileName).Subscribe(logFile =>
             {
-                if(_model.IsLogFileEnabled) logger.SetLogFile(Path.GetDirectoryName(_model.LogFileName), Path.GetFileName(_model.LogFileName));
+                try
+                {
+                    if (_model.IsLogFileEnabled) logger.SetLogFile(Path.GetDirectoryName(_model.LogFileName), Path.GetFileName(_model.LogFileName));
+                }
+
+                catch (Exception logException)
+                {
+                    _statusService.SetStatus(AtariST.SerialDisk.Common.Status.StatusKey.Error, logException.Message);
+                }
             });
 
             _isLogDisplayEnabled = _model.WhenAnyValue(x => x.IsLogDisplayEnabled).ToProperty(this, x => x.IsLogDisplayEnabled);
@@ -254,6 +270,7 @@ namespace SerialDiskUI.ViewModels
             RefreshVirtualDiskFolderCommand = ReactiveCommand.CreateFromTask(async () =>
             {
                 _serialDiskService.ReimportLocalDirectoryContents();
+                _statusService.SetStatus(AtariST.SerialDisk.Common.Status.StatusKey.OperationComplete, "refreshing disk contents");
             });
 
             StartSerialDiskCommand = ReactiveCommand.CreateFromTask(async () =>

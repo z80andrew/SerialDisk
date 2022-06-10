@@ -43,8 +43,11 @@ namespace SerialDiskUI.Services
 
                 _logFilePath = Path.Combine(folderPath, fileName);
 
-                if (File.Exists(_logFilePath)) _fileStream = new FileStream(_logFilePath, FileMode.Append);
-                else _fileStream = new FileStream(_logFilePath, FileMode.OpenOrCreate);
+                if (!string.Equals(_logFilePath, _fileStream?.Name))
+                {
+                    if (File.Exists(_logFilePath)) _fileStream = new FileStream(_logFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+                    else _fileStream = new FileStream(_logFilePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite);
+                }
             }
 
             catch (Exception logException)
@@ -54,12 +57,24 @@ namespace SerialDiskUI.Services
                     .AppendLine(logException.Message);
 
                 var logMessage = new LogMessage(LoggingLevel.Info, logText.ToString(), DateTime.Now);
+
+                throw logException;
             }
         }
 
         public void UnsetLogFile()
         {
-            _fileStream = null;
+            try
+            {
+                if (_fileStream != null) _fileStream.Dispose();
+                _fileStream = null;
+            }
+
+            catch(Exception ex)
+            {
+                _fileStream = null;
+                LogException(ex, "Could not un-set log file");
+            }
         }
 
         public void Log(string message, LoggingLevel messageLogLevel)

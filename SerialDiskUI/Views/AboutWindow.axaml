@@ -8,6 +8,7 @@
 		Width="400"
 		Height="250"
 		Title="About"
+		Icon="/Assets/info.ico"
 		WindowStartupLocation="CenterOwner">
 	
 	<Window.Styles>
