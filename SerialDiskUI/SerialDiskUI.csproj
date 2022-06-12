@@ -6,6 +6,7 @@
     <AssemblyName>SerialDiskUI</AssemblyName>
     <RootNamespace>SerialDiskUI</RootNamespace>
     <ApplicationIcon>Assets\SerialDisk.ico</ApplicationIcon>
+    <Version>3.0</Version>
   </PropertyGroup>
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />

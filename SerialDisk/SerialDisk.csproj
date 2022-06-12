@@ -6,7 +6,7 @@
     <RootNamespace>AtariST.SerialDisk</RootNamespace>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <FileVersion>2.0.0.0</FileVersion>
-    <Version>2.0</Version>
+    <Version>3.0</Version>
     <ApplicationIcon />
     <StartupObject></StartupObject>
     <Authors>z80andrew</Authors>

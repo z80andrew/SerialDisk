@@ -21,34 +21,34 @@ build_script:
     if($isWindows)
     {
         # Publish and package Self Contained Executables        
-        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r win-x64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/win-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
-        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r win-x86 -c Release --self-contained true --output ./bin/Release/CLI/SCE/win-x86 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
+        dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r win-x64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/win-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
+        dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r win-x86 -c Release --self-contained true --output ./bin/Release/CLI/SCE/win-x86 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
         
         # Publish and package Framework Dependant Executables        
-        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r win-x64 -c Release --self-contained false --output ./bin/Release/CLI/FDE/win-x64
-        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r win-x86 -c Release --self-contained false --output ./bin/Release/CLI/FDE/win-x86
+        dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r win-x64 -c Release --self-contained false --output ./bin/Release/CLI/FDE/win-x64
+        dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r win-x86 -c Release --self-contained false --output ./bin/Release/CLI/FDE/win-x86
     }
 
     elseif($isLinux)
     {
         # Publish and package Self Contained Executables        
-        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r linux-x64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-linux-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
-        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r linux-arm64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-linux-arm64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
-        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r linux-arm -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-linux-arm32 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
+        dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r linux-x64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-linux-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
+        dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r linux-arm64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-linux-arm64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
+        dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r linux-arm -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-linux-arm32 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
 
         # Publish and package Framework Dependant Executables
-        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r linux-x64 -c Release --self-contained false --output ./bin/Release/CLI/FDE/serialdisk-linux-x64
-        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r linux-arm64 -c Release --self-contained false --output ./bin/Release/CLI/FDE/serialdisk-linux-arm64
-        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r linux-arm -c Release --self-contained false --output ./bin/Release/CLI/FDE/serialdisk-linux-arm32
+        dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r linux-x64 -c Release --self-contained false --output ./bin/Release/CLI/FDE/serialdisk-linux-x64
+        dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r linux-arm64 -c Release --self-contained false --output ./bin/Release/CLI/FDE/serialdisk-linux-arm64
+        dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r linux-arm -c Release --self-contained false --output ./bin/Release/CLI/FDE/serialdisk-linux-arm32
     }
     
     else
     {    
         # Publish and package Self Contained Executables        
-        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r osx-x64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-macos-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
+        dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r osx-x64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-macos-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
 
         # Publish and package Framework Dependant Executables
-        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r osx-x64 -c Release --self-contained false --output ./bin/Release/CLI/FDE/serialdisk-macos-x64
+        dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r osx-x64 -c Release --self-contained false --output ./bin/Release/CLI/FDE/serialdisk-macos-x64
     }
 
 on_success:
