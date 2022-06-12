@@ -32,7 +32,7 @@ build_script:
     elseif($isLinux)
     {
         # Publish and package Self Contained Executables        
-        dotnet publish ./SerialDiskCLI/SerialdiskCLI.csproj -r linux-x64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-linux-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
+        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r linux-x64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-linux-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
         dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r linux-arm64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-linux-arm64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
         dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r linux-arm -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-linux-arm32 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
 
