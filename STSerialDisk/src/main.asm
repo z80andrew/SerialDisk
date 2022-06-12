@@ -1,42 +1,7 @@
 .include "../macro/gemdos.asm"
 .include "../macro/bios.asm"
 .include "../macro/xbios.asm"
-
-|=-------------------------------------------------------------------------------
-
-| Atari memory addresses
-.equ hdv_bpb, 		0x472														| Vector to routine that establishes the BPB of a BIOS drive.
-.equ hdv_rw, 		0x476														| Vector to the routine for reading and writing of blocks to BIOS drives.
-.equ hdv_mediach, 	0x47e														| Vector to routine for establishing the media-change status of a BIOS drive. The BIOS device number is passed on the stack (4(sp)).
-.equ _drvbits, 		0x4c2														| Bit-table for the mounted drives of the BIOS.
-.equ _dskbufp, 		0x4c6														| Pointer to a 1024-byte buffer for reading and writing to floppy disks or hard drives. (Unused)
-.equ _hz_200,		0x4ba														| Number of elapsed 200Hz interrupts since boot (timer C)
-.equ _bufl,			0x4b2														| Two (GEMDOS) buffer-list  headers.
-.equ _vbclock,		0x462														| Vertical blank count (long)
-.equ palmode,		0xFFFF820A													| PAL/NTSC mode (byte)
-.equ screenres,		0xFFFF8260													| Screen resolution (byte)
-
-| SerialDisk commands
-.equ cmd_read, 		0x00
-.equ cmd_write, 	0x01
-.equ cmd_bpb, 		0x02
-
-| SerialDisk data flags
-.equ compression_isenabled,	0x00
-
-| Other constants
-.equ wait_secs,				0x01												| Time for pauses (secs * 10)
-.equ serial_timeout_secs,	0x05												| Serial read timeout (secs * 10)
-.equ crc32_poly,			0x04c11db7											| Polynomial for CRC32 calculation
-.equ ascii_offset,			0x41												| Offset from number to its ASCII equivalent
-.equ palmode_pal,			0x02												| Value of byte at 0xFFFF820A when 50Hz
-.equ palmode_ntsc,			0x00												| Value of byte at 0xFFFF820A when 60Hz
-.equ screenres_high,		0x02												| Value of byte at 0xFFFF8260 when ~72Hz
-
-| Screen refresh rates
-.equ pal_hz,				0x32												| 50Hz
-.equ ntsc_hz,				0x3C												| 60Hz
-.equ hires_hz,				0x48												| 72Hz (although more accurately 71.2-71.4Hz)
+.include "../src/atari.asm"
 
 |-------------------------------------------------------------------------------
 
@@ -141,12 +106,12 @@ set_refresh_rate:
 	jmp		set_refresh_rate_end
 not_hires:
 	move.b	(palmode), d0
-	cmp.b	#palmode_pal, d0
-	jne		not_pal
-	move.w	#pal_hz, refresh_rate
-	jmp		set_refresh_rate_end
-not_pal:
+	tst.b	d0																	| 0 = NTSC, otherwise PAL
+	jne		pal
 	move.w	#ntsc_hz, refresh_rate
+	jmp		set_refresh_rate_end
+pal:
+	move.w	#pal_hz, refresh_rate
 set_refresh_rate_end:
 	rts
 
@@ -318,10 +283,13 @@ _rw:
 _rw_write:
 	movem.l	d3/a4,-(sp)															| Push buffer address and data length to the stack
 
-	move.b	flags,d0
-	jbsr	write_serial
-	btst	#0,flags
+	jbsr	read_serial															| Receive serial data flags
+	tst.w	d0
+	jmi		99f
+
+	btst	#compression_isenabled,d0											| Check for compression flag
 	jeq		_rw_write_uncompressed
+
 	.include "../src/RLE.asm"
 	jmp	_rw_write_crc32
 _rw_write_uncompressed:
@@ -665,8 +633,6 @@ write_serial:
 read_config_file:
 	move	#0x4d,disk_identifier												| Set default disk id as ASCII 'M'
 	move	#0x0d,sector_size_shift_value										| Set default sector size shift
-	clr.w	flags
-	bset	#0,flags															| Set default compression (enabled)
 
 	Fopen	const_config_filename,#0											| Attempt to open config file
 	tst.w	d0																	| Check return value
@@ -701,15 +667,6 @@ read_config_file:
 
 	move	d1,sector_size_shift_value
 
-	| Read compression flag
-
-	clr		d1
-	move.b	temp_long+2,d1
-
-	cmp		#0x30,d1															| Compare read byte with ASCII '0'
-	jne		1f																	| Not 0, keep compression default (enabled)
-
-	bclr	#0,flags															| Clear compression flag
 1:
 	clr.l	d0																	| Success return value
 	jmp		99f																	| No problems encountered, jump to end
@@ -833,7 +790,7 @@ const_config_filename:
 | Messages
 
 msg_welcome:
-	.asciz	"SerialDisk v2.6\r\n"
+	.asciz	"SerialDisk v3.0 beta\r\n"
 
 msg_config_found:
 	.asciz	"Found config file\r\n"
@@ -885,10 +842,6 @@ old_hdv_mediach:
 
 crc32_table:
 	ds.l	0x100
-
-| 00000000 00000001 - Output compression enable flag
-flags:
-	ds.w	0x01
 
 refresh_rate:
 	ds.w	0x01

@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>AtariST.SerialDisk</RootNamespace>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <FileVersion>2.0.0.0</FileVersion>
@@ -29,7 +29,7 @@
     <None Remove="Atari\hello_l.txt" />
     <None Remove="Atari\hello_m.txt" />
     <None Remove="Atari\SERDISK.CFG" />
-    <None Remove="Atari\SERDISK2.TOS" />
+    <None Remove="Atari\SERDISK3.TOS" />
     <None Remove="Resources\default_config_osx.json" />
     <None Remove="serialdisk.config" />
   </ItemGroup>
@@ -44,7 +44,7 @@
     <Content Include="Atari\SERDISK.CFG">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Atari\SERDISK2.TOS">
+    <Content Include="Atari\SERDISK3.TOS">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <EmbeddedResource Include="Resources\default_config_osx.json">
@@ -68,17 +68,21 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="K4os.Compression.LZ4" Version="1.2.6" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />
-    <PackageReference Include="System.IO.Ports" Version="5.0.0" />
+    <PackageReference Include="K4os.Compression.LZ4" Version="1.2.16" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+    <PackageReference Include="System.IO.Ports" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <RuntimeHostConfigurationOption Include="System.Globalization.Invariant" Value="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
   </ItemGroup>
 
 </Project>

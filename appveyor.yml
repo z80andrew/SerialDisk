@@ -1,9 +1,9 @@
-version: 2.6.{build}
+version: 3.0.{build}
 
 image: 
-- Visual Studio 2019
+- Visual Studio 2022
 - Ubuntu2004
-- macos
+- macOS
 
 dotnet_csproj:
   patch: true
@@ -21,83 +21,83 @@ build_script:
     if($isWindows)
     {
         # Publish and package Self Contained Executables        
-        dotnet publish SerialDisk/Serialdisk.csproj -r win-x64 -c Release --self-contained true --output ./bin/Release/SCE/win-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true
-        dotnet publish SerialDisk/Serialdisk.csproj -r win-x86 -c Release --self-contained true --output ./bin/Release/SCE/win-x86 /p:PublishTrimmed=true /p:PublishSingleFile=true
+        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r win-x64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/win-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
+        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r win-x86 -c Release --self-contained true --output ./bin/Release/CLI/SCE/win-x86 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
         
         # Publish and package Framework Dependant Executables        
-        dotnet publish SerialDisk/Serialdisk.csproj -r win-x64 -c Release --self-contained false --output ./bin/Release/FDE/win-x64
-        dotnet publish SerialDisk/Serialdisk.csproj -r win-x86 -c Release --self-contained false --output ./bin/Release/FDE/win-x86
+        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r win-x64 -c Release --self-contained false --output ./bin/Release/CLI/FDE/win-x64
+        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r win-x86 -c Release --self-contained false --output ./bin/Release/CLI/FDE/win-x86
     }
 
     elseif($isLinux)
     {
         # Publish and package Self Contained Executables        
-        dotnet publish ./SerialDisk/SerialDisk.csproj -r linux-x64 -c Release --self-contained true --output ./bin/Release/SCE/serialdisk-linux-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true
-        dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm64 -c Release --self-contained true --output ./bin/Release/SCE/serialdisk-linux-arm64 /p:PublishTrimmed=true /p:PublishSingleFile=true
-        dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm -c Release --self-contained true --output ./bin/Release/SCE/serialdisk-linux-arm32 /p:PublishTrimmed=true /p:PublishSingleFile=true
+        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r linux-x64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-linux-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
+        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r linux-arm64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-linux-arm64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
+        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r linux-arm -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-linux-arm32 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
 
         # Publish and package Framework Dependant Executables
-        dotnet publish SerialDisk/SerialDisk.csproj -r linux-x64 -c Release --self-contained false --output ./bin/Release/FDE/serialdisk-linux-x64
-        dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm64 -c Release --self-contained false --output ./bin/Release/FDE/serialdisk-linux-arm64
-        dotnet publish SerialDisk/SerialDisk.csproj -r linux-arm -c Release --self-contained false --output ./bin/Release/FDE/serialdisk-linux-arm32
+        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r linux-x64 -c Release --self-contained false --output ./bin/Release/CLI/FDE/serialdisk-linux-x64
+        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r linux-arm64 -c Release --self-contained false --output ./bin/Release/CLI/FDE/serialdisk-linux-arm64
+        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r linux-arm -c Release --self-contained false --output ./bin/Release/CLI/FDE/serialdisk-linux-arm32
     }
     
     else
     {    
         # Publish and package Self Contained Executables        
-        dotnet publish SerialDisk/SerialDisk.csproj -r osx-x64 -c Release --self-contained true --output ./bin/Release/SCE/serialdisk-macos-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true
+        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r osx-x64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-macos-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
 
         # Publish and package Framework Dependant Executables
-        dotnet publish SerialDisk/SerialDisk.csproj -r osx-x64 -c Release --self-contained false --output ./bin/Release/FDE/serialdisk-macos-x64
+        dotnet publish SerialDiskCLI/SerialdiskCLI.csproj -r osx-x64 -c Release --self-contained false --output ./bin/Release/CLI/FDE/serialdisk-macos-x64
     }
 
 on_success:
 - ps: >-
-    $versionNo = "2.6"
+    $versionNo = "3.0"
     
     if($isWindows)
     {
-        7z a -mx=9 serialdisk_$($versionNo)_sce_win-x64.zip ./bin/Release/SCE/win-x64/*
-        appveyor PushArtifact serialdisk_$($versionNo)_sce_win-x64.zip
+        7z a -mx=9 serialdisk_$($versionNo)_cli_sce_win-x64.zip ./bin/Release/CLI/SCE/win-x64/*
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_win-x64.zip
 
-        7z a -mx=9 serialdisk_$($versionNo)_sce_win-x86.zip ./bin/Release/SCE/win-x86/*
-        appveyor PushArtifact serialdisk_$($versionNo)_sce_win-x86.zip
+        7z a -mx=9 serialdisk_$($versionNo)_cli_sce_win-x86.zip ./bin/Release/CLI/SCE/win-x86/*
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_win-x86.zip
 
-        7z a -mx=9 serialdisk_$($versionNo)_fde_win-x64.zip ./bin/Release/FDE/win-x64/*
-        appveyor PushArtifact serialdisk_$($versionNo)_fde_win-x64.zip
+        7z a -mx=9 serialdisk_$($versionNo)_cli_fde_win-x64.zip ./bin/Release/CLI/FDE/win-x64/*
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_fde_win-x64.zip
 
-        7z a -mx=9 serialdisk_$($versionNo)_fde_win-x86.zip ./bin/Release/FDE/win-x86/*
-        appveyor PushArtifact serialdisk_$($versionNo)_fde_win-x86.zip
+        7z a -mx=9 serialdisk_$($versionNo)_cli_fde_win-x86.zip ./bin/Release/CLI/FDE/win-x86/*
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_fde_win-x86.zip
     }
     
     elseif($isLinux)
     {
-        tar -czf serialdisk_$($versionNo)_sce_linux-x64.tar.gz -C ./bin/Release/SCE serialdisk-linux-x64
-        appveyor PushArtifact serialdisk_$($versionNo)_sce_linux-x64.tar.gz
+        tar -czf serialdisk_$($versionNo)_cli_sce_linux-x64.tar.gz -C ./bin/Release/CLI/SCE serialdisk-linux-x64
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_linux-x64.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_sce_linux-arm64.tar.gz -C ./bin/Release/SCE serialdisk-linux-arm64
-        appveyor PushArtifact serialdisk_$($versionNo)_sce_linux-arm64.tar.gz
+        tar -czf serialdisk_$($versionNo)_cli_sce_linux-arm64.tar.gz -C ./bin/Release/CLI/SCE serialdisk-linux-arm64
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_linux-arm64.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_sce_linux-arm32.tar.gz -C ./bin/Release/SCE serialdisk-linux-arm32
-        appveyor PushArtifact serialdisk_$($versionNo)_sce_linux-arm32.tar.gz
+        tar -czf serialdisk_$($versionNo)_cli_sce_linux-arm32.tar.gz -C ./bin/Release/CLI/SCE serialdisk-linux-arm32
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_linux-arm32.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_fde_linux-x64.tar.gz -C ./bin/Release/FDE serialdisk-linux-x64
-        appveyor PushArtifact serialdisk_$($versionNo)_fde_linux-x64.tar.gz
+        tar -czf serialdisk_$($versionNo)_cli_fde_linux-x64.tar.gz -C ./bin/Release/CLI/FDE serialdisk-linux-x64
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_fde_linux-x64.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_fde_linux-arm64.tar.gz -C ./bin/Release/FDE serialdisk-linux-arm64
-        appveyor PushArtifact serialdisk_$($versionNo)_fde_linux-arm64.tar.gz
+        tar -czf serialdisk_$($versionNo)_cli_fde_linux-arm64.tar.gz -C ./bin/Release/CLI/FDE serialdisk-linux-arm64
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_fde_linux-arm64.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_fde_linux-arm32.tar.gz -C ./bin/Release/FDE serialdisk-linux-arm32
-        appveyor PushArtifact serialdisk_$($versionNo)_fde_linux-arm32.tar.gz
+        tar -czf serialdisk_$($versionNo)_cli_fde_linux-arm32.tar.gz -C ./bin/Release/CLI/FDE serialdisk-linux-arm32
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_fde_linux-arm32.tar.gz
     }
     
     else
     {
-        tar -czf serialdisk_$($versionNo)_sce_macos-x64.tar.gz -C ./bin/Release/SCE serialdisk-macos-x64
-        appveyor PushArtifact serialdisk_$($versionNo)_sce_macos-x64.tar.gz
+        tar -czf serialdisk_$($versionNo)_cli_sce_macos-x64.tar.gz -C ./bin/Release/CLI/SCE serialdisk-macos-x64
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_macos-x64.tar.gz
         
-        tar -czf serialdisk_$($versionNo)_fde_macos-x64.tar.gz -C ./bin/Release/FDE serialdisk-macos-x64
-        appveyor PushArtifact serialdisk_$($versionNo)_fde_macos-x64.tar.gz        
+        tar -czf serialdisk_$($versionNo)_cli_fde_macos-x64.tar.gz -C ./bin/Release/CLI/FDE serialdisk-macos-x64
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_fde_macos-x64.tar.gz        
     }
 
 test_script:

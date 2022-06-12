@@ -1,0 +1,76 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Design.PreviewWith>
+      <DockPanel Classes="AppDockPanel">
+        <Border Classes="SectionContainer" DockPanel.Dock="Top">
+            <TextBlock>The rain in Spain falls mainly on the plain.</TextBlock>
+        </Border>
+
+        <Border Classes="SectionContainer" DockPanel.Dock="Top">
+          <Grid ShowGridLines="False" DockPanel.Dock="Top" Background="White">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="auto"></ColumnDefinition>
+              <ColumnDefinition Width="auto"></ColumnDefinition>
+              <ColumnDefinition Width="auto"></ColumnDefinition>
+              <ColumnDefinition Width="auto"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="auto"></RowDefinition>
+              <RowDefinition Height="auto"></RowDefinition>
+              <RowDefinition Height="auto"></RowDefinition>
+              <RowDefinition Height="auto"></RowDefinition>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Grid.Column="0" Classes="SettingsColumn" >Port</TextBlock>
+            <TextBlock Grid.Row="0" Grid.Column="1" Classes="SettingsColumn" Text="{Binding ComPortName}"></TextBlock>
+            <TextBlock Grid.Row="1" Grid.Column="0" Classes="SettingsColumn">Baud rate</TextBlock>
+            <TextBlock Grid.Row="1" Grid.Column="1" Classes="SettingsColumn" Text="{Binding BaudRate}" ></TextBlock>
+            <TextBlock Grid.Row="2" Grid.Column="0" Classes="SettingsColumn">Data bits</TextBlock>
+            <TextBlock Grid.Row="2" Grid.Column="1" Classes="SettingsColumn" Text="{Binding DataBits}"></TextBlock>
+            <TextBlock Grid.Row="3" Grid.Column="0" Classes="SettingsColumn">Parity</TextBlock>
+            <TextBlock Grid.Row="3" Grid.Column="1" Classes="SettingsColumn">None</TextBlock>
+
+            <TextBlock Grid.Row="0" Grid.Column="2" Classes="SettingsColumn">Stop bits</TextBlock>
+            <TextBlock Grid.Row="0" Grid.Column="3" Classes="SettingsColumn">1</TextBlock>
+            <TextBlock Grid.Row="1" Grid.Column="2" Classes="SettingsColumn">Compression</TextBlock>
+            <TextBlock Grid.Row="1" Grid.Column="3" Classes="SettingsColumn">Enabled</TextBlock>
+            <TextBlock Grid.Row="2" Grid.Column="2" Classes="SettingsColumn">Flow control</TextBlock>
+            <TextBlock Grid.Row="2" Grid.Column="3" Classes="SettingsColumn">XON/XOFF</TextBlock>
+          </Grid>
+        </Border>
+      </DockPanel>
+    </Design.PreviewWith>
+
+    <Style Selector="TextBlock">
+      <Setter Property="FontFamily" Value="/Assets/Fonts/NotoSans.ttf#Noto Sans"/>
+    </Style>
+
+	<Style Selector="TextBlock.SettingsLabel">
+		<Setter Property="Margin" Value="0,7,0,3"/>
+	</Style>
+
+	<Style Selector="TextBlock.SettingsLabelFirst">
+		<Setter Property="Margin" Value="0,0,0,3"/>
+	</Style>
+
+	<Style Selector="TextBlock.SettingsColumn">
+    <Setter Property="Margin" Value="5,5,10,0"/>
+  </Style>
+
+  <Style Selector="TextBox">
+      <!--<Setter Property="FontFamily" Value="Courier New"/>-->
+    </Style>
+
+  <Style Selector="DockPanel.AppDockPanel">
+    <Setter Property="Background" Value="#DDD"/>
+  </Style>
+
+  <Style Selector="Border">
+    <Setter Property="CornerRadius" Value="5"/>
+  </Style>
+
+  <Style Selector="Border.SectionContainer">
+    <Setter Property="Margin" Value="5"/>
+    <Setter Property="BorderBrush" Value="Gray"/>
+    <Setter Property="BorderThickness" Value="3"/>
+  </Style>
+</Styles>

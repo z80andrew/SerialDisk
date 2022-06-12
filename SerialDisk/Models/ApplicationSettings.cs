@@ -6,23 +6,17 @@ namespace AtariST.SerialDisk.Models
 {
     public class ApplicationSettings
     {
-        private string _logfileName;
-
         public SerialPortSettings SerialSettings { get; set; }
 
         public AtariDiskSettings DiskSettings { get; set; }
 
         public LoggingLevel LoggingLevel { get; set; }
 
-        public string LocalDirectoryPath{ get; set; }
+        public string LocalDirectoryPath { get; set; }
 
         public bool IsCompressionEnabled { get; set; }
 
-        public string LogFileName
-        {
-            get => _logfileName;
-            set => _logfileName = String.Join("_", value.Split(Path.GetInvalidFileNameChars()));
-        }
+        public string LogFileName { get; set; }
 
         public ApplicationSettings()
         {

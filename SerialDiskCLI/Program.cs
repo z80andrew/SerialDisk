@@ -1,9 +1,9 @@
-using AtariST.SerialDisk.Common;
-using AtariST.SerialDisk.Comms;
+﻿using AtariST.SerialDisk.Common;
 using AtariST.SerialDisk.Interfaces;
 using AtariST.SerialDisk.Models;
 using AtariST.SerialDisk.Storage;
 using AtariST.SerialDisk.Utilities;
+using AtariST.SerialDiskCLI.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -11,23 +11,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Ports;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.Serialization.Json;
 using System.Text;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using static AtariST.SerialDisk.Common.Constants;
 
-namespace AtariST.SerialDisk
+namespace AtariST.SerialDiskCLI
 {
-    public class SerialDisk
+    public static class Program
     {
         private static ApplicationSettings _applicationSettings;
-        private static Logger _logger;
         private static DiskParameters _diskParameters;
-        private static Disk _disk;
-        private static Serial _serial;
 
         private static string FormatEnumParams(Type enumerationType)
         {
@@ -108,66 +100,23 @@ namespace AtariST.SerialDisk
             return localDirectoryInfo.FullName;
         }
 
-        private static void ConfigureServices(IServiceCollection serviceCollection)
+        private static void ConfigureServices(IServiceCollection serviceCollection, ApplicationSettings settings)
         {
-            serviceCollection.AddSingleton<IDisk, Disk>();
-            serviceCollection.AddSingleton<ISerial, Serial>();
-            serviceCollection.AddSingleton<ILogger, Logger>();
+            serviceCollection
+                .AddSingleton<ILogger>(new Logger(_applicationSettings.LoggingLevel, _applicationSettings.LogFileName));
         }
 
-        private static Task ListenForConsoleKeypress()
+        private static void ApplyConfiguration(string[] args)
         {
-            return Task.Factory.StartNew(() =>
-            {
-                var keyInfo = new ConsoleKeyInfo();
-                do
-                {
-                    keyInfo = Console.ReadKey(true);
-                    if ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0 && keyInfo.Key == ConsoleKey.R) _disk.ReimportLocalDirectoryContents();
-
-                } while ((keyInfo.Modifiers & ConsoleModifiers.Control) == 0 || keyInfo.Key != ConsoleKey.X);
-            });
-        }
-
-        public static void Main(string[] args)
-        {
-            var versionMessage = "Serial Disk v" + Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
-
-            Console.WriteLine(versionMessage);
-           
-            #region Dependency injection
-
-            var serviceCollection = new ServiceCollection();
-            ConfigureServices(serviceCollection);
-            var serviceProvider = serviceCollection.BuildServiceProvider();
-
-            #endregion
-
-            #region Application settings
-
             try
             {
-                var resourceFiles = Assembly.GetExecutingAssembly().GetManifestResourceNames();
-                var defaultConfigName = $"Resources.default_config_{ OSHelper.OperatingSystemName.ToLower()}.json";
-                var defaultConfigResourceName = resourceFiles.Where(res => res.Contains(defaultConfigName)).Single();
-
-                using (var defaultConfigStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(defaultConfigResourceName))
-                {
-                    DataContractJsonSerializer appSettingsSerializer = new DataContractJsonSerializer(typeof(ApplicationSettings));
-                    _applicationSettings = (ApplicationSettings)appSettingsSerializer.ReadObject(defaultConfigStream);
-                }
+                _applicationSettings = ConfigurationHelper.GetDefaultApplicationSettings();
 
                 var configBuilder = new ConfigurationBuilder();
 
-                configBuilder.AddJsonFile(Constants.configFileName, true, false)
+                configBuilder.AddJsonFile(Common.Constants.configFileName, true, false)
                     .Build()
                     .Bind(_applicationSettings);
-
-                if (args.Any() && args.Where(arg => arg.ToLowerInvariant().StartsWith("--help")).Any())
-                {
-                    PrintUsage(_applicationSettings);
-                    return;
-                }
 
                 configBuilder.AddCommandLine(args, Constants.ConsoleParameterMappings)
                     .Build()
@@ -181,7 +130,17 @@ namespace AtariST.SerialDisk
                 Console.WriteLine($"Error parsing parameters: {parameterException.Message}");
                 return;
             }
+        }
 
+        public static void Main(string[] args)
+        {
+            if (args.Any() && args.Where(arg => arg.ToLowerInvariant().StartsWith("--help")).Any())
+            {
+                PrintUsage(_applicationSettings);
+                return;
+            }
+
+            ApplyConfiguration(args);
 
             if (String.IsNullOrEmpty(_applicationSettings.LocalDirectoryPath)
                 || !Directory.Exists(_applicationSettings.LocalDirectoryPath))
@@ -190,54 +149,23 @@ namespace AtariST.SerialDisk
                 return;
             }
 
-            #endregion
+            var serviceCollection = new ServiceCollection();
+            ConfigureServices(serviceCollection, _applicationSettings);
+            var serviceProvider = serviceCollection.BuildServiceProvider();
 
-            _logger = new Logger(_applicationSettings.LoggingLevel, _applicationSettings.LogFileName);
+            var logger = serviceProvider.GetRequiredService<ILogger>();
 
-            _logger.LogToFile(versionMessage);
+            var cliApplication = new SerialDiskCLI(_applicationSettings, _diskParameters, logger);
 
-            var json = JsonSerializer.Serialize(_applicationSettings, typeof(ApplicationSettings));
-
-            _logger.Log(json, LoggingLevel.All);
-
-            _logger.Log($"Operating system: {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture} {System.Runtime.InteropServices.RuntimeInformation.OSDescription}", LoggingLevel.Debug);
-            _logger.Log($"Framework version: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", LoggingLevel.Debug);
-
-            _diskParameters = new DiskParameters(_applicationSettings.LocalDirectoryPath, _applicationSettings.DiskSettings, _logger);
-
-            _logger.Log($"Importing local directory contents from {_applicationSettings.LocalDirectoryPath}", Constants.LoggingLevel.Debug);
-
-            _disk = new Disk(_diskParameters, _logger);
-
-            CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
-
-            _serial = new Serial(_applicationSettings.SerialSettings, _disk, _logger, cancelTokenSource, _applicationSettings.IsCompressionEnabled);
-
-            _logger.Log($"Baud rate:{_applicationSettings.SerialSettings.BaudRate} | Data bits:{_applicationSettings.SerialSettings.DataBits}" +
+            logger.Log($"Baud rate:{_applicationSettings.SerialSettings.BaudRate} | Data bits:{_applicationSettings.SerialSettings.DataBits}" +
                 $" | Parity:{_applicationSettings.SerialSettings.Parity} | Stop bits:{_applicationSettings.SerialSettings.StopBits} | Flow control:{_applicationSettings.SerialSettings.Handshake}", LoggingLevel.Info);
-            _logger.Log($"Using local directory {_applicationSettings.LocalDirectoryPath} as a {_applicationSettings.DiskSettings.DiskSizeMiB}MiB virtual disk", LoggingLevel.Info);
-            _logger.Log($"Compression: " + (_applicationSettings.IsCompressionEnabled ? "Enabled" : "Disabled"), LoggingLevel.Info);
-            _logger.Log($"Logging level: { _applicationSettings.LoggingLevel} ", LoggingLevel.Info);
+            logger.Log($"Using local directory {_applicationSettings.LocalDirectoryPath} as a {_applicationSettings.DiskSettings.DiskSizeMiB}MiB virtual disk", LoggingLevel.Info);
+            logger.Log($"Compression: " + (_applicationSettings.IsCompressionEnabled ? "Enabled" : "Disabled"), LoggingLevel.Info);
+            logger.Log($"Logging level: { _applicationSettings.LoggingLevel} ", LoggingLevel.Info);
 
             Console.WriteLine("Press Ctrl-X to quit, Ctrl-R to reimport local disk content.");
 
-            Task keyboardListener = ListenForConsoleKeypress();
-
-            try
-            {
-                keyboardListener.Wait(cancelTokenSource.Token);
-            }
-
-            catch (OperationCanceledException ex)
-            {
-                _logger.Log("Thread cancellation requested", LoggingLevel.Debug);
-                _logger.Log(ex.Message, LoggingLevel.Debug);
-            }
-
-            _serial.Dispose();
-            _logger.Dispose();
-
-            Console.ResetColor();
+            cliApplication.ListenForKeyboardCommand();
         }
     }
 }

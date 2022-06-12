@@ -7,7 +7,7 @@ namespace AtariST.SerialDisk.Common
         public const string DATE_FORMAT = "yyyy-MM-dd";
         public const string TIME_FORMAT = "HH:mm:ss";
 
-        public const string configFileName = "serialdisk.config";
+        public const string PROJECT_URL = @"https://www.github.com/z80andrew/serialdisk";
 
         public static Dictionary<string, string> ConsoleParameterMappings
         {

@@ -176,7 +176,10 @@ namespace AtariST.SerialDisk.Storage
 
                     else if (_clusterInfos[clusterIndex]?.LocalDirectoryContent?.LocalPath != null)
                     {
-                        if (firstSector == sector) _logger.Log($"Reading local file {_clusterInfos[clusterIndex].LocalDirectoryContent.LocalPath}", Constants.LoggingLevel.Info);
+                        if (firstSector == sector)
+                        {
+                            _logger.Log($"Reading local file {_clusterInfos[clusterIndex].LocalDirectoryContent.LocalPath}", Constants.LoggingLevel.Info);
+                        }
 
                         byte[] fileClusterDataBuffer = new byte[Parameters.BytesPerCluster];
 
@@ -197,7 +200,7 @@ namespace AtariST.SerialDisk.Storage
 
                         catch (Exception ex)
                         {
-                            _logger.LogException(ex, "Error reading sectors");
+                            _logger.LogException(ex, "Error reading disk sectors");
                         }
                     }
                 }
@@ -500,6 +503,7 @@ namespace AtariST.SerialDisk.Storage
                     if (localDirectoryContent == null)
                     {
                         _logger.Log($"Creating local file: {newContentPath}", Constants.LoggingLevel.Info);
+
                         File.Create(GetAbsolutePath(newContentPath)).Dispose();
 
                         var newLocalDirectoryContent = new LocalDirectoryContentInfo

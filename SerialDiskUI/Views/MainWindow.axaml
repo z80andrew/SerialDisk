@@ -1,0 +1,151 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:vm="using:SerialDiskUI.ViewModels"
+		xmlns:res="using:SerialDiskUI.Properties"
+        mc:Ignorable="d"
+        d:DesignWidth="380" d:DesignHeight="480"
+        Width="420" Height="388"
+        MinWidth="420" MinHeight="250"        
+        SizeToContent="Height"
+        x:Class="SerialDiskUI.Views.MainWindow"
+        Title="SerialDisk"
+		Icon="/Assets/SerialDisk.ico"
+		 SystemDecorations="Full"
+		WindowStartupLocation="CenterScreen">
+	
+	<Window.Styles>
+		<StyleInclude Source="/Assets/Styles/DefaultStyle.axaml" />
+	</Window.Styles>
+
+	<Design.DataContext>
+		<vm:MainWindowViewModel>
+			<x:Arguments>
+				<x:Null></x:Null>
+				<x:Null></x:Null>
+				<x:Null></x:Null>
+			</x:Arguments>
+		</vm:MainWindowViewModel>
+	</Design.DataContext>
+
+	<DockPanel Classes="AppDockPanel" LastChildFill="True">
+		<DockPanel DockPanel.Dock="Top">
+			<Menu DockPanel.Dock="Top">
+				<MenuItem Header="_File">
+					<MenuItem Header="_Exit" Command="{Binding ExitCommand}">
+					</MenuItem>
+				</MenuItem>
+
+				<MenuItem Header="_Tools">
+					<MenuItem Header="_Configuration" Command="{Binding ShowSettingsCommand}"/>
+				</MenuItem>
+
+				<MenuItem Header="_Help">
+					<MenuItem Header="_About" Command="{Binding ShowAboutCommand}" />
+				</MenuItem>
+			</Menu>
+		</DockPanel>
+
+		<Border Classes="SectionContainer" DockPanel.Dock="Top">
+				<DockPanel Margin="10">
+					<DockPanel DockPanel.Dock="Top">
+						<Image Height="28" Margin="0,0,5,0" Opacity="{Binding ReceiveIconOpacity}" 
+							   Source="/Assets/Images/data-in.png" ToolTip.Tip="Receiving"/>
+						<Image Height="28" Margin="0,0,5,0" Opacity="{Binding SendIconOpacity}" 
+							   Source="/Assets/Images/data-out.png" ToolTip.Tip="Sending"/>
+
+						<Border DockPanel.Dock="Top" BorderThickness="4" BorderBrush="Gray">
+							<Panel>
+								<ProgressBar Name="TransferProgressBar" Height="25"
+											Maximum="{Binding TotalBytes}" Value="{Binding TransferredBytes}"
+											Foreground="#00DD00" Background="#BBB" />
+								<TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"
+											FontSize="18" Text="{Binding TransferPercent}" />
+							</Panel>
+						</Border>
+					</DockPanel>
+
+					<DockPanel DockPanel.Dock="Top" Margin="0,10,0,0">
+						<Button Margin="0,0,30,0" Command="{Binding StartSerialDiskCommand}" >
+							<ContentControl>
+								<Panel>
+									<Image ToolTip.Tip="Start virtual disk" Height="18" Source="/Assets/Images/play.png" IsVisible="{Binding !SerialPortOpen}"/>
+									<Image ToolTip.Tip="Stop virtual disk" Height="18" Source="/Assets/Images/square.png" IsVisible="{Binding SerialPortOpen}"/>
+								</Panel>
+							</ContentControl>
+						</Button>
+						<Border BorderBrush="White" BorderThickness="2" VerticalAlignment="Center">
+							<DockPanel Background="White">
+								<TextBlock Margin="5,0,0,0" Text="{Binding StatusText}"></TextBlock>
+							</DockPanel>
+						</Border>
+					</DockPanel>
+				</DockPanel>
+		</Border>
+
+		<!-- Center area -->
+		<Border Classes="SectionContainer" DockPanel.Dock="Top">
+			<StackPanel Margin="0">
+				<TextBlock Padding="10" Background="White">Virtual disk</TextBlock>
+				<DockPanel Margin="10">
+					<Button ToolTip.Tip="Open virtual disk folder in system explorer" Command="{Binding ShowVirtualDiskFolderCommand}" VerticalContentAlignment="Center" >
+						<Image Height="18" Source="/Assets/Images/folder.png"/>
+					</Button>
+					<Panel>
+						<Panel Background="Transparent" IsEnabled="{Binding !SerialPortOpen}" ZIndex="100" ToolTip.Tip="Refresh virtual disk contents from folder (unavailable when virtual disk stopped)"></Panel>
+						<Button ToolTip.Tip="Refresh virtual disk contents from folder" Command="{Binding RefreshVirtualDiskFolderCommand}" VerticalContentAlignment="Center" 
+								IsEnabled="{Binding SerialPortOpen}">
+							<Image Opacity="{Binding ReloadIconOpacity}" Height="18" Source="/Assets/Images/refresh.png"/>
+						</Button>
+					</Panel>
+					<TextBlock TextTrimming="CharacterEllipsis" FontSize="18" Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding VirtualDiskFolder}"/>
+				</DockPanel>
+				<Panel Margin="0,10,0,0" IsVisible="False">
+					<ProgressBar Name="DiskUsageBar" Height="25"
+								Maximum="32768" Value="8192"
+								Foreground="#00DD00" Background="#BBB" />
+					<TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"
+								FontSize="18" Text="25% used of 256MiB" />
+				</Panel>
+				</StackPanel>
+		</Border>
+
+		<!-- Log area -->
+		<Border Name="LogBorder" Classes="SectionContainer"
+				DockPanel.Dock="Top" IsVisible="{Binding IsLogDisplayEnabled}">
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto"></RowDefinition>
+					<RowDefinition></RowDefinition>
+					<RowDefinition Height="Auto"></RowDefinition>
+				</Grid.RowDefinitions>
+
+				<StackPanel Grid.Row="0" Orientation="Horizontal" Background="White">
+					<TextBlock Padding="10">Log</TextBlock>
+					<Button Margin="5,5,5,5" ToolTip.Tip="Clear all log messages"  Height="NaN" Command="{Binding ClearLogMessagesCommand}">
+						<Image Height="18" Source="/Assets/Images/clear-log.png"/>
+					</Button>
+				</StackPanel>
+
+				<ScrollViewer Name="LogScrollViewer" Grid.Row="1"
+							  VerticalScrollBarVisibility="Auto"
+							  HorizontalScrollBarVisibility="Auto"
+							  AllowAutoHide="False"
+							  Padding="5">
+					<ItemsControl Items="{Binding LogItems}" Margin="5,5,12,12">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<StackPanel Orientation="Horizontal">
+									<TextBlock Text="{Binding TimeStampTime}" Margin="0,0,5,0"/>
+									<TextBlock Text="{Binding Message}"/>
+								</StackPanel>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</ScrollViewer>
+			</Grid>
+		</Border>
+
+	</DockPanel>
+</Window>

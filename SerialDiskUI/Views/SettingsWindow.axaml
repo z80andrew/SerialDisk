@@ -1,0 +1,167 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:SerialDiskUI.ViewModels"
+		x:Class="SerialDiskUI.Views.SettingsWindow"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="550"
+        Width="400" Height="400"
+        WindowStartupLocation="CenterOwner"
+        Title="Configuration"
+		Icon="/Assets/config.ico"
+        SizeToContent="Height"
+		CanResize="False">
+
+	<Window.Styles>
+		<StyleInclude Source="/Assets/Styles/DefaultStyle.axaml" />
+
+		<Style Selector="TabItem">
+			<Setter Property="TextBlock.FontSize" Value="25"/>
+			<Setter Property="Margin" Value="10,0,0,0"/>
+		</Style>
+	</Window.Styles>
+
+	<Design.DataContext>
+		<vm:SettingsWindowViewModel/>
+	</Design.DataContext>
+
+	<DockPanel Classes="AppDockPanel">
+		<TabControl DockPanel.Dock="Top" Grid.IsSharedSizeScope="True">
+			<TabItem Header="Serial" IsSelected="True">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition SharedSizeGroup="SettingsGrid"/>
+					</Grid.RowDefinitions>
+					<Border Classes="SectionContainer">
+						<StackPanel Margin="10">
+							<TextBlock Classes="SettingsLabelFirst">COM port</TextBlock>
+							<StackPanel Orientation="Horizontal">
+								<ComboBox ToolTip.Tip="Serial port to use for communication" Items="{Binding COMPortChoices}" SelectedItem="{Binding SelectedCOMPort}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Text="{Binding Key}"/>
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
+
+								<TextBox Text="{Binding OtherCOMPortName}" IsVisible="{Binding IsCOMPortTextBoxVisible}"></TextBox>
+							</StackPanel>
+
+							<!-- Teeeechnically this isn't baud rate (hence clarification in the tooltip), but label kept for consistency with C# and Atari nomenclature -->
+							<TextBlock Classes="SettingsLabel">Baud rate</TextBlock>
+							<ComboBox ToolTip.Tip="Data transmission rate in bits per second" Items="{Binding BaudRateChoices}" SelectedItem="{Binding SelectedBaud}">
+								<ComboBox.ItemTemplate>
+									<DataTemplate>
+										<TextBlock Text="{Binding Key}"/>
+									</DataTemplate>
+								</ComboBox.ItemTemplate>
+							</ComboBox>
+
+							<TextBlock Classes="SettingsLabel">Parity</TextBlock>
+							<ComboBox ToolTip.Tip="Parity to use for simple error-checking" Items="{Binding ParityChoices}" SelectedItem="{Binding SelectedParity}">
+								<ComboBox.ItemTemplate>
+									<DataTemplate>
+										<TextBlock Text="{Binding Key}"/>
+									</DataTemplate>
+								</ComboBox.ItemTemplate>
+							</ComboBox>
+
+							<TextBlock Classes="SettingsLabel">Data bits</TextBlock>
+							<ComboBox ToolTip.Tip="Number of data bits to send per transmission unit" Items="{Binding DataBitsChoices}" SelectedItem="{Binding SelectedDataBits}">
+								<ComboBox.ItemTemplate>
+									<DataTemplate>
+										<TextBlock Text="{Binding Key}"/>
+									</DataTemplate>
+								</ComboBox.ItemTemplate>
+							</ComboBox>
+
+							<TextBlock Classes="SettingsLabel">Stop bits</TextBlock>
+							<ComboBox ToolTip.Tip="Number of bits to use to signal end of data transmission" Items="{Binding StopBitsChoices}" SelectedItem="{Binding SelectedStopBits}">
+								<ComboBox.ItemTemplate>
+									<DataTemplate>
+										<TextBlock Text="{Binding Key}"/>
+									</DataTemplate>
+								</ComboBox.ItemTemplate>
+							</ComboBox>
+
+							<TextBlock Classes="SettingsLabel">Flow control</TextBlock>
+							<ComboBox ToolTip.Tip="Data flow control method" Items="{Binding HandshakeChoices}" SelectedItem="{Binding SelectedHandshake}">
+								<ComboBox.ItemTemplate>
+									<DataTemplate>
+										<TextBlock Text="{Binding Key}"/>
+									</DataTemplate>
+								</ComboBox.ItemTemplate>
+							</ComboBox>
+
+							<CheckBox ToolTip.Tip="Enable or disable data compression when sending and receiving over serial." Margin="0,7,0,0" IsChecked="{Binding IsCompressionEnabled}">Data compression</CheckBox>
+						</StackPanel>
+					</Border>
+				</Grid>
+			</TabItem>
+			<TabItem Header="Disk" IsSelected="False">
+				<Grid >
+					<Grid.RowDefinitions>
+						<RowDefinition SharedSizeGroup="SettingsGrid"/>
+					</Grid.RowDefinitions>
+					<Border Classes="SectionContainer">
+						<StackPanel Margin="10">
+							<TextBlock Classes="SettingsLabelFirst" Text="Virtual disk folder"/>
+							<DockPanel>
+								<Button DockPanel.Dock="Right" Margin="5,0,0,0" Command="{Binding ChooseFolderCommand}">Browse...</Button>
+								<TextBox ToolTip.Tip="PC folder to use as a virtual disk" FontSize="16" Name="SelectedFolderTextBox" VerticalAlignment="Center"
+										 Text="{Binding SelectedFolder}"></TextBox>
+							</DockPanel>
+							<TextBlock Classes="SettingsLabel" Margin="0,10,0,0">Virtual disk size</TextBlock>
+								<Slider Minimum="1" Maximum="512" Orientation="Horizontal"
+										Ticks="32,64,128,256,512" IsSnapToTickEnabled="True"
+										Width="NaN" Value="{Binding VirtualDiskSizeMB}"
+										Margin="0,-13,0,-3"/>
+								<StackPanel Orientation="Horizontal" Spacing="5">
+									<TextBox Text="{Binding VirtualDiskSizeMB}" Focusable="False"
+											 IsReadOnly="True">
+
+									</TextBox>
+									<TextBlock VerticalAlignment="Center">MiB</TextBlock>
+								</StackPanel>
+						</StackPanel>
+					</Border>
+				</Grid>
+			</TabItem>
+
+			<TabItem Header="Logging" IsSelected="False">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition SharedSizeGroup="SettingsGrid"/>
+					</Grid.RowDefinitions>
+					<Border Classes="SectionContainer">
+						<StackPanel Margin="10">
+							<CheckBox ToolTip.Tip="Show or hide log messages on the main application window" IsChecked="{Binding IsLogDisplayEnabled}">Show log</CheckBox>
+							<CheckBox ToolTip.Tip="Enable or disable writing log messages to a file" IsChecked="{Binding IsLogFileEnabled}">Log to file</CheckBox>
+
+							<DockPanel>
+								<Button DockPanel.Dock="Right" Command="{Binding ChooseFileCommand}"
+										Margin="5,0,0,0" IsEnabled="{Binding IsLogFileEnabled}">Browse...</Button>
+								<TextBox ToolTip.Tip="File to write log messages to" DockPanel.Dock="Left" VerticalAlignment="Center" Text="{Binding SelectedFile}"
+										 IsEnabled="{Binding IsLogFileEnabled}"></TextBox>
+							</DockPanel>
+
+							<TextBlock Classes="SettingsLabel">Logging level</TextBlock>
+							<ComboBox ToolTip.Tip="Log message detail level, from Info (lowest) to All (highest)" Items="{Binding LogLevelChoices}" SelectedItem="{Binding SelectedLogLevel}">
+								<ComboBox.ItemTemplate>
+									<DataTemplate>
+										<TextBlock Text="{Binding Key}"/>
+									</DataTemplate>
+								</ComboBox.ItemTemplate>
+							</ComboBox>
+						</StackPanel>
+					</Border>
+				</Grid>
+			</TabItem>
+		</TabControl>
+
+		<StackPanel Margin="15,0,0,10" Orientation="Horizontal" Spacing="5">
+			<Button Command="{Binding ApplySettingsCommand}" DockPanel.Dock="Left">Save</Button>
+			<Button Command="{Binding CloseSettingsCommand}" DockPanel.Dock="Right">Cancel</Button>
+		</StackPanel>
+	</DockPanel>
+</Window>
