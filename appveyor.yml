@@ -20,6 +20,8 @@ build_script:
     
     if($isWindows)
     {
+        # CLI version
+        # -----------
         # Publish and package Self Contained Executables        
         dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r win-x64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/win-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
         dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r win-x86 -c Release --self-contained true --output ./bin/Release/CLI/SCE/win-x86 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
@@ -27,6 +29,16 @@ build_script:
         # Publish and package Framework Dependant Executables        
         dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r win-x64 -c Release --self-contained false --output ./bin/Release/CLI/FDE/win-x64
         dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r win-x86 -c Release --self-contained false --output ./bin/Release/CLI/FDE/win-x86
+        
+        # UI version
+        # ----------
+        # Publish and package Self Contained Executables        
+        dotnet publish SerialDiskUI/SerialDiskUI.csproj -r win-x64 -c Release --self-contained true --output ./bin/Release/UI/SCE/win-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
+        dotnet publish SerialDiskUI/SerialDiskUI.csproj -r win-x86 -c Release --self-contained true --output ./bin/Release/UI/SCE/win-x86 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
+        
+        # Publish and package Framework Dependant Executables        
+        dotnet publish SerialDiskUI/SerialDiskUI.csproj -r win-x64 -c Release --self-contained false --output ./bin/Release/UI/FDE/win-x64
+        dotnet publish SerialDiskUI/SerialDiskUI.csproj -r win-x86 -c Release --self-contained false --output ./bin/Release/UI/FDE/win-x86
     }
 
     elseif($isLinux)
@@ -57,6 +69,8 @@ on_success:
     
     if($isWindows)
     {
+        # CLI version
+        
         7z a -mx=9 serialdisk_$($versionNo)_cli_sce_win-x64.zip ./bin/Release/CLI/SCE/win-x64/*
         appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_win-x64.zip
 
@@ -68,6 +82,21 @@ on_success:
 
         7z a -mx=9 serialdisk_$($versionNo)_cli_fde_win-x86.zip ./bin/Release/CLI/FDE/win-x86/*
         appveyor PushArtifact serialdisk_$($versionNo)_cli_fde_win-x86.zip
+        
+        # UI Version
+
+        7z a -mx=9 serialdisk_$($versionNo)_ui_sce_win-x64.zip ./bin/Release/UI/SCE/win-x64/*
+        appveyor PushArtifact serialdisk_$($versionNo)_ui_sce_win-x64.zip
+
+        7z a -mx=9 serialdisk_$($versionNo)_ui_sce_win-x86.zip ./bin/Release/UI/SCE/win-x86/*
+        appveyor PushArtifact serialdisk_$($versionNo)_ui_sce_win-x86.zip
+
+        7z a -mx=9 serialdisk_$($versionNo)_ui_fde_win-x64.zip ./bin/Release/UI/FDE/win-x64/*
+        appveyor PushArtifact serialdisk_$($versionNo)_ui_fde_win-x64.zip
+
+        7z a -mx=9 serialdisk_$($versionNo)_ui_fde_win-x86.zip ./bin/Release/UI/FDE/win-x86/*
+        appveyor PushArtifact serialdisk_$($versionNo)_ui_fde_win-x86.zip        
+        
     }
     
     elseif($isLinux)
