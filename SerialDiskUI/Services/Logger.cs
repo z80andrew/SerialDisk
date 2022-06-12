@@ -45,6 +45,8 @@ namespace SerialDiskUI.Services
 
                 if (!string.Equals(_logFilePath, _fileStream?.Name))
                 {
+                    if(_fileStream != null) _fileStream.Dispose();
+
                     if (File.Exists(_logFilePath)) _fileStream = new FileStream(_logFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
                     else _fileStream = new FileStream(_logFilePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite);
                 }

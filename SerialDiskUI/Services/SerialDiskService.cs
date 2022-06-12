@@ -34,7 +34,15 @@ namespace SerialDiskUI.Services
 
             catch (Exception ex)
             {
-                statusService.SetStatus(Status.StatusKey.Error, ex.Message);
+                switch (ex.Source)
+                {
+                    case "System.IO.Ports":
+                        statusService.SetStatus(Status.StatusKey.Error, $"could not open serial port - {ex.Message}");
+                        break;
+                    default:
+                        statusService.SetStatus(Status.StatusKey.Error, ex.Message);
+                        break;
+                }
             }
         }
 

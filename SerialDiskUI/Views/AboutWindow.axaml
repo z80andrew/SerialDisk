@@ -8,6 +8,7 @@
 		Width="400"
 		Height="250"
 		Title="About"
+		CanResize="False"
 		Icon="/Assets/info.ico"
 		WindowStartupLocation="CenterOwner">
 	
@@ -28,7 +29,7 @@
 	<DockPanel Classes="AppDockPanel" LastChildFill="True">
 		<Border Classes="SectionContainer" DockPanel.Dock="Top">
 			<DockPanel HorizontalAlignment="Center">
-				<Border BorderBrush="White" BorderThickness="3" DockPanel.Dock="Top">
+				<Border BorderBrush="White" DockPanel.Dock="Top">
 					<DockPanel DockPanel.Dock="Top" Background="White">
 						<TextBlock DockPanel.Dock="Right" VerticalAlignment="Bottom"
 							   Margin="0,0,10,0">v3.0β</TextBlock>
