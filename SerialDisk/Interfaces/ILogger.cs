@@ -11,7 +11,7 @@ namespace AtariST.SerialDisk.Interfaces
         LoggingLevel LogLevel { get; set; }
         void Log(string message, Constants.LoggingLevel messageLogLevel);
         void LogException(Exception exception, string message = "");
-        void SetLogFile(string folderPath, string fileName);
+        void SetLogFile(string filePath);
         void UnsetLogFile();
     }
 }

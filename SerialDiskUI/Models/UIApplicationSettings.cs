@@ -26,9 +26,8 @@ namespace SerialDiskUI.Models
         {
             IsLogDisplayEnabled = false;
             IsLogFileEnabled = false;
-            
-            var logfile = !string.IsNullOrEmpty(appSettings.LogFileName) ? appSettings.LogFileName : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", "serialdisk.log");
-            LogFileName = logfile;
+
+            LogFileName = appSettings.LogFileName;
 
             LocalDirectorySizeInBytes = 0;
             MainWindowHeight = -1;

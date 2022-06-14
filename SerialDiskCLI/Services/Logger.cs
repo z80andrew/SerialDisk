@@ -16,17 +16,13 @@ namespace AtariST.SerialDiskCLI.Services
         public LoggingLevel LogLevel { get; set; }
         public LogMessage LogMessage { get; private set; }
 
-        public Logger(LoggingLevel loggingLevel, string logFileName = null)
+        public Logger(LoggingLevel loggingLevel, string logFilePath = null)
         {
             LogLevel = loggingLevel;
 
-            if (logFileName != null)
+            if (logFilePath != null)
             {
-                string folderPath = Path.GetDirectoryName(AppContext.BaseDirectory);
-
-                string logFolderPath = Path.Combine(folderPath, "log");
-
-                SetLogFile(logFolderPath, logFileName);
+                SetLogFile(logFilePath);
             }
         }
 
@@ -78,21 +74,22 @@ namespace AtariST.SerialDiskCLI.Services
             if (_fileStream != null) _fileStream.Dispose();
         }
 
-        public void SetLogFile(string folderPath, string fileName)
+        public void SetLogFile(string logFilePath)
         {
-            _logFilePath = Path.Combine(folderPath, fileName);
-
-            try
+            if (!string.IsNullOrEmpty(logFilePath))
             {
-                if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
+                try
+                {
+                    if (File.Exists(logFilePath)) _fileStream = new FileStream(logFilePath, FileMode.Append);
+                    else _fileStream = new FileStream(logFilePath, FileMode.OpenOrCreate);
 
-                if (File.Exists(_logFilePath)) _fileStream = new FileStream(_logFilePath, FileMode.Append);
-                else _fileStream = new FileStream(_logFilePath, FileMode.OpenOrCreate);
-            }
+                    _logFilePath = logFilePath;
+                }
 
-            catch (Exception logException)
-            {
-                LogException(logException, $"ERROR: Unable to create log file {_logFilePath}");
+                catch (Exception logException)
+                {
+                    LogException(logException, $"ERROR: Unable to create log file {logFilePath}");
+                }
             }
         }
 

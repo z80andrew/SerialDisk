@@ -23,44 +23,51 @@ namespace SerialDiskUI.Services
             private set => this.RaiseAndSetIfChanged(ref _logMessage, value);
         }
 
-        public Logger(LoggingLevel loggingLevel, string logFileName = null)
+        public Logger(LoggingLevel loggingLevel, string logFilePath = null)
         {
             LogLevel = loggingLevel;
 
-            if (logFileName != null)
+            if (logFilePath != null)
             {
-                string folderPath = Path.GetDirectoryName(AppContext.BaseDirectory);
-                string logFolderPath = Path.Combine(folderPath, "log");
-                SetLogFile(logFolderPath, logFileName);
+                try
+                {
+                    SetLogFile(logFilePath);
+                }
+
+                catch(Exception ex)
+                {
+                    LogException(ex, LogMessage.Message);
+                }
             }
         }
 
-        public void SetLogFile(string folderPath, string fileName)
+        public void SetLogFile(string logFilePath)
         {
-            try
+            if (!string.IsNullOrEmpty(logFilePath))
             {
-                if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
-
-                _logFilePath = Path.Combine(folderPath, fileName);
-
-                if (!string.Equals(_logFilePath, _fileStream?.Name))
+                try
                 {
-                    if(_fileStream != null) _fileStream.Dispose();
+                    if (!string.Equals(logFilePath, _fileStream?.Name))
+                    {
+                        if (_fileStream != null) _fileStream.Dispose();
 
-                    if (File.Exists(_logFilePath)) _fileStream = new FileStream(_logFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
-                    else _fileStream = new FileStream(_logFilePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite);
+                        if (File.Exists(logFilePath)) _fileStream = new FileStream(logFilePath, FileMode.Append);
+                        else _fileStream = new FileStream(logFilePath, FileMode.OpenOrCreate);
+
+                        _logFilePath = logFilePath;
+                    }
                 }
-            }
 
-            catch (Exception logException)
-            {
-                var logText = new StringBuilder()
-                    .AppendLine("WARNING! Unable to create log file.")
-                    .AppendLine(logException.Message);
+                catch (Exception logException)
+                {
+                    var logText = new StringBuilder()
+                        .AppendLine($"Unable to set log file path {logFilePath}")
+                        .AppendLine(logException.Message);
 
-                var logMessage = new LogMessage(LoggingLevel.Info, logText.ToString(), DateTime.Now);
+                    LogMessage = new LogMessage(LoggingLevel.Info, logText.ToString(), DateTime.Now);
 
-                throw logException;
+                    throw logException;
+                }
             }
         }
 

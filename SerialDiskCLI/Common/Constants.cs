@@ -8,6 +8,6 @@ namespace AtariST.SerialDiskCLI.Common
 {
     internal class Constants
     {
-        public const string configFileName = "serialdisk.config";
+        public const string CONFIG_FILE_NAME = "serialdisk.config";
     }
 }

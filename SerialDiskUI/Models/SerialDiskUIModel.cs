@@ -37,11 +37,11 @@ namespace SerialDiskUI.Models
             set => this.RaiseAndSetIfChanged(ref _isLogFileEnabled, value);
         }
 
-        private string _logFileName;
-        public string LogFileName
+        private string _logFilePath;
+        public string LogFilePath
         {
-            get => _logFileName;
-            set => this.RaiseAndSetIfChanged(ref _logFileName, value);
+            get => _logFilePath;
+            set => this.RaiseAndSetIfChanged(ref _logFilePath, value);
         }
 
         private string _comPortName;
@@ -114,7 +114,7 @@ namespace SerialDiskUI.Models
                 VirtualDiskFolder = settings.LocalDirectoryPath;
 
                 LoggingLevel = settings.LoggingLevel;
-                LogFileName = settings.LogFileName;
+                LogFilePath = settings.LogFileName;
 
                 IsOutputCompressionEnabled = settings.IsCompressionEnabled;
 

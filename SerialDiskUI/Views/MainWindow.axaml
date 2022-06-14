@@ -12,9 +12,9 @@
         x:Class="SerialDiskUI.Views.MainWindow"
         Title="SerialDisk"
 		Icon="/Assets/SerialDisk.ico"
-		 SystemDecorations="Full"
+		SystemDecorations="Full"
 		WindowStartupLocation="CenterScreen">
-	
+
 	<Window.Styles>
 		<StyleInclude Source="/Assets/Styles/DefaultStyle.axaml" />
 	</Window.Styles>
@@ -51,9 +51,9 @@
 				<DockPanel Margin="10">
 					<DockPanel DockPanel.Dock="Top">
 						<Image Height="28" Margin="0,0,5,0" Opacity="{Binding ReceiveIconOpacity}" 
-							   Source="/Assets/Images/data-in.png" ToolTip.Tip="Receiving"/>
+							   Source="/Assets/Icons/download_rounded_128.png" ToolTip.Tip="Receiving"/>
 						<Image Height="28" Margin="0,0,5,0" Opacity="{Binding SendIconOpacity}" 
-							   Source="/Assets/Images/data-out.png" ToolTip.Tip="Sending"/>
+							   Source="/Assets/Icons/upload_rounded_128.png" ToolTip.Tip="Sending"/>
 
 						<Border DockPanel.Dock="Top" BorderThickness="4" BorderBrush="Gray">
 							<Panel>
@@ -70,8 +70,8 @@
 						<Button Margin="0,0,30,0" Command="{Binding StartSerialDiskCommand}" >
 							<ContentControl>
 								<Panel>
-									<Image ToolTip.Tip="Start virtual disk" Height="18" Source="/Assets/Images/play.png" IsVisible="{Binding !SerialPortOpen}"/>
-									<Image ToolTip.Tip="Stop virtual disk" Height="18" Source="/Assets/Images/square.png" IsVisible="{Binding SerialPortOpen}"/>
+									<Image ToolTip.Tip="Start virtual disk" Height="18" Source="/Assets/Icons/play._128.png" IsVisible="{Binding !SerialPortOpen}"/>
+									<Image ToolTip.Tip="Stop virtual disk" Height="18" Source="/Assets/Icons/stop_128.png" IsVisible="{Binding SerialPortOpen}"/>
 								</Panel>
 							</ContentControl>
 						</Button>
@@ -90,13 +90,13 @@
 				<TextBlock Padding="10" Background="White">Virtual disk</TextBlock>
 				<DockPanel Margin="10">
 					<Button ToolTip.Tip="Open virtual disk folder in system explorer" Command="{Binding ShowVirtualDiskFolderCommand}" VerticalContentAlignment="Center" >
-						<Image Height="18" Source="/Assets/Images/folder.png"/>
+						<Image Height="18" Source="/Assets/Icons/folder_128.png"/>
 					</Button>
 					<Panel>
 						<Panel Background="Transparent" IsEnabled="{Binding !SerialPortOpen}" ZIndex="100" ToolTip.Tip="Refresh virtual disk contents from folder (unavailable when virtual disk stopped)"></Panel>
 						<Button ToolTip.Tip="Refresh virtual disk contents from folder" Command="{Binding RefreshVirtualDiskFolderCommand}" VerticalContentAlignment="Center" 
 								IsEnabled="{Binding SerialPortOpen}">
-							<Image Opacity="{Binding ReloadIconOpacity}" Height="18" Source="/Assets/Images/refresh.png"/>
+							<Image Opacity="{Binding ReloadIconOpacity}" Height="18" Source="/Assets/Icons/rotate-right_128.png"/>
 						</Button>
 					</Panel>
 					<TextBlock TextTrimming="CharacterEllipsis" FontSize="18" Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding VirtualDiskFolder}"/>
@@ -123,8 +123,8 @@
 
 				<StackPanel Grid.Row="0" Orientation="Horizontal" Background="White">
 					<TextBlock Padding="10">Log</TextBlock>
-					<Button Margin="5,5,5,5" ToolTip.Tip="Clear all log messages"  Height="NaN" Command="{Binding ClearLogMessagesCommand}">
-						<Image Height="18" Source="/Assets/Images/clear-log.png"/>
+					<Button Margin="0,0,0,0" ToolTip.Tip="Clear all log messages"  Height="NaN" Command="{Binding ClearLogMessagesCommand}">
+						<Image Height="18" Source="/Assets/Icons/broom_128.png"/>
 					</Button>
 				</StackPanel>
 

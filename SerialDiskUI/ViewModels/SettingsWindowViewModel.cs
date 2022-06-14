@@ -196,7 +196,7 @@ namespace SerialDiskUI.ViewModels
             IsLogDisplayEnabled = settings.IsLogDisplayEnabled;
             SelectedLogLevel = LogLevelChoices.Where(x => x.Value == settings.LoggingLevel).FirstOrDefault();
             IsLogFileEnabled = settings.IsLogFileEnabled;
-            SelectedFile = settings.LogFileName;
+            SelectedFile = settings.LogFilePath;
 
             IsCompressionEnabled = _settings.IsOutputCompressionEnabled;
         }
@@ -229,7 +229,7 @@ namespace SerialDiskUI.ViewModels
                 _settings.IsLogDisplayEnabled = _settings.ApplicationSettings.IsLogDisplayEnabled = IsLogDisplayEnabled;
                 _settings.LoggingLevel = _settings.ApplicationSettings.LoggingLevel = SelectedLogLevel.Value;
                 _settings.IsLogFileEnabled = _settings.ApplicationSettings.IsLogFileEnabled = IsLogFileEnabled;
-                _settings.LogFileName = _settings.ApplicationSettings.LogFileName = SelectedFile;
+                _settings.LogFilePath = _settings.ApplicationSettings.LogFileName = SelectedFile;
 
                 _settings.IsOutputCompressionEnabled = _settings.ApplicationSettings.IsCompressionEnabled = IsCompressionEnabled;
 

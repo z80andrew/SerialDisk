@@ -8,6 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="serialdisk.config" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="serialdisk.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SerialDisk\SerialDisk.csproj" />
   </ItemGroup>
 

@@ -75,9 +75,12 @@ namespace SerialDiskUI
             {
                 var configBuilder = new ConfigurationBuilder();
 
-                configBuilder.AddJsonFile(Common.Constants.ConfigFilePath, true, false)
-                    .Build()
-                    .Bind(appSettings);
+                if (File.Exists(Common.Constants.ConfigFilePath))
+                {
+                    configBuilder.AddJsonFile(Common.Constants.ConfigFilePath, true, false)
+                        .Build()
+                        .Bind(appSettings);
+                }
 
                 configBuilder.AddCommandLine(args, AtariST.SerialDisk.Common.Constants.ConsoleParameterMappings)
                     .Build()

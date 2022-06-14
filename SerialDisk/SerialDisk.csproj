@@ -31,7 +31,6 @@
     <None Remove="Atari\SERDISK.CFG" />
     <None Remove="Atari\SERDISK3.TOS" />
     <None Remove="Resources\default_config_osx.json" />
-    <None Remove="serialdisk.config" />
   </ItemGroup>
 
   <ItemGroup>
@@ -56,9 +55,6 @@
     <EmbeddedResource Include="Resources\default_config_windows.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
-    <Content Include="serialdisk.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>

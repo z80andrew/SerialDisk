@@ -114,9 +114,12 @@ namespace AtariST.SerialDiskCLI
 
                 var configBuilder = new ConfigurationBuilder();
 
-                configBuilder.AddJsonFile(Common.Constants.configFileName, true, false)
-                    .Build()
-                    .Bind(_applicationSettings);
+                if (File.Exists(Common.Constants.CONFIG_FILE_NAME))
+                {
+                    configBuilder.AddJsonFile(Common.Constants.CONFIG_FILE_NAME, true, false)
+                        .Build()
+                        .Bind(_applicationSettings);
+                }
 
                 configBuilder.AddCommandLine(args, Constants.ConsoleParameterMappings)
                     .Build()

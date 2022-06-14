@@ -191,7 +191,7 @@ namespace SerialDiskUI.ViewModels
             {
                 try
                 {
-                    if (isLogEnabled) logger.SetLogFile(Path.GetDirectoryName(_model.LogFileName), Path.GetFileName(_model.LogFileName));
+                    if (isLogEnabled) logger.SetLogFile(_model.LogFilePath);
                     else logger.UnsetLogFile();
                 }
 
@@ -206,11 +206,11 @@ namespace SerialDiskUI.ViewModels
                 logger.LogLevel = logLevel;
             });
 
-            _model.WhenAnyValue(m => m.LogFileName).Subscribe(logFile =>
+            _model.WhenAnyValue(m => m.LogFilePath).Subscribe(logFile =>
             {
                 try
                 {
-                    if (_model.IsLogFileEnabled) logger.SetLogFile(Path.GetDirectoryName(_model.LogFileName), Path.GetFileName(_model.LogFileName));
+                    if (_model.IsLogFileEnabled) logger.SetLogFile(_model.LogFilePath);
                 }
 
                 catch (Exception logException)
