@@ -93,7 +93,7 @@
 						<Image Height="18" Source="/Assets/Icons/folder_128.png"/>
 					</Button>
 					<Panel>
-						<Panel Background="Transparent" IsEnabled="{Binding !SerialPortOpen}" ZIndex="100" ToolTip.Tip="Refresh virtual disk contents from folder (unavailable when virtual disk stopped)"></Panel>
+						<Panel Background="Transparent" IsEnabled="{Binding !SerialPortOpen}" ZIndex="100" ToolTip.Tip="Refresh virtual disk contents from folder (unavailable when stopped)"></Panel>
 						<Button ToolTip.Tip="Refresh virtual disk contents from folder" Command="{Binding RefreshVirtualDiskFolderCommand}" VerticalContentAlignment="Center" 
 								IsEnabled="{Binding SerialPortOpen}">
 							<Image Opacity="{Binding ReloadIconOpacity}" Height="18" Source="/Assets/Icons/rotate-right_128.png"/>
