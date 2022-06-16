@@ -44,6 +44,6 @@
     <PackageReference Include="System.IO.Ports" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="D:\repos\SerialDisk\SerialDisk\SerialDisk.csproj" />
+    <ProjectReference Include="..\SerialDisk\SerialDisk.csproj" />
   </ItemGroup>
 </Project>
