@@ -4,8 +4,8 @@
     <OutputType>Library</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>AtariST.SerialDisk</RootNamespace>
-    <AssemblyVersion>2.0.0.0</AssemblyVersion>
-    <FileVersion>2.0.0.0</FileVersion>
+    <AssemblyVersion>3.0.0.0</AssemblyVersion>
+    <FileVersion>3.0.0.0</FileVersion>
     <Version>3.0</Version>
     <ApplicationIcon />
     <StartupObject></StartupObject>
@@ -24,14 +24,6 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Optimize>false</Optimize>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="Atari\hello_l.txt" />
-    <None Remove="Atari\hello_m.txt" />
-    <None Remove="Atari\SERDISK.CFG" />
-    <None Remove="Atari\SERDISK3.TOS" />
-    <None Remove="Resources\default_config_osx.json" />
-  </ItemGroup>
 
   <ItemGroup>
     <Content Include="Atari\hello_m.txt">
