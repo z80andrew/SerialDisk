@@ -6,8 +6,6 @@ using ReactiveUI;
 using SerialDiskUI.Models;
 using SerialDiskUI.ViewModels;
 using System;
-using System.Collections.Generic;
-using System.Reactive;
 using System.Threading.Tasks;
 
 namespace SerialDiskUI.Views
@@ -51,10 +49,7 @@ namespace SerialDiskUI.Views
                     logBorder.IsVisible = isLogDisplayed;
                 })));
 
-            logBorder.PropertyChanged += LogBorder_PropertyChanged;
-
             var logScrollViewer = this.FindControl<ScrollViewer>("LogScrollViewer");
-
             logScrollViewer.PropertyChanged += LogScrollViewer_PropertyChanged;
         }
 
@@ -66,19 +61,8 @@ namespace SerialDiskUI.Views
 
         private void SetSize(int width, int height, Border logBorder)
         {
-            if (width > -1) Width = Convert.ToDouble(width);
-            
-            if (height > -1 && logBorder.IsVisible)
-            {
-                SavedWindowHeight = Convert.ToDouble(height);
-                EnableWindowResize();
-            }
-
-            else
-            {
-                DisableWindowResize();
-                this.MaxHeight = Height;
-            }
+            if (width > -1) Width = Convert.ToDouble(width);            
+            if (height > -1) Height = Convert.ToDouble(height);
         }
 
         private void SetPosition(int xPos, int yPos)
@@ -95,49 +79,26 @@ namespace SerialDiskUI.Views
             SavedWindowPosition = Position;
         }
 
-        private void LogBorder_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
-        {
-            if (e.Property.Name == nameof(Border.IsVisible))
-            {
-                if (!(bool)e.NewValue) DisableWindowResize();
-                else EnableWindowResize();
-            }
-
-            else if (e.Property.Name == nameof(Border.TransformedBounds))
-            {
-                var logBorder = sender as Border;
-
-                if (!logBorder.IsVisible && logBorder.TransformedBounds == null)
-                {
-                    this.MinHeight = this.Height;
-                    this.MaxHeight = this.Height;
-                }
-            }
-        }
-
         private void LogScrollViewer_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
         {
+            var logScrollViewer = sender as ScrollViewer;
+
             if (e.Property.Name == nameof(ScrollViewer.Extent))
             {
-                var logScrollViewer = sender as ScrollViewer;
                 logScrollViewer.ScrollToEnd();
                 logScrollViewer.LineDown();
             }
-        }
 
-        private void EnableWindowResize()
-        {
-            this.MinHeight = _savedMinHeight + _logMinHeight;
-            this.MaxHeight = double.PositiveInfinity;
-            this.SizeToContent = SizeToContent.Manual;
-            this.Height = SavedWindowHeight;
-        }
-
-        private void DisableWindowResize()
-        {
-            this.MinHeight = _savedMinHeight;
-            SavedWindowHeight = this.Height;
-            this.SizeToContent = SizeToContent.Height;
+            else if (e.Property.Name == nameof(ScrollViewer.TransformedBounds))
+            {
+                if (logScrollViewer.IsEffectivelyVisible) this.MinHeight = _savedMinHeight + _logMinHeight;
+                
+                else
+                {
+                    this.MinHeight = _savedMinHeight;
+                    this.Height = MinHeight;
+                }
+            }
         }
 
         private async Task DoShowSettingsDialogAsync(InteractionContext<SettingsWindowViewModel, SerialDiskUIModel> interaction)

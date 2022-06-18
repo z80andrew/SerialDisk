@@ -7,8 +7,8 @@
         mc:Ignorable="d"
         d:DesignWidth="380" d:DesignHeight="480"
         Width="420" Height="388"
-        MinWidth="420" MinHeight="250"        
-        SizeToContent="Height"
+        MinWidth="420" MinHeight="250"
+        SizeToContent="Manual"
         x:Class="SerialDiskUI.Views.MainWindow"
         Title="SerialDisk"
 		Icon="/Assets/SerialDisk.ico"
@@ -113,7 +113,7 @@
 
 		<!-- Log area -->
 		<Border Name="LogBorder" Classes="SectionContainer"
-				DockPanel.Dock="Top" IsVisible="{Binding IsLogDisplayEnabled}">
+				DockPanel.Dock="Bottom" IsVisible="{Binding IsLogDisplayEnabled}">
 			<Grid>
 				<Grid.RowDefinitions>
 					<RowDefinition Height="Auto"></RowDefinition>
