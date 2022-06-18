@@ -127,42 +127,42 @@ on_success:
     {
         # CLI version
         
-        tar -czf serialdisk_$($versionNo)_cli_sce_linux-x64.tar.gz -C ./bin/Release/CLI/SCE/linux-x64
+        tar -czf serialdisk_$($versionNo)_cli_sce_linux-x64.tar.gz -C ./bin/Release/CLI/SCE linux-x64
         appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_linux-x64.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_cli_sce_linux-arm64.tar.gz -C ./bin/Release/CLI/SCE/linux-arm64
+        tar -czf serialdisk_$($versionNo)_cli_sce_linux-arm64.tar.gz -C ./bin/Release/CLI/SCE linux-arm64
         appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_linux-arm64.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_cli_sce_linux-arm32.tar.gz -C ./bin/Release/CLI/SCE/linux-arm32
+        tar -czf serialdisk_$($versionNo)_cli_sce_linux-arm32.tar.gz -C ./bin/Release/CLI/SCE linux-arm32
         appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_linux-arm32.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_cli_fde_linux-x64.tar.gz -C ./bin/Release/CLI/FDE/linux-x64
+        tar -czf serialdisk_$($versionNo)_cli_fde_linux-x64.tar.gz -C ./bin/Release/CLI/FDE linux-x64
         appveyor PushArtifact serialdisk_$($versionNo)_cli_fde_linux-x64.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_cli_fde_linux-arm64.tar.gz -C ./bin/Release/CLI/FDE/linux-arm64
+        tar -czf serialdisk_$($versionNo)_cli_fde_linux-arm64.tar.gz -C ./bin/Release/CLI/FDE linux-arm64
         appveyor PushArtifact serialdisk_$($versionNo)_cli_fde_linux-arm64.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_cli_fde_linux-arm32.tar.gz -C ./bin/Release/CLI/FDE/linux-arm32
+        tar -czf serialdisk_$($versionNo)_cli_fde_linux-arm32.tar.gz -C ./bin/Release/CLI/FDE linux-arm32
         appveyor PushArtifact serialdisk_$($versionNo)_cli_fde_linux-arm32.tar.gz
         
         # UI Version
         
-        tar -czf serialdisk_$($versionNo)_ui_sce_linux-x64.tar.gz -C ./bin/Release/UI/SCE/linux-x64
+        tar -czf serialdisk_$($versionNo)_ui_sce_linux-x64.tar.gz -C ./bin/Release/UI/SCE linux-x64
         appveyor PushArtifact serialdisk_$($versionNo)_ui_sce_linux-x64.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_ui_sce_linux-arm64.tar.gz -C ./bin/Release/UI/SCE/linux-arm64
+        tar -czf serialdisk_$($versionNo)_ui_sce_linux-arm64.tar.gz -C ./bin/Release/UI/SCE linux-arm64
         appveyor PushArtifact serialdisk_$($versionNo)_ui_sce_linux-arm64.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_ui_sce_linux-arm32.tar.gz -C ./bin/Release/UI/SCE/linux-arm32
+        tar -czf serialdisk_$($versionNo)_ui_sce_linux-arm32.tar.gz -C ./bin/Release/UI/SCE linux-arm32
         appveyor PushArtifact serialdisk_$($versionNo)_ui_sce_linux-arm32.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_ui_fde_linux-x64.tar.gz -C ./bin/Release/UI/FDE/linux-x64
+        tar -czf serialdisk_$($versionNo)_ui_fde_linux-x64.tar.gz -C ./bin/Release/UI/FDE linux-x64
         appveyor PushArtifact serialdisk_$($versionNo)_ui_fde_linux-x64.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_ui_fde_linux-arm64.tar.gz -C ./bin/Release/UI/FDE/linux-arm64
+        tar -czf serialdisk_$($versionNo)_ui_fde_linux-arm64.tar.gz -C ./bin/Release/UI/FDE linux-arm64
         appveyor PushArtifact serialdisk_$($versionNo)_ui_fde_linux-arm64.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_ui_fde_linux-arm32.tar.gz -C ./bin/Release/UI/FDE/linux-arm32
+        tar -czf serialdisk_$($versionNo)_ui_fde_linux-arm32.tar.gz -C ./bin/Release/UI/FDE linux-arm32
         appveyor PushArtifact serialdisk_$($versionNo)_ui_fde_linux-arm32.tar.gz        
     }
     
@@ -170,18 +170,18 @@ on_success:
     {
         # CLI version
     
-        tar -czf serialdisk_$($versionNo)_cli_sce_macos-x64.tar.gz -C ./bin/Release/CLI/SCE/macos-x64
+        tar -czf serialdisk_$($versionNo)_cli_sce_macos-x64.tar.gz -C ./bin/Release/CLI/SCE macos-x64
         appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_macos-x64.tar.gz
         
-        tar -czf serialdisk_$($versionNo)_cli_fde_macos-x64.tar.gz -C ./bin/Release/CLI/FDE/macos-x64
+        tar -czf serialdisk_$($versionNo)_cli_fde_macos-x64.tar.gz -C ./bin/Release/CLI/FDE macos-x64
         appveyor PushArtifact serialdisk_$($versionNo)_cli_fde_macos-x64.tar.gz      
 
         # UI Version        
         
-        tar -czf serialdisk_$($versionNo)_ui_sce_macos-x64.tar.gz -C ./bin/Release/UI/SCE/macos-x64
+        tar -czf serialdisk_$($versionNo)_ui_sce_macos-x64.tar.gz -C ./bin/Release/UI/SCE macos-x64
         appveyor PushArtifact serialdisk_$($versionNo)_ui_sce_macos-x64.tar.gz
         
-        tar -czf serialdisk_$($versionNo)_ui_fde_macos-x64.tar.gz -C ./bin/Release/UI/FDE/macos-x64
+        tar -czf serialdisk_$($versionNo)_ui_fde_macos-x64.tar.gz -C ./bin/Release/UI/FDE macos-x64
         appveyor PushArtifact serialdisk_$($versionNo)_ui_fde_macos-x64.tar.gz              
     }
 
