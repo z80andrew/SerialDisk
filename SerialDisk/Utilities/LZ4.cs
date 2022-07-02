@@ -1,4 +1,5 @@
 ﻿using K4os.Compression.LZ4;
+using System.Linq;
 
 namespace AtariST.SerialDisk.Utilities
 {
@@ -13,7 +14,7 @@ namespace AtariST.SerialDisk.Utilities
                 compressedBytes, 0, compressedBytes.Length,
                 LZ4Level.L12_MAX);
 
-            return compressedBytes[..encodedLength];
+            return compressedBytes.Take(encodedLength).ToArray();
         }
     }
 }

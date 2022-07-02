@@ -9,10 +9,10 @@ namespace AtariST.SerialDisk.Interfaces
 {
     public interface IStatusService
     {
-        public Status.StatusKey Status { get; }
-        public string StatusWithMessage { get; }
-        public int TotalBytes { get; }
-        public int TransferredBytes { get; }
+        Status.StatusKey Status { get; }
+        string StatusWithMessage { get; }
+        int TotalBytes { get; }
+        int TransferredBytes { get; }
         void SetTransferProgress(int totalBytes, int transferredBytes);
         void SetStatus(Status.StatusKey status, string message = null);
     }

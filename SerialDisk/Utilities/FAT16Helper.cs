@@ -131,7 +131,7 @@ namespace AtariST.SerialDisk.Utilities
         {
             using (FileStream fileStream = new FileStream($"cluster {cluster.LocalDirectoryContent.TOSFileName} offset {cluster.FileOffset}.bin", FileMode.Create))
             {
-                fileStream.Write(cluster.DataBuffer);
+                fileStream.Write(cluster.DataBuffer, 0, cluster.DataBuffer.Length);
             }
         }
     }
