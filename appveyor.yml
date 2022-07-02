@@ -89,7 +89,7 @@ build_script:
 
 on_success:
 - ps: >-
-    $versionNo = "3.0"
+    $versionNo = "3.0b1"
     
     if($isWindows)
     {
