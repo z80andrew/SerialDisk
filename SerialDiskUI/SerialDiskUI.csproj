@@ -46,4 +46,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SerialDisk\SerialDisk.csproj" />
   </ItemGroup>
+    <PropertyGroup>
+	    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    </PropertyGroup>
 </Project>

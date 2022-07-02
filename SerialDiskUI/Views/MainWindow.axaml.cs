@@ -61,8 +61,11 @@ namespace SerialDiskUI.Views
 
         private void SetSize(int width, int height, Border logBorder)
         {
+            this.Height = ViewModel.IsLogDisplayEnabled ? _savedMinHeight + _logMinHeight : _savedMinHeight;
+
             if (width > -1) Width = Convert.ToDouble(width);            
             if (height > -1) Height = Convert.ToDouble(height);
+
         }
 
         private void SetPosition(int xPos, int yPos)
