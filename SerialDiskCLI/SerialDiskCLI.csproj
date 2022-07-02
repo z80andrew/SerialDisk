@@ -11,4 +11,10 @@
     <ProjectReference Include="..\SerialDisk\SerialDisk.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="serialdisk.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
