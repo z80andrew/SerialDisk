@@ -4,6 +4,7 @@ namespace AtariST.SerialDisk.Common
 {
     public static class Constants
     {
+        public const string VERSION_TYPE = "β1"; // used to denote non-release versions
         public const string DATE_FORMAT = "yyyy-MM-dd";
         public const string TIME_FORMAT = "HH:mm:ss";
 

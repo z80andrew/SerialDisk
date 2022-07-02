@@ -4,6 +4,7 @@ using SerialDiskUI.Models;
 using System;
 using System.Diagnostics;
 using System.Reactive;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
@@ -13,6 +14,7 @@ namespace SerialDiskUI.ViewModels
     {
         public ReactiveCommand<Unit, SimpleDialogModel> CloseAboutCommand { get; }
         public ICommand ShowWebsiteCommand { get; }
+        public String VersionNote => $"{Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion}{Constants.VERSION_TYPE}";
 
         public string WebsiteButtonText => Constants.PROJECT_URL.Replace(@"https://www.", String.Empty);
 

@@ -38,6 +38,8 @@ namespace AtariST.SerialDiskCLI
 
         private static void PrintUsage(ApplicationSettings _applicationSettings)
         {
+            _applicationSettings = ConfigurationHelper.GetDefaultApplicationSettings();
+
             Console.WriteLine();
 
             Console.WriteLine("Usage:");
