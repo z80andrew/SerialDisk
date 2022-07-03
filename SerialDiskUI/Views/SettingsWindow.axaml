@@ -96,7 +96,7 @@
 								</ComboBox.ItemTemplate>
 							</ComboBox>
 
-							<CheckBox ToolTip.Tip="Enable or disable data compression when sending and receiving over serial." Margin="0,7,0,0" IsChecked="{Binding IsCompressionEnabled}">Data compression</CheckBox>
+							<CheckBox ToolTip.Tip="Enable or disable compression when sending and receiving data" Margin="0,7,0,0" IsChecked="{Binding IsCompressionEnabled}">Data compression</CheckBox>
 						</StackPanel>
 					</Border>
 				</Grid>

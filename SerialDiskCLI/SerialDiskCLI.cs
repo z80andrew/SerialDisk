@@ -32,7 +32,7 @@ namespace AtariST.SerialDiskCLI
 
         private void Init(ApplicationSettings applicationSettings, DiskParameters diskParameters, CancellationTokenSource cancelTokenSource)
         {
-            var versionMessage = $"Serial Disk v{Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion}{Constants.VERSION_TYPE}";
+            var versionMessage = $"Serial Disk v{Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion} {Constants.VERSION_TYPE}";
 
             _logger.Log(versionMessage, LoggingLevel.Info);
 

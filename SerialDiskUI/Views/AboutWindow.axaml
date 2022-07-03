@@ -30,12 +30,22 @@
 		<Border Classes="SectionContainer" DockPanel.Dock="Top">
 			<DockPanel HorizontalAlignment="Center">
 				<Border BorderBrush="White" DockPanel.Dock="Top">
-					<DockPanel DockPanel.Dock="Top" Background="White">
-						<TextBlock DockPanel.Dock="Right" VerticalAlignment="Bottom"
-							   Margin="0,0,10,0" Text="{Binding VersionNote}"></TextBlock>
-						<Image VerticalAlignment="Top" DockPanel.Dock="Left" Source="avares://SerialDiskUI/Assets/Images/serialdisk_logo.png"/>
-					</DockPanel>
+						<DockPanel DockPanel.Dock="Top" Background="White">
+							<Viewbox DockPanel.Dock="Top" StretchDirection="DownOnly" Stretch="Uniform">
+								<TextBlock FontWeight="Bold" FontFamily="Courier New"
+									   Text="
+            _____           _       ______  _      __&#10;
+           / ___/___  _____(_)___  / / __ \(_)____/ /__&#10;
+o o o o o  \__ \/ _ \/ ___/ / __ `/ / / / / / ___/ //_/&#10;
+ o o o o  ___/ /  __/ /  / / /_/ / / /_/ / (__  ) , &lt;&#10;
+         /____/\___/_/  /_/\____/_/_____/_/____/_/|_|">&#10;
+							</TextBlock>
+						</Viewbox>
+							<TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+								   Margin="0,0,10,0" Text="{Binding VersionNote}"></TextBlock>
+						</DockPanel>
 				</Border>
+
 				<TextBlock Margin="10" DockPanel.Dock="Top" HorizontalAlignment="Center">by z80andrew</TextBlock>
 				<Button Classes="URL" Background="Transparent" Foreground="Blue" DockPanel.Dock="Top" 
 						HorizontalAlignment="Center" Command="{Binding ShowWebsiteCommand}" Content="{Binding WebsiteButtonText}" ></Button>

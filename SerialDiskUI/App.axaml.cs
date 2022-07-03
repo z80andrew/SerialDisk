@@ -59,8 +59,7 @@ namespace SerialDiskUI
 
                 desktop.MainWindow = new MainWindow(_appSettings.MainWindowWidth, _appSettings.MainWindowHeight, _appSettings.MainWindowX, _appSettings.MainWindowY)
                 {
-                    DataContext = new MainWindowViewModel(model, statusService, logger),
-                    
+                    DataContext = new MainWindowViewModel(model, statusService, logger),                    
                 };
             }
         }

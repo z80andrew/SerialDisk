@@ -10,22 +10,9 @@ namespace SerialDiskUI
         // yet and stuff might break.
         public static void Main(string[] args)
         {
-            #region Dependency injection
-
-            //var serviceCollection = new ServiceCollection();
-            //ConfigureServices(serviceCollection);
-            //var serviceProvider = serviceCollection.BuildServiceProvider();
-
-            #endregion
-
             BuildAvaloniaApp()
               .StartWithClassicDesktopLifetime(args);
         }
-
-        //private static void ConfigureServices(IServiceCollection serviceCollection)
-        //{
-        //    serviceCollection.AddSingleton<ILogger>(new Logger(Constants.LoggingLevel.Info));
-        //}
 
         // Avalonia configuration, don't remove; also used by visual designer.
         public static AppBuilder BuildAvaloniaApp()
