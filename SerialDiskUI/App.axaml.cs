@@ -86,16 +86,17 @@ namespace SerialDiskUI
                     .Build()
                     .Bind(appSettings);
 
-                // Directory can be specified as relative, so get full path
-                if (Directory.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, appSettings.LocalDirectoryPath)))
-                {
-                    appSettings.LocalDirectoryPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, appSettings.LocalDirectoryPath));
-                }
             }
 
             catch (Exception parameterException)
             {
                 System.Diagnostics.Debug.WriteLine($"Error parsing parameters: {parameterException.Message}");
+            }
+
+            // Directory can be specified as relative, so get full path
+            if (Directory.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, appSettings.LocalDirectoryPath)))
+            {
+                appSettings.LocalDirectoryPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, appSettings.LocalDirectoryPath));
             }
 
             return appSettings;
