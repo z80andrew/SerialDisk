@@ -24,7 +24,6 @@
     <None Remove="Assets\Icons\rotate-right_128.png" />
     <None Remove="Assets\Icons\stop_128.png" />
     <None Remove="Assets\Icons\upload_rounded_128.png" />
-    <None Remove="Assets\Images\serialdisk_logo.png" />
     <None Remove="Assets\SerialDisk.ico" />
     <None Remove="serialdiskui.config" />
   </ItemGroup>
