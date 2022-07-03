@@ -87,9 +87,9 @@ namespace SerialDiskUI
                     .Bind(appSettings);
 
                 // Directory can be specified as relative, so get full path
-                if (Directory.Exists(appSettings.LocalDirectoryPath))
+                if (Directory.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, appSettings.LocalDirectoryPath)))
                 {
-                    appSettings.LocalDirectoryPath = Path.GetFullPath(appSettings.LocalDirectoryPath);
+                    appSettings.LocalDirectoryPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, appSettings.LocalDirectoryPath));
                 }
             }
 
