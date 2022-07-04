@@ -17,8 +17,8 @@
 .equ compression_isenabled,	0x00
 
 | Other constants
-.equ wait_secs,				0x01												| Time for pauses (secs * 10)
-.equ serial_timeout_secs,	0x05												| Serial read timeout (secs * 10)
+.equ wait_secs,				0x01												| Time for pauses (secs)
+.equ serial_timeout_secs,	0x05												| Serial read timeout (secs)
 .equ crc32_poly,			0x04c11db7											| Polynomial for CRC32 calculation
 .equ ascii_offset,			0x41												| Offset from number to its ASCII equivalent
 .equ screenres_high,		0x02												| Value of byte at (screenres) when in hi resolution mode

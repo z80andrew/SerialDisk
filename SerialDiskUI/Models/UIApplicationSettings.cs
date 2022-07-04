@@ -1,12 +1,6 @@
 ﻿using AtariST.SerialDisk.Models;
-using AtariST.SerialDisk.Utilities;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using SerialDiskUI.Common;
 
 namespace SerialDiskUI.Models
@@ -26,9 +20,6 @@ namespace SerialDiskUI.Models
         {
             IsLogDisplayEnabled = false;
             IsLogFileEnabled = false;
-
-            LogFileName = appSettings.LogFileName;
-
             LocalDirectorySizeInBytes = 0;
             MainWindowHeight = -1;
             MainWindowWidth = -1;
@@ -40,6 +31,7 @@ namespace SerialDiskUI.Models
             LoggingLevel = appSettings.LoggingLevel;
             LocalDirectoryPath = appSettings.LocalDirectoryPath;
             IsCompressionEnabled = appSettings.IsCompressionEnabled;
+            LogFileName = appSettings.LogFileName;
         }
 
         public void WriteSettingsToDisk()
