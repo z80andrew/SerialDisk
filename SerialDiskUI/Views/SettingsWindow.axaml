@@ -162,7 +162,7 @@
 			</TabItem>
 		</TabControl>
 
-		<StackPanel Margin="15,0,0,10" Orientation="Horizontal" Spacing="5">
+		<StackPanel Margin="15,5,20,15" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5">
 			<Button Command="{Binding ApplySettingsCommand}" DockPanel.Dock="Left">Save</Button>
 			<Button Command="{Binding CloseSettingsCommand}" DockPanel.Dock="Right">Cancel</Button>
 		</StackPanel>

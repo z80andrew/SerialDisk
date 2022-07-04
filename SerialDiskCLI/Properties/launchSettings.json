@@ -2,7 +2,7 @@
   "profiles": {
     "SerialDiskCLI": {
       "commandName": "Project",
-      "commandLineArgs": "--port COM4 --baud-rate 19200 --handshake none --parity none --logging-level debug --disk-size 32 --compression true D:\\\\Temp\\\\atari2"
+      "commandLineArgs": ""
     }
   }
 }

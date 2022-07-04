@@ -2,7 +2,7 @@
   "profiles": {
     "SerialDiskUI": {
       "commandName": "Project",
-      "commandLineArgs": "--port COM4 --baud-rate 19200 --handshake requesttosend --parity none --disk-size 32 --logging-level all d:\\temp\\atari2"
+      "commandLineArgs": ""
     }
   }
 }

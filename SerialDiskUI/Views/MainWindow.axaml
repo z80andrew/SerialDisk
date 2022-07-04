@@ -75,8 +75,8 @@
 								</Panel>
 							</ContentControl>
 						</Button>
-						<Border BorderBrush="White" BorderThickness="2" VerticalAlignment="Center">
-							<DockPanel Background="White">
+						<Border Height="31" BorderBrush="White" Background="White" BorderThickness="2" VerticalAlignment="Center">
+							<DockPanel VerticalAlignment="Center" Background="White">
 								<TextBlock Margin="5,0,0,0" Text="{Binding StatusText}"></TextBlock>
 							</DockPanel>
 						</Border>

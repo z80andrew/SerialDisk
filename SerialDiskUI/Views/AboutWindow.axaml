@@ -4,9 +4,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:vm="using:SerialDiskUI.ViewModels"		
 		x:Class="SerialDiskUI.Views.AboutWindow"
-        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="250"
+        mc:Ignorable="d"
 		Width="400"
-		Height="250"
+		Height="270"
 		Title="About"
 		CanResize="False"
 		Icon="/Assets/info.ico"
@@ -32,12 +32,12 @@
 				<Border BorderBrush="White" DockPanel.Dock="Top">
 						<DockPanel DockPanel.Dock="Top" Background="White">
 							<Viewbox DockPanel.Dock="Top" StretchDirection="DownOnly" Stretch="Uniform">
-								<TextBlock FontWeight="Bold" FontFamily="Courier New"
+								<TextBlock FontFamily="/Assets/Fonts/AtariST8x16SystemFont.ttf#"
 									   Text="
             _____           _       ______  _      __&#10;
            / ___/___  _____(_)___  / / __ \(_)____/ /__&#10;
 o o o o o  \__ \/ _ \/ ___/ / __ `/ / / / / / ___/ //_/&#10;
- o o o o  ___/ /  __/ /  / / /_/ / / /_/ / (__  ) , &lt;&#10;
+ o o o o  ___/ /  __/ /  / / /_/ / / /_/ / (__  ) ,&lt;&#10;
          /____/\___/_/  /_/\____/_/_____/_/____/_/|_|">&#10;
 							</TextBlock>
 						</Viewbox>
