@@ -214,22 +214,20 @@ namespace SerialDiskUI.ViewModels
             {
                 var comPortName = String.Equals(SelectedCOMPort.Value, COMPORT_OTHER, StringComparison.CurrentCultureIgnoreCase) ? _otherCOMPortName : SelectedCOMPort.Value;
 
-
-                // TODO: Remove the use of _settings properties if everything is in _settings.ApplicationSettings
-                _settings.ComPortName = _settings.ApplicationSettings.SerialSettings.PortName = comPortName;
+                if(!String.IsNullOrEmpty(comPortName)) _settings.ComPortName = _settings.ApplicationSettings.SerialSettings.PortName = comPortName;
                 _settings.BaudRate = _settings.ApplicationSettings.SerialSettings.BaudRate = SelectedBaud.Value;
                 _settings.DataBits = _settings.ApplicationSettings.SerialSettings.DataBits = SelectedDataBits.Value;
                 _settings.StopBits = _settings.ApplicationSettings.SerialSettings.StopBits = SelectedStopBits.Value;
                 _settings.Handshake = _settings.ApplicationSettings.SerialSettings.Handshake = SelectedHandshake.Value;
                 _settings.Parity = _settings.ApplicationSettings.SerialSettings.Parity = SelectedParity.Value;
 
-                _settings.VirtualDiskFolder = _settings.ApplicationSettings.LocalDirectoryPath = SelectedFolder;
+                if(!String.IsNullOrEmpty(SelectedFolder)) _settings.VirtualDiskFolder = _settings.ApplicationSettings.LocalDirectoryPath = SelectedFolder;
                 _settings.VirtualDiskSizeMB = _settings.ApplicationSettings.DiskSettings.DiskSizeMiB = VirtualDiskSizeMB;
 
                 _settings.IsLogDisplayEnabled = _settings.ApplicationSettings.IsLogDisplayEnabled = IsLogDisplayEnabled;
                 _settings.LoggingLevel = _settings.ApplicationSettings.LoggingLevel = SelectedLogLevel.Value;
                 _settings.IsLogFileEnabled = _settings.ApplicationSettings.IsLogFileEnabled = IsLogFileEnabled;
-                _settings.LogFilePath = _settings.ApplicationSettings.LogFileName = SelectedFile;
+                if (!String.IsNullOrEmpty(SelectedFile)) _settings.LogFilePath = _settings.ApplicationSettings.LogFileName = SelectedFile;
 
                 _settings.IsOutputCompressionEnabled = _settings.ApplicationSettings.IsCompressionEnabled = IsCompressionEnabled;
 
