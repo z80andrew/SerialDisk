@@ -3,7 +3,7 @@ version: 3.0.{build}
 image: 
 - Visual Studio 2022
 - Ubuntu2004
-- macOS
+- macos-monterey
 
 dotnet_csproj:
   patch: true
@@ -176,13 +176,28 @@ on_success:
         tar -czf serialdisk_$($versionNo)_cli_fde_macos-x64.tar.gz -C ./bin/Release/CLI/FDE serialdisk-macos-x64
         appveyor PushArtifact serialdisk_$($versionNo)_cli_fde_macos-x64.tar.gz      
 
-        # UI Version        
-        
-        tar -czf serialdisk_$($versionNo)_ui_sce_macos-x64.tar.gz -C ./bin/Release/UI/SCE serialdisk-macos-x64
-        appveyor PushArtifact serialdisk_$($versionNo)_ui_sce_macos-x64.tar.gz
+        # UI version 
         
         tar -czf serialdisk_$($versionNo)_ui_fde_macos-x64.tar.gz -C ./bin/Release/UI/FDE serialdisk-macos-x64
-        appveyor PushArtifact serialdisk_$($versionNo)_ui_fde_macos-x64.tar.gz              
+        appveyor PushArtifact serialdisk_$($versionNo)_ui_fde_macos-x64.tar.gz   
+        
+        # UI app bundle
+
+        $APP_NAME="SerialDisk.app"
+        $BUNDLE_DIRECTORY="./macOS-bundle"
+        $PUBLISH_OUTPUT_DIRECTORY="./bin/Release/UI/SCE/serialdisk-macos-x64/."
+        $INFO_PLIST="./SerialDiskUI/Assets/macOS-build/Info.plist"
+        $ICON_FILE='./SerialDiskUI/Assets/macOS-build/SerialDisk.icns'
+
+        New-Item -Path "$BUNDLE_DIRECTORY/$APP_NAME/Contents/MacOS" -ItemType "directory"
+        New-Item -Path "$BUNDLE_DIRECTORY/$APP_NAME/Contents/Resources" -ItemType "directory"
+
+        Copy-Item -Path "$INFO_PLIST" -Destination "$BUNDLE_DIRECTORY/$APP_NAME/Contents"
+        Copy-Item -Path $ICON_FILE -Destination "$BUNDLE_DIRECTORY/$APP_NAME/Contents/Resources"
+        Copy-Item -Path "$PUBLISH_OUTPUT_DIRECTORY/*" -Destination "$BUNDLE_DIRECTORY/$APP_NAME/Contents/MacOS" -Recurse  
+
+        tar -cvzf serialdisk_$($versionNo)_ui_sce_macos-x64.tar.gz -C $BUNDLE_DIRECTORY $APP_NAME
+        appveyor PushArtifact serialdisk_$($versionNo)_ui_sce_macos-x64.tar.gz
     }
 
 test_script:

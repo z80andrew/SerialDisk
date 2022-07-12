@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
@@ -10,6 +10,10 @@
   </PropertyGroup>
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <AvaloniaResource Remove="Assets\macOS-build\Info.plist" />
+    <AvaloniaResource Remove="Assets\macOS-build\SerialDisk.icns" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="serialdiskui.config">
