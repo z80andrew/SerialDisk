@@ -5,27 +5,11 @@
     <Nullable>enable</Nullable>
     <AssemblyName>SerialDiskUI</AssemblyName>
     <RootNamespace>SerialDiskUI</RootNamespace>
-    <ApplicationIcon>Assets\SerialDisk.ico</ApplicationIcon>
+    <ApplicationIcon>Assets\Icons\SerialDisk.ico</ApplicationIcon>
     <Version>3.0</Version>
   </PropertyGroup>
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="Assets\Fonts\AtariST8x16SystemFont.ttf" />
-    <None Remove="Assets\Fonts\NotoSans-Bold.ttf" />
-    <None Remove="Assets\Fonts\NotoSans-BoldItalic.ttf" />
-    <None Remove="Assets\Fonts\NotoSans-Italic.ttf" />
-    <None Remove="Assets\Fonts\NotoSans-Regular.ttf" />
-    <None Remove="Assets\Icons\broom_128.png" />
-    <None Remove="Assets\Icons\download_rounded_128.png" />
-    <None Remove="Assets\Icons\folder_128.png" />
-    <None Remove="Assets\Icons\play._128.png" />
-    <None Remove="Assets\Icons\rotate-right_128.png" />
-    <None Remove="Assets\Icons\stop_128.png" />
-    <None Remove="Assets\Icons\upload_rounded_128.png" />
-    <None Remove="Assets\SerialDisk.ico" />
-    <None Remove="serialdiskui.config" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="serialdiskui.config">
