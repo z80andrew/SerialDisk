@@ -1,8 +1,8 @@
 version: 3.0.{build}
 
 image: 
-- Visual Studio 2022
-- Ubuntu2004
+- Visual Studio 2022 
+- Ubuntu2004 
 - macos-monterey
 
 dotnet_csproj:
@@ -69,23 +69,23 @@ build_script:
     }
     
     else
-    {    
-        # CLI version
-        # -----------      
-        # Publish and package Self Contained Executables        
-        dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r osx-x64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-macos-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
-
-        # Publish and package Framework Dependant Executables
-        dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r osx-x64 -c Release --self-contained false --output ./bin/Release/CLI/FDE/serialdisk-macos-x64
-        
-        # UI version
-        # ----------  
-        # Publish and package Self Contained Executables        
-        dotnet publish SerialDiskUI/SerialDiskUI.csproj -r osx-x64 -c Release --self-contained true --output ./bin/Release/UI/SCE/serialdisk-macos-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
-        
-        # Publish and package Framework Dependant Executables        
-        dotnet publish SerialDiskUI/SerialDiskUI.csproj -r osx-x64 -c Release --self-contained false --output ./bin/Release/UI/FDE/serialdisk-macos-x64
-    }
+    {
+        # CLI version 
+        # -----------       
+        # Publish and package Self Contained Executables         
+        dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r osx-x64 -c Release --self-contained true --output ./bin/Release/CLI/SCE/serialdisk-macos-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true 
+ 
+        # Publish and package Framework Dependant Executables 
+        dotnet publish SerialDiskCLI/SerialDiskCLI.csproj -r osx-x64 -c Release --self-contained false --output ./bin/Release/CLI/FDE/serialdisk-macos-x64 
+         
+        # UI version 
+        # ----------   
+        # Publish and package Self Contained Executables         
+        dotnet publish SerialDiskUI/SerialDiskUI.csproj -r osx-x64 -c Release --self-contained true --output ./bin/Release/UI/SCE/serialdisk-macos-x64 /p:PublishTrimmed=true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true 
+         
+        # Publish and package Framework Dependant Executables         
+        dotnet publish SerialDiskUI/SerialDiskUI.csproj -r osx-x64 -c Release --self-contained false --output ./bin/Release/UI/FDE/serialdisk-macos-x64 
+    } 
 
 on_success:
 - ps: >-
@@ -168,42 +168,42 @@ on_success:
     
     else
     {
-        # CLI version
+        # CLI version 
+     
+        tar -czf serialdisk_$($versionNo)_cli_sce_macos-x64.tar.gz -C ./bin/Release/CLI/SCE serialdisk-macos-x64 
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_macos-x64.tar.gz 
+         
+        tar -czf serialdisk_$($versionNo)_cli_fde_macos-x64.tar.gz -C ./bin/Release/CLI/FDE serialdisk-macos-x64 
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_fde_macos-x64.tar.gz       
+ 
+        # UI version  
+         
+        tar -czf serialdisk_$($versionNo)_ui_fde_macos-x64.tar.gz -C ./bin/Release/UI/FDE serialdisk-macos-x64 
+        appveyor PushArtifact serialdisk_$($versionNo)_ui_fde_macos-x64.tar.gz    
     
-        tar -czf serialdisk_$($versionNo)_cli_sce_macos-x64.tar.gz -C ./bin/Release/CLI/SCE serialdisk-macos-x64
-        appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_macos-x64.tar.gz
-        
-        tar -czf serialdisk_$($versionNo)_cli_fde_macos-x64.tar.gz -C ./bin/Release/CLI/FDE serialdisk-macos-x64
-        appveyor PushArtifact serialdisk_$($versionNo)_cli_fde_macos-x64.tar.gz      
-
-        # UI version 
-        
-        tar -czf serialdisk_$($versionNo)_ui_fde_macos-x64.tar.gz -C ./bin/Release/UI/FDE serialdisk-macos-x64
-        appveyor PushArtifact serialdisk_$($versionNo)_ui_fde_macos-x64.tar.gz   
-        
         # UI app bundle
 
         $APP_NAME="SerialDisk.app"
         $BUNDLE_DIRECTORY="./macOS-bundle"
         $PUBLISH_OUTPUT_DIRECTORY="./bin/Release/UI/SCE/serialdisk-macos-x64/."
         $INFO_PLIST="./SerialDiskUI/Assets/macOS-build/Info.plist"
-        $ICON_FILE='./SerialDiskUI/Assets/macOS-build/SerialDisk.icns'
+        $ICON_FILE="./SerialDiskUI/Assets/macOS-build/SerialDisk.icns"
 
         New-Item -Path "$BUNDLE_DIRECTORY/$APP_NAME/Contents/MacOS" -ItemType "directory"
         New-Item -Path "$BUNDLE_DIRECTORY/$APP_NAME/Contents/Resources" -ItemType "directory"
 
-        Copy-Item -Path "$INFO_PLIST" -Destination "$BUNDLE_DIRECTORY/$APP_NAME/Contents"
-        Copy-Item -Path $ICON_FILE -Destination "$BUNDLE_DIRECTORY/$APP_NAME/Contents/Resources"
+        Copy-Item -Path "$INFO_PLIST" -Destination "$BUNDLE_DIRECTORY/$APP_NAME/Contents" 
+        Copy-Item -Path "$ICON_FILE" -Destination "$BUNDLE_DIRECTORY/$APP_NAME/Contents/Resources"
         Copy-Item -Path "$PUBLISH_OUTPUT_DIRECTORY/*" -Destination "$BUNDLE_DIRECTORY/$APP_NAME/Contents/MacOS" -Recurse  
-
-        tar -cvzf serialdisk_$($versionNo)_ui_sce_macos-x64.tar.gz -C $BUNDLE_DIRECTORY $APP_NAME
+        
+        tar -czf serialdisk_$($versionNo)_ui_sce_macos-x64.tar.gz -C $BUNDLE_DIRECTORY $APP_NAME
         appveyor PushArtifact serialdisk_$($versionNo)_ui_sce_macos-x64.tar.gz
     }
 
-test_script:
-- ps: >-
-    dotnet clean
-    
-    dotnet test --test-adapter-path:. --logger:Appveyor -nodereuse:false
-
-deploy: off
+test_script: 
+- ps: >- 
+    dotnet clean 
+     
+    dotnet test --test-adapter-path:. --logger:Appveyor -nodereuse:false 
+ 
+deploy: off 
