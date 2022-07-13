@@ -1,47 +1,65 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <AssemblyName>SerialDiskUI</AssemblyName>
-    <RootNamespace>SerialDiskUI</RootNamespace>
-    <ApplicationIcon>Assets\SerialDisk.ico</ApplicationIcon>
-    <Version>3.0</Version>
-  </PropertyGroup>
-  <ItemGroup>
-    <AvaloniaResource Include="Assets\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="Assets\Fonts\AtariST8x16SystemFont.ttf" />
-    <None Remove="Assets\Fonts\NotoSans-Bold.ttf" />
-    <None Remove="Assets\Fonts\NotoSans-BoldItalic.ttf" />
-    <None Remove="Assets\Fonts\NotoSans-Italic.ttf" />
-    <None Remove="Assets\Fonts\NotoSans-Regular.ttf" />
-    <None Remove="Assets\Icons\broom_128.png" />
-    <None Remove="Assets\Icons\download_rounded_128.png" />
-    <None Remove="Assets\Icons\folder_128.png" />
-    <None Remove="Assets\Icons\play._128.png" />
-    <None Remove="Assets\Icons\rotate-right_128.png" />
-    <None Remove="Assets\Icons\stop_128.png" />
-    <None Remove="Assets\Icons\upload_rounded_128.png" />
-    <None Remove="Assets\SerialDisk.ico" />
-    <None Remove="serialdiskui.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="serialdiskui.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Avalonia" Version="0.10.15" />
-    <PackageReference Include="Avalonia.Desktop" Version="0.10.15" />
-    <PackageReference Include="Avalonia.Diagnostics" Version="0.10.15" />
-    <PackageReference Include="Avalonia.ReactiveUI" Version="0.10.15" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\SerialDisk\SerialDisk.csproj" />
-  </ItemGroup>
-    <PropertyGroup>
-	    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-    </PropertyGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="Current">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net6.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<AssemblyName>SerialDiskUI</AssemblyName>
+		<RootNamespace>SerialDiskUI</RootNamespace>
+		<ApplicationIcon>Assets\Icons\SerialDisk.ico</ApplicationIcon>
+		<Version>3.0</Version>
+	</PropertyGroup>
+	<ItemGroup>
+		<AvaloniaResource Include="Assets\**" />
+	</ItemGroup>
+	<ItemGroup>
+		<AvaloniaResource Remove="Assets\macOS-build\Info.plist.template" />
+		<AvaloniaResource Remove="Assets\macOS-build\SerialDisk.icns" />
+	</ItemGroup>
+	<ItemGroup>
+		<Content Include="serialdiskui.config">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Avalonia" Version="0.10.16" />
+		<PackageReference Include="Avalonia.Desktop" Version="0.10.16" />
+		<PackageReference Include="Avalonia.Diagnostics" Version="0.10.16" />
+		<PackageReference Include="Avalonia.ReactiveUI" Version="0.10.16" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\SerialDisk\SerialDisk.csproj" />
+	</ItemGroup>
+	<PropertyGroup>
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+	</PropertyGroup>
+
+	<!-- Task required to update macOS bundle plist version numbers -->
+	<UsingTask
+	  TaskName="ReplaceFileText"
+	  TaskFactory="RoslynCodeTaskFactory"
+	  AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll" >
+		<ParameterGroup>
+			<InputFilename ParameterType="System.String" Required="true" />
+			<OutputFilename ParameterType="System.String" Required="true" />
+			<MatchExpression ParameterType="System.String" Required="true" />
+			<ReplacementText ParameterType="System.String" Required="true" />
+		</ParameterGroup>
+		<Task>
+			<Using Namespace="System" />
+			<Using Namespace="System.IO" />
+			<Using Namespace="System.Text.RegularExpressions" />
+			<Code Type="Fragment" Language="cs">
+				<![CDATA[
+				File.WriteAllText(
+					OutputFilename,
+					Regex.Replace(File.ReadAllText(InputFilename), MatchExpression, ReplacementText)
+					);
+			  ]]>
+			</Code>
+		</Task>
+	</UsingTask>
+
+	<Target Name="PlistVersionText" AfterTargets="Corecompile">
+		<ReplaceFileText InputFilename="Assets\macOS-build\Info.plist.template" OutputFilename="Assets\macOS-build\Info.plist" MatchExpression="\#version\#" ReplacementText="$(InformationalVersion)" />
+	</Target>
 </Project>

@@ -9,7 +9,7 @@
 		Height="260"
 		Title="About"
 		CanResize="False"
-		Icon="/Assets/info.ico"
+		Icon="/Assets/Icons/info.ico"
 		WindowStartupLocation="CenterOwner">
 	
 	<Window.Styles>
