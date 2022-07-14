@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.ReactiveUI;
 
-namespace SerialDiskUI
+namespace Z80andrew.SerialDisk.SerialDiskUI
 {
     class Program
     {

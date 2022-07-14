@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AtariST.SerialDiskCLI.Common
+namespace Z80andrew.SerialDisk.SerialDiskCLI.Common
 {
     internal class Constants
     {

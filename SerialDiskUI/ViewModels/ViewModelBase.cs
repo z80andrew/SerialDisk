@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SerialDiskUI.ViewModels
+namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 {
     public class ViewModelBase : ReactiveObject
     {

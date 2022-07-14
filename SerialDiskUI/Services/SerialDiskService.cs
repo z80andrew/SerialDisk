@@ -1,12 +1,12 @@
-﻿using AtariST.SerialDisk.Common;
-using AtariST.SerialDisk.Comms;
-using AtariST.SerialDisk.Interfaces;
-using AtariST.SerialDisk.Models;
-using AtariST.SerialDisk.Storage;
+﻿using Z80andrew.SerialDisk.Common;
+using Z80andrew.SerialDisk.Comms;
+using Z80andrew.SerialDisk.Interfaces;
+using Z80andrew.SerialDisk.Models;
+using Z80andrew.SerialDisk.Storage;
 using System;
 using System.Threading;
 
-namespace SerialDiskUI.Services
+namespace Z80andrew.SerialDisk.SerialDiskUI.Services
 {
     public class SerialDiskService
     {

@@ -1,9 +1,9 @@
-﻿using AtariST.SerialDisk.Common;
-using AtariST.SerialDisk.Models;
+﻿using Z80andrew.SerialDisk.Common;
+using Z80andrew.SerialDisk.Models;
 using System;
-using static AtariST.SerialDisk.Common.Constants;
+using static Z80andrew.SerialDisk.Common.Constants;
 
-namespace AtariST.SerialDisk.Interfaces
+namespace Z80andrew.SerialDisk.Interfaces
 {
     public interface ILogger : IDisposable
     {

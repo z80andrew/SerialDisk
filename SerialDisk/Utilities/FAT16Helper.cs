@@ -1,11 +1,11 @@
-﻿using AtariST.SerialDisk.Models;
+﻿using Z80andrew.SerialDisk.Models;
 using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using static AtariST.SerialDisk.Common.Constants;
+using static Z80andrew.SerialDisk.Common.Constants;
 
-namespace AtariST.SerialDisk.Utilities
+namespace Z80andrew.SerialDisk.Utilities
 {
     public static class FAT16Helper
     {

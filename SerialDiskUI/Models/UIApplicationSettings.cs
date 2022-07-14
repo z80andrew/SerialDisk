@@ -1,9 +1,9 @@
-﻿using AtariST.SerialDisk.Models;
+﻿using Z80andrew.SerialDisk.Models;
 using System.IO;
 using System.Text.Json;
-using SerialDiskUI.Common;
+using Z80andrew.SerialDisk.SerialDiskUI.Common;
 
-namespace SerialDiskUI.Models
+namespace Z80andrew.SerialDisk.SerialDiskUI.Models
 {
     public class UIApplicationSettings : ApplicationSettings
     {

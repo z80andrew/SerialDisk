@@ -1,4 +1,4 @@
-﻿namespace AtariST.SerialDisk.Interfaces
+﻿namespace Z80andrew.SerialDisk.Interfaces
 {
     public interface ISerial
     {

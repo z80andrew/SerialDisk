@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SerialDiskUI.Common
+namespace Z80andrew.SerialDisk.SerialDiskUI.Common
 {
     public enum Status
     {

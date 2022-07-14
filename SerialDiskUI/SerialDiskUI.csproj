@@ -4,7 +4,7 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<AssemblyName>SerialDiskUI</AssemblyName>
-		<RootNamespace>SerialDiskUI</RootNamespace>
+		<RootNamespace>Z80andrew.SerialDisk.SerialDiskUI</RootNamespace>
 		<ApplicationIcon>Assets\Icons\SerialDisk.ico</ApplicationIcon>
 		<Version>3.0</Version>
 	</PropertyGroup>
@@ -27,17 +27,14 @@
 		<PackageReference Include="Avalonia.ReactiveUI" Version="0.10.16" />
 	</ItemGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\SerialDisk\SerialDisk.csproj" />
+	  <ProjectReference Include="..\SerialDisk\SerialDisk.csproj" />
 	</ItemGroup>
 	<PropertyGroup>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 	</PropertyGroup>
 
 	<!-- Task required to update macOS bundle plist version numbers -->
-	<UsingTask
-	  TaskName="ReplaceFileText"
-	  TaskFactory="RoslynCodeTaskFactory"
-	  AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll" >
+	<UsingTask TaskName="ReplaceFileText" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
 		<ParameterGroup>
 			<InputFilename ParameterType="System.String" Required="true" />
 			<OutputFilename ParameterType="System.String" Required="true" />

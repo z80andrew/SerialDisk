@@ -1,7 +1,7 @@
 .include "../macro/gemdos.asm"
 .include "../macro/bios.asm"
 .include "../macro/xbios.asm"
-.include "../src/atari.asm"
+.include "../src/constants.asm"
 
 |-------------------------------------------------------------------------------
 
@@ -97,6 +97,18 @@ start:
 
 start_end:
 	Ptermres d7,#0
+
+|-------------------------------------------------------------------------------
+| Reads display refresh rate and stores it in memory to be used for
+| timing calculations
+|
+| Input
+|
+| Output
+| variables: refresh_rate
+|
+| Corrupts
+|
 
 set_refresh_rate:
 	move.b	(screenres), d0

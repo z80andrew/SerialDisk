@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using static AtariST.SerialDisk.Common.Constants;
+using static Z80andrew.SerialDisk.Common.Constants;
 
-namespace AtariST.SerialDisk.Models
+namespace Z80andrew.SerialDisk.Models
 {
     public class ApplicationSettings
     {

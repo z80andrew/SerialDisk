@@ -1,17 +1,17 @@
-using AtariST.SerialDisk.Utilities;
+using Z80andrew.SerialDisk.Utilities;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.Configuration;
-using SerialDiskUI.Models;
-using SerialDiskUI.Services;
-using SerialDiskUI.ViewModels;
-using SerialDiskUI.Views;
+using Z80andrew.SerialDisk.SerialDiskUI.Models;
+using Z80andrew.SerialDisk.SerialDiskUI.Services;
+using Z80andrew.SerialDisk.SerialDiskUI.ViewModels;
+using Z80andrew.SerialDisk.SerialDiskUI.Views;
 using System;
 using System.IO;
 
-namespace SerialDiskUI
+namespace Z80andrew.SerialDisk.SerialDiskUI
 {
     public class App : Application
     {
@@ -81,7 +81,7 @@ namespace SerialDiskUI
                         .Bind(appSettings);
                 }
 
-                configBuilder.AddCommandLine(args, AtariST.SerialDisk.Common.Constants.ConsoleParameterMappings)
+                configBuilder.AddCommandLine(args, Z80andrew.SerialDisk.Common.Constants.ConsoleParameterMappings)
                     .Build()
                     .Bind(appSettings);
 

@@ -1,13 +1,13 @@
-﻿using AtariST.SerialDisk.Common;
-using AtariST.SerialDisk.Interfaces;
-using AtariST.SerialDisk.Models;
+﻿using Z80andrew.SerialDisk.Common;
+using Z80andrew.SerialDisk.Interfaces;
+using Z80andrew.SerialDisk.Models;
 using DynamicData;
 using ReactiveUI;
 using System;
 using System.IO;
 using System.Text;
 
-namespace SerialDiskUI.Services
+namespace Z80andrew.SerialDisk.SerialDiskUI.Services
 {
     public class StatusService : ReactiveObject, IStatusService
     {
@@ -41,7 +41,7 @@ namespace SerialDiskUI.Services
 
         public StatusService()
         {
-            SetStatus(AtariST.SerialDisk.Common.Status.StatusKey.Stopped);
+            SetStatus(Z80andrew.SerialDisk.Common.Status.StatusKey.Stopped);
         }
 
         public void SetTransferProgress(int totalBytes, int receivedBytes)
@@ -51,7 +51,7 @@ namespace SerialDiskUI.Services
 
             var statusString = new StringBuilder()
                 .Append("Status: ")
-                .Append(AtariST.SerialDisk.Common.Status.Statuses.Find(x => x.Key == Status).Value)
+                .Append(Z80andrew.SerialDisk.Common.Status.Statuses.Find(x => x.Key == Status).Value)
                 .Append($" ({TransferredBytes}/{TotalBytes} bytes)");
             
             StatusWithMessage = statusString.ToString();
@@ -62,9 +62,9 @@ namespace SerialDiskUI.Services
             Status = status;
 
             // Reset progressbar values if not transferring
-            if (status != AtariST.SerialDisk.Common.Status.StatusKey.Sending
-                || status != AtariST.SerialDisk.Common.Status.StatusKey.Receiving
-                || status != AtariST.SerialDisk.Common.Status.StatusKey.Error)
+            if (status != Z80andrew.SerialDisk.Common.Status.StatusKey.Sending
+                || status != Z80andrew.SerialDisk.Common.Status.StatusKey.Receiving
+                || status != Z80andrew.SerialDisk.Common.Status.StatusKey.Error)
             {
                 TotalBytes = Int32.MaxValue;
                 TransferredBytes = Int32.MinValue;
@@ -72,7 +72,7 @@ namespace SerialDiskUI.Services
 
             var statusString = new StringBuilder()
                 .Append("Status: ")
-                .Append(AtariST.SerialDisk.Common.Status.Statuses.Find(x => x.Key == status).Value);
+                .Append(Z80andrew.SerialDisk.Common.Status.Statuses.Find(x => x.Key == status).Value);
 
             if (!String.IsNullOrEmpty(message)) statusString.Append(" ").Append(message);
 

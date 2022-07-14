@@ -1,8 +1,8 @@
-﻿using AtariST.SerialDisk.Models;
-using AtariST.SerialDisk.Utilities;
+﻿using Z80andrew.SerialDisk.Models;
+using Z80andrew.SerialDisk.Utilities;
 using Avalonia.Controls;
 using ReactiveUI;
-using SerialDiskUI.Models;
+using Z80andrew.SerialDisk.SerialDiskUI.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,10 +11,10 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
-using static AtariST.SerialDisk.Common.Constants;
-using static SerialDiskUI.Common.Constants;
+using static Z80andrew.SerialDisk.Common.Constants;
+using static Z80andrew.SerialDisk.SerialDiskUI.Common.Constants;
 
-namespace SerialDiskUI.ViewModels
+namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 {
     public class SettingsWindowViewModel : ViewModelBase
     {

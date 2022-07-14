@@ -1,9 +1,9 @@
-﻿using AtariST.SerialDisk.Models;
+﻿using Z80andrew.SerialDisk.Models;
 using ReactiveUI;
 using System.IO.Ports;
-using static AtariST.SerialDisk.Common.Constants;
+using static Z80andrew.SerialDisk.Common.Constants;
 
-namespace SerialDiskUI.Models
+namespace Z80andrew.SerialDisk.SerialDiskUI.Models
 {
     public class SerialDiskUIModel : ReactiveObject
     {

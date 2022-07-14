@@ -1,9 +1,9 @@
-﻿using AtariST.SerialDisk.Models;
+﻿using Z80andrew.SerialDisk.Models;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization.Json;
 
-namespace AtariST.SerialDisk.Utilities
+namespace Z80andrew.SerialDisk.Utilities
 {
     public static class ConfigurationHelper
     {

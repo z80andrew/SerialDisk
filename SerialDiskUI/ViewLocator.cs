@@ -1,9 +1,9 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using SerialDiskUI.ViewModels;
+using Z80andrew.SerialDisk.SerialDiskUI.ViewModels;
 using System;
 
-namespace SerialDiskUI
+namespace Z80andrew.SerialDisk.SerialDiskUI
 {
     public class ViewLocator : IDataTemplate
     {

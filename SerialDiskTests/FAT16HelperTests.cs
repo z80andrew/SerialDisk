@@ -1,8 +1,8 @@
-﻿using AtariST.SerialDisk.Utilities;
+﻿using Z80andrew.SerialDisk.Utilities;
 using NUnit.Framework;
-using static AtariST.SerialDisk.Common.Constants;
+using static Z80andrew.SerialDisk.Common.Constants;
 
-namespace Tests
+namespace Z80andrew.SerialDisk.Tests
 {
     [TestFixture]
     public class FAT16HelperTests

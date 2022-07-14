@@ -1,8 +1,8 @@
-﻿using AtariST.SerialDisk.Models;
-using AtariST.SerialDisk.Storage;
+﻿using Z80andrew.SerialDisk.Models;
+using Z80andrew.SerialDisk.Storage;
 using System.Collections.Generic;
 
-namespace AtariST.SerialDisk.Interfaces
+namespace Z80andrew.SerialDisk.Interfaces
 {
     public interface IDisk
     {

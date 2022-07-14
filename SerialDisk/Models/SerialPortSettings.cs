@@ -1,6 +1,6 @@
 ﻿using System.IO.Ports;
 
-namespace AtariST.SerialDisk.Models
+namespace Z80andrew.SerialDisk.Models
 {
     public class SerialPortSettings
     {

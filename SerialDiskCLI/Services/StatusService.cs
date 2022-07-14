@@ -1,10 +1,10 @@
-﻿using AtariST.SerialDisk.Common;
-using AtariST.SerialDisk.Interfaces;
+﻿using Z80andrew.SerialDisk.Common;
+using Z80andrew.SerialDisk.Interfaces;
 using System;
 using System.Diagnostics;
 using System.Text;
 
-namespace AtariST.SerialDiskCLI.Services
+namespace Z80andrew.SerialDisk.SerialDiskCLI.Services
 {
     public class StatusService : IStatusService
     {

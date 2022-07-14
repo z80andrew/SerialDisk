@@ -1,7 +1,7 @@
-using AtariST.SerialDisk.Common;
-using AtariST.SerialDisk.Interfaces;
-using AtariST.SerialDisk.Models;
-using AtariST.SerialDisk.Utilities;
+using Z80andrew.SerialDisk.Common;
+using Z80andrew.SerialDisk.Interfaces;
+using Z80andrew.SerialDisk.Models;
+using Z80andrew.SerialDisk.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -9,7 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace AtariST.SerialDisk.Storage
+namespace Z80andrew.SerialDisk.Storage
 {
     public class Disk : IDisk
     {

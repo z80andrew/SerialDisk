@@ -1,8 +1,8 @@
-﻿using AtariST.SerialDisk.Common;
+﻿using Z80andrew.SerialDisk.Common;
 using System;
-using static AtariST.SerialDisk.Common.Constants;
+using static Z80andrew.SerialDisk.Common.Constants;
 
-namespace AtariST.SerialDisk.Models
+namespace Z80andrew.SerialDisk.Models
 {
     public enum LogMessageType
     {

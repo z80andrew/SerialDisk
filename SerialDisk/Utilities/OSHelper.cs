@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace AtariST.SerialDisk.Utilities
+namespace Z80andrew.SerialDisk.Utilities
 {
     public static class OSHelper
     {

@@ -1,6 +1,6 @@
-﻿using AtariST.SerialDisk.Common;
+﻿using Z80andrew.SerialDisk.Common;
 using ReactiveUI;
-using SerialDiskUI.Models;
+using Z80andrew.SerialDisk.SerialDiskUI.Models;
 using System;
 using System.Diagnostics;
 using System.Reactive;
@@ -8,7 +8,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace SerialDiskUI.ViewModels
+namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 {
     public class AboutWindowViewModel : ViewModelBase
     {

@@ -3,12 +3,12 @@ using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.ReactiveUI;
 using ReactiveUI;
-using SerialDiskUI.Models;
-using SerialDiskUI.ViewModels;
+using Z80andrew.SerialDisk.SerialDiskUI.Models;
+using Z80andrew.SerialDisk.SerialDiskUI.ViewModels;
 using System;
 using System.Threading.Tasks;
 
-namespace SerialDiskUI.Views
+namespace Z80andrew.SerialDisk.SerialDiskUI.Views
 {
     public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
     {

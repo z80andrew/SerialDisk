@@ -6,20 +6,20 @@ using System.Windows.Input;
 using System.Reactive;
 using System.Diagnostics;
 using Avalonia.Controls.ApplicationLifetimes;
-using SerialDiskUI.Services;
-using SerialDiskUI.Models;
+using Z80andrew.SerialDisk.SerialDiskUI.Services;
+using Z80andrew.SerialDisk.SerialDiskUI.Models;
 using System.IO.Ports;
 using System.Globalization;
 using System.Threading.Tasks;
-using AtariST.SerialDisk.Interfaces;
+using Z80andrew.SerialDisk.Interfaces;
 using System.IO;
-using AtariST.SerialDisk.Common;
-using AtariST.SerialDisk.Utilities;
+using Z80andrew.SerialDisk.Common;
+using Z80andrew.SerialDisk.Utilities;
 using System.Collections.ObjectModel;
 using System.Linq;
-using AtariST.SerialDisk.Models;
+using Z80andrew.SerialDisk.Models;
 
-namespace SerialDiskUI.ViewModels
+namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
@@ -170,12 +170,12 @@ namespace SerialDiskUI.ViewModels
                 .ToProperty(this, x => x.TransferPercent);
 
             _serialPortOpen = statusService.WhenAnyValue(x => x.Status)
-                .Select(x => x != AtariST.SerialDisk.Common.Status.StatusKey.Stopped && x != AtariST.SerialDisk.Common.Status.StatusKey.Error)
+                .Select(x => x != Z80andrew.SerialDisk.Common.Status.StatusKey.Stopped && x != Z80andrew.SerialDisk.Common.Status.StatusKey.Error)
                 .ToProperty(this, x => x.SerialPortOpen);
 
             _statusService.WhenAnyValue(x => x.Status)
                 .Subscribe(x => {
-                    var isPortOpen = x != AtariST.SerialDisk.Common.Status.StatusKey.Stopped && x != AtariST.SerialDisk.Common.Status.StatusKey.Error;
+                    var isPortOpen = x != Z80andrew.SerialDisk.Common.Status.StatusKey.Stopped && x != Z80andrew.SerialDisk.Common.Status.StatusKey.Error;
                     ReloadIconOpacity = isPortOpen ? ICON_ENABLED_OPACITY : ICON_DISABLED_OPACITY;
                 });
 
@@ -197,7 +197,7 @@ namespace SerialDiskUI.ViewModels
 
                 catch(Exception logException)
                 {
-                    _statusService.SetStatus(AtariST.SerialDisk.Common.Status.StatusKey.Error, logException.Message);
+                    _statusService.SetStatus(Z80andrew.SerialDisk.Common.Status.StatusKey.Error, logException.Message);
                 }
             });
 
@@ -215,7 +215,7 @@ namespace SerialDiskUI.ViewModels
 
                 catch (Exception logException)
                 {
-                    _statusService.SetStatus(AtariST.SerialDisk.Common.Status.StatusKey.Error, logException.Message);
+                    _statusService.SetStatus(Z80andrew.SerialDisk.Common.Status.StatusKey.Error, logException.Message);
                 }
             });
 
@@ -270,13 +270,13 @@ namespace SerialDiskUI.ViewModels
             RefreshVirtualDiskFolderCommand = ReactiveCommand.CreateFromTask(async () =>
             {
                 _serialDiskService.ReimportLocalDirectoryContents();
-                _statusService.SetStatus(AtariST.SerialDisk.Common.Status.StatusKey.OperationComplete, "refreshing disk contents");
+                _statusService.SetStatus(Z80andrew.SerialDisk.Common.Status.StatusKey.OperationComplete, "refreshing disk contents");
             });
 
             StartSerialDiskCommand = ReactiveCommand.CreateFromTask(async () =>
             {
-                if (_statusService.Status == AtariST.SerialDisk.Common.Status.StatusKey.Stopped
-                        || _statusService.Status == AtariST.SerialDisk.Common.Status.StatusKey.Error)
+                if (_statusService.Status == Z80andrew.SerialDisk.Common.Status.StatusKey.Stopped
+                        || _statusService.Status == Z80andrew.SerialDisk.Common.Status.StatusKey.Error)
                 {
                     _serialDiskService.BeginSerialDisk(_model.ApplicationSettings, _statusService, logger);
                 }
@@ -299,12 +299,12 @@ namespace SerialDiskUI.ViewModels
         {
             switch (status)
             {
-                case AtariST.SerialDisk.Common.Status.StatusKey.Receiving:
+                case Z80andrew.SerialDisk.Common.Status.StatusKey.Receiving:
                     SendIconOpacity = ICON_DISABLED_OPACITY;
                     ReceiveIconOpacity = ICON_ENABLED_OPACITY;
                     break;
 
-                case AtariST.SerialDisk.Common.Status.StatusKey.Sending:
+                case Z80andrew.SerialDisk.Common.Status.StatusKey.Sending:
                     ReceiveIconOpacity = ICON_DISABLED_OPACITY;
                     SendIconOpacity = ICON_ENABLED_OPACITY;
                     break;

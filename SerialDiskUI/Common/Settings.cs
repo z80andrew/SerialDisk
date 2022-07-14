@@ -5,7 +5,7 @@ using System.IO;
 using System.IO.Ports;
 using System.Resources;
 
-namespace SerialDiskUI.Common
+namespace Z80andrew.SerialDisk.SerialDiskUI.Common
 {
     public static class Constants
     {

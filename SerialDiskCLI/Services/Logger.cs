@@ -1,13 +1,13 @@
-﻿using AtariST.SerialDisk.Common;
-using AtariST.SerialDisk.Interfaces;
-using AtariST.SerialDisk.Models;
+﻿using Z80andrew.SerialDisk.Common;
+using Z80andrew.SerialDisk.Interfaces;
+using Z80andrew.SerialDisk.Models;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using static AtariST.SerialDisk.Common.Constants;
+using static Z80andrew.SerialDisk.Common.Constants;
 
-namespace AtariST.SerialDiskCLI.Services
+namespace Z80andrew.SerialDisk.SerialDiskCLI.Services
 {
     public class Logger : IDisposable, ILogger
     {

@@ -1,9 +1,9 @@
-﻿using AtariST.SerialDisk.Common;
-using AtariST.SerialDisk.Interfaces;
-using AtariST.SerialDisk.Models;
-using AtariST.SerialDisk.Storage;
-using AtariST.SerialDisk.Utilities;
-using AtariST.SerialDiskCLI.Services;
+﻿using Z80andrew.SerialDisk.Common;
+using Z80andrew.SerialDisk.Interfaces;
+using Z80andrew.SerialDisk.Models;
+using Z80andrew.SerialDisk.Storage;
+using Z80andrew.SerialDisk.Utilities;
+using Z80andrew.SerialDisk.SerialDiskCLI.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -12,9 +12,9 @@ using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
-using static AtariST.SerialDisk.Common.Constants;
+using static Z80andrew.SerialDisk.Common.Constants;
 
-namespace AtariST.SerialDiskCLI
+namespace Z80andrew.SerialDisk.SerialDiskCLI
 {
     public static class Program
     {

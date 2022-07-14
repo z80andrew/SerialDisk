@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace AtariST.SerialDisk.Common
+namespace Z80andrew.SerialDisk.Common
 {
     public static class Constants
     {

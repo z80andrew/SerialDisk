@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.ReactiveUI;
-using SerialDiskUI.ViewModels;
+using Z80andrew.SerialDisk.SerialDiskUI.ViewModels;
 using ReactiveUI;
 using System;
 using System.Threading.Tasks;
@@ -14,7 +14,7 @@ using System.Text.RegularExpressions;
 using System.Diagnostics;
 using Avalonia.Input.TextInput;
 
-namespace SerialDiskUI.Views
+namespace Z80andrew.SerialDisk.SerialDiskUI.Views
 {
     public class SettingsWindow : ReactiveWindow<SettingsWindowViewModel>
     {

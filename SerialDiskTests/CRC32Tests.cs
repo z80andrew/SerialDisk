@@ -1,9 +1,9 @@
-﻿using AtariST.SerialDisk.Utilities;
+﻿using Z80andrew.SerialDisk.Utilities;
 using NUnit.Framework;
 using System.Linq;
 using System.Text;
 
-namespace Tests
+namespace Z80andrew.SerialDisk.Tests
 {
     [TestFixture]
     public class CRC32Tests
