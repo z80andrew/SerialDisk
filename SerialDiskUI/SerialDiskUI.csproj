@@ -59,7 +59,7 @@
 		</Task>
 	</UsingTask>
 
-	<Target Name="PlistVersionText" AfterTargets="Corecompile">
+	<Target Name="PlistVersionText" AfterTargets="AfterBuild">
 		<ReplaceFileText InputFilename="Assets\macOS-build\Info.plist.template" OutputFilename="Assets\macOS-build\Info.plist" MatchExpression="\#version\#" ReplacementText="$(InformationalVersion)" />
 	</Target>
 </Project>
