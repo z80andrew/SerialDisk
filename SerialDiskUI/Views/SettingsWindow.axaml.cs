@@ -24,14 +24,10 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
 #if DEBUG
             this.AttachDevTools();
 #endif
-
-            if (ViewModel is not null)
-            {
-                this.WhenActivated(d => d(ViewModel.ApplySettingsCommand.Subscribe(CloseSettingsWindow)));
-                this.WhenActivated(d => d(ViewModel.CloseSettingsCommand.Subscribe(CloseSettingsWindow)));
-                this.WhenActivated(d => d(ViewModel.ShowFolderDialog.RegisterHandler(WindowShowFolderDialog)));
-                this.WhenActivated(d => d(ViewModel.ShowFileDialog.RegisterHandler(WindowShowFileDialog)));
-            }
+            this.WhenActivated(d => d(ViewModel.ApplySettingsCommand.Subscribe(CloseSettingsWindow)));
+            this.WhenActivated(d => d(ViewModel.CloseSettingsCommand.Subscribe(CloseSettingsWindow)));
+            this.WhenActivated(d => d(ViewModel.ShowFolderDialog.RegisterHandler(WindowShowFolderDialog)));
+            this.WhenActivated(d => d(ViewModel.ShowFileDialog.RegisterHandler(WindowShowFileDialog)));
         }
 
         private void CloseSettingsWindow(Unit commandOutput)
