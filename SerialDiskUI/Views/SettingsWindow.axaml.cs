@@ -18,8 +18,6 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
 {
     public class SettingsWindow : ReactiveWindow<SettingsWindowViewModel>
     {
-        string inputDiskSize = string.Empty;
-
         public SettingsWindow()
         {
             InitializeComponent();
@@ -27,10 +25,18 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
             this.AttachDevTools();
 #endif
 
-            this.WhenActivated(d => d(ViewModel.ApplySettingsCommand.Subscribe(Close)));
-            this.WhenActivated(d => d(ViewModel.CloseSettingsCommand.Subscribe(Close)));
-            this.WhenActivated(d => d(ViewModel.ShowFolderDialog.RegisterHandler(WindowShowFolderDialog)));
-            this.WhenActivated(d => d(ViewModel.ShowFileDialog.RegisterHandler(WindowShowFileDialog)));
+            if (ViewModel is not null)
+            {
+                this.WhenActivated(d => d(ViewModel.ApplySettingsCommand.Subscribe(CloseSettingsWindow)));
+                this.WhenActivated(d => d(ViewModel.CloseSettingsCommand.Subscribe(CloseSettingsWindow)));
+                this.WhenActivated(d => d(ViewModel.ShowFolderDialog.RegisterHandler(WindowShowFolderDialog)));
+                this.WhenActivated(d => d(ViewModel.ShowFileDialog.RegisterHandler(WindowShowFileDialog)));
+            }
+        }
+
+        private void CloseSettingsWindow(Unit commandOutput)
+        {
+            this.Close();
         }
 
         private void InitializeComponent()
@@ -40,11 +46,13 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
 
         private async Task WindowShowFolderDialog(InteractionContext<string, string?> interaction)
         {
-            var dialog = new OpenFolderDialog();
-            dialog.Directory = !string.IsNullOrEmpty(interaction?.Input) ? interaction.Input : AppDomain.CurrentDomain.BaseDirectory;
+            var dialog = new OpenFolderDialog
+            {
+                Directory = !string.IsNullOrEmpty(interaction?.Input) ? interaction.Input : AppDomain.CurrentDomain.BaseDirectory
+            };
 
             var folderPath = await dialog.ShowAsync(this);
-            interaction.SetOutput(folderPath);
+            interaction?.SetOutput(folderPath);
         }
 
         private async Task WindowShowFileDialog(InteractionContext<string, string?> interaction)
@@ -64,7 +72,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
             }
 
             var filePath = await dialog.ShowAsync(this);
-            interaction.SetOutput(filePath);
+            interaction?.SetOutput(filePath);
         }
     }
 }

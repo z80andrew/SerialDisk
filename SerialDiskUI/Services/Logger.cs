@@ -23,7 +23,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Services
             private set => this.RaiseAndSetIfChanged(ref _logMessage, value);
         }
 
-        public Logger(LoggingLevel loggingLevel, string logFilePath = null)
+        public Logger(LoggingLevel loggingLevel, string? logFilePath = null)
         {
             LogLevel = loggingLevel;
 
@@ -49,7 +49,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Services
                 {
                     if (!string.Equals(logFilePath, _fileStream?.Name))
                     {
-                        if (_fileStream != null) _fileStream.Dispose();
+                        _fileStream?.Dispose();
 
                         if (File.Exists(logFilePath)) _fileStream = new FileStream(logFilePath, FileMode.Append);
                         else _fileStream = new FileStream(logFilePath, FileMode.OpenOrCreate);
@@ -66,7 +66,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Services
 
                     LogMessage = new LogMessage(LoggingLevel.Info, logText.ToString(), DateTime.Now);
 
-                    throw logException;
+                    throw;
                 }
             }
         }
@@ -75,13 +75,11 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Services
         {
             try
             {
-                if (_fileStream != null) _fileStream.Dispose();
-                _fileStream = null;
+                _fileStream?.Dispose();
             }
 
             catch(Exception ex)
             {
-                _fileStream = null;
                 LogException(ex, "Could not un-set log file");
             }
         }

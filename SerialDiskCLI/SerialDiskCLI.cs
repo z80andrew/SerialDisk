@@ -22,15 +22,15 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
 
         private CancellationTokenSource _cancelTokenSource;
 
-        public SerialDiskCLI(ApplicationSettings applicationSettings, DiskParameters diskParameters, ILogger logger)
+        public SerialDiskCLI(ApplicationSettings applicationSettings, ILogger logger)
         {
             _logger = logger;
             _cancelTokenSource = new CancellationTokenSource();
 
-            Init(applicationSettings, diskParameters, _cancelTokenSource);
+            Init(applicationSettings, _cancelTokenSource);
         }
 
-        private void Init(ApplicationSettings applicationSettings, DiskParameters diskParameters, CancellationTokenSource cancelTokenSource)
+        private void Init(ApplicationSettings applicationSettings, CancellationTokenSource cancelTokenSource)
         {
             var versionMessage = $"Serial Disk v{Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion} {Constants.VERSION_TYPE}";
 
@@ -43,7 +43,7 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
             _logger.Log($"Operating system: {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture} {System.Runtime.InteropServices.RuntimeInformation.OSDescription}", LoggingLevel.Debug);
             _logger.Log($"Framework version: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}", LoggingLevel.Debug);
 
-            diskParameters = new DiskParameters(applicationSettings.LocalDirectoryPath, applicationSettings.DiskSettings, _logger);
+            var diskParameters = new DiskParameters(applicationSettings.LocalDirectoryPath, applicationSettings.DiskSettings, _logger);
 
             _logger.Log($"Importing local directory contents from {applicationSettings.LocalDirectoryPath}", Constants.LoggingLevel.Debug);
 

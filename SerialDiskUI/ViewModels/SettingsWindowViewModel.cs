@@ -20,7 +20,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
     {
         private const string COMPORT_OTHER = "Other";
 
-        private SerialDiskUIModel _settings;
+        private readonly SerialDiskUIModel _settings;
         private bool _isCOMPortTextBoxVisible;
         private string _otherCOMPortName;
         private bool _isLogDisplayEnabled;
@@ -102,6 +102,13 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
         public KeyValuePair<string, Parity>[] ParityChoices { get; set; }
         public KeyValuePair<string, LoggingLevel>[] LogLevelChoices { get; set; }
 
+        public ReactiveCommand<Unit, Unit> ApplySettingsCommand { get; }
+        public ReactiveCommand<Unit, Unit> CloseSettingsCommand { get; }
+        public ReactiveCommand<Unit, Unit> ChooseFolderCommand { get; }
+        public ReactiveCommand<Unit, Unit> ChooseFileCommand { get; }
+        public Interaction<string, string?> ShowFolderDialog { get; }
+        public Interaction<string, string?> ShowFileDialog { get; }
+
         public bool IsLogDisplayEnabled
         {
             get => _isLogDisplayEnabled;
@@ -115,8 +122,8 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 
             ChooseFolderCommand = ReactiveCommand.CreateFromTask(OpenFolderAsync);
             ChooseFileCommand = ReactiveCommand.CreateFromTask(OpenFileAsync);
-            ApplySettingsCommand = ReactiveCommand.CreateFromTask(ApplySettings);
-            CloseSettingsCommand = ReactiveCommand.CreateFromTask(CloseSettings);
+            ApplySettingsCommand = ReactiveCommand.Create(ApplySettingsFromFormValues);
+            CloseSettingsCommand = ReactiveCommand.Create(CloseSettings);
 
             InitChoices();
         }
@@ -130,11 +137,11 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 
             ChooseFolderCommand = ReactiveCommand.CreateFromTask(OpenFolderAsync);
             ChooseFileCommand = ReactiveCommand.CreateFromTask(OpenFileAsync);
-            ApplySettingsCommand = ReactiveCommand.CreateFromTask(ApplySettings);
-            CloseSettingsCommand = ReactiveCommand.CreateFromTask(CloseSettings);
+            ApplySettingsCommand = ReactiveCommand.Create(ApplySettingsFromFormValues);
+            CloseSettingsCommand = ReactiveCommand.Create(CloseSettings);
 
             InitChoices();
-            ApplySettingsValues(_settings);
+            ApplyFormValuesFromSettings(_settings);
         }
 
         private void InitChoices()
@@ -169,7 +176,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
             COMPortChoices = portChoices.ToArray();
         }
 
-        private void ApplySettingsValues(SerialDiskUIModel settings)
+        private void ApplyFormValuesFromSettings(SerialDiskUIModel settings)
         {
             if (COMPortChoices.Where(x => x.Value == settings.ComPortName).Any())
             {
@@ -201,45 +208,33 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
             IsCompressionEnabled = _settings.IsOutputCompressionEnabled;
         }
 
-        public ReactiveCommand<Unit, SerialDiskUIModel> ApplySettingsCommand { get; }
-        public ReactiveCommand<Unit, SerialDiskUIModel> CloseSettingsCommand { get; }
-        public ReactiveCommand<Unit, Unit> ChooseFolderCommand { get; }
-        public ReactiveCommand<Unit, Unit> ChooseFileCommand { get; }
-        public Interaction<string, string?> ShowFolderDialog { get; }
-        public Interaction<string, string?> ShowFileDialog { get; }
-
-        private async Task<SerialDiskUIModel> ApplySettings()
+        private void ApplySettingsFromFormValues()
         {
-            if (_settings != null)
-            {
-                var comPortName = String.Equals(SelectedCOMPort.Value, COMPORT_OTHER, StringComparison.CurrentCultureIgnoreCase) ? _otherCOMPortName : SelectedCOMPort.Value;
+            var comPortName = String.Equals(SelectedCOMPort.Value, COMPORT_OTHER, StringComparison.CurrentCultureIgnoreCase) ? _otherCOMPortName : SelectedCOMPort.Value;
 
-                if(!String.IsNullOrEmpty(comPortName)) _settings.ComPortName = _settings.ApplicationSettings.SerialSettings.PortName = comPortName;
-                _settings.BaudRate = _settings.ApplicationSettings.SerialSettings.BaudRate = SelectedBaud.Value;
-                _settings.DataBits = _settings.ApplicationSettings.SerialSettings.DataBits = SelectedDataBits.Value;
-                _settings.StopBits = _settings.ApplicationSettings.SerialSettings.StopBits = SelectedStopBits.Value;
-                _settings.Handshake = _settings.ApplicationSettings.SerialSettings.Handshake = SelectedHandshake.Value;
-                _settings.Parity = _settings.ApplicationSettings.SerialSettings.Parity = SelectedParity.Value;
+            if(!String.IsNullOrEmpty(comPortName)) _settings.ComPortName = _settings.ApplicationSettings.SerialSettings.PortName = comPortName;
+            _settings.BaudRate = _settings.ApplicationSettings.SerialSettings.BaudRate = SelectedBaud.Value;
+            _settings.DataBits = _settings.ApplicationSettings.SerialSettings.DataBits = SelectedDataBits.Value;
+            _settings.StopBits = _settings.ApplicationSettings.SerialSettings.StopBits = SelectedStopBits.Value;
+            _settings.Handshake = _settings.ApplicationSettings.SerialSettings.Handshake = SelectedHandshake.Value;
+            _settings.Parity = _settings.ApplicationSettings.SerialSettings.Parity = SelectedParity.Value;
 
-                if(!String.IsNullOrEmpty(SelectedFolder)) _settings.VirtualDiskFolder = _settings.ApplicationSettings.LocalDirectoryPath = SelectedFolder;
-                _settings.VirtualDiskSizeMB = _settings.ApplicationSettings.DiskSettings.DiskSizeMiB = VirtualDiskSizeMB;
+            if(!String.IsNullOrEmpty(SelectedFolder)) _settings.VirtualDiskFolder = _settings.ApplicationSettings.LocalDirectoryPath = SelectedFolder;
+            _settings.VirtualDiskSizeMB = _settings.ApplicationSettings.DiskSettings.DiskSizeMiB = VirtualDiskSizeMB;
 
-                _settings.IsLogDisplayEnabled = _settings.ApplicationSettings.IsLogDisplayEnabled = IsLogDisplayEnabled;
-                _settings.LoggingLevel = _settings.ApplicationSettings.LoggingLevel = SelectedLogLevel.Value;
-                _settings.IsLogFileEnabled = _settings.ApplicationSettings.IsLogFileEnabled = IsLogFileEnabled;
-                if (!String.IsNullOrEmpty(SelectedFile)) _settings.LogFilePath = _settings.ApplicationSettings.LogFileName = SelectedFile;
+            _settings.IsLogDisplayEnabled = _settings.ApplicationSettings.IsLogDisplayEnabled = IsLogDisplayEnabled;
+            _settings.LoggingLevel = _settings.ApplicationSettings.LoggingLevel = SelectedLogLevel.Value;
+            _settings.IsLogFileEnabled = _settings.ApplicationSettings.IsLogFileEnabled = IsLogFileEnabled;
+            if (!String.IsNullOrEmpty(SelectedFile)) _settings.LogFilePath = _settings.ApplicationSettings.LogFileName = SelectedFile;
 
-                _settings.IsOutputCompressionEnabled = _settings.ApplicationSettings.IsCompressionEnabled = IsCompressionEnabled;
+            _settings.IsOutputCompressionEnabled = _settings.ApplicationSettings.IsCompressionEnabled = IsCompressionEnabled;
 
-                _settings.ApplicationSettings.WriteSettingsToDisk();
-            }
-
-            return _settings;
+            _settings.ApplicationSettings.WriteSettingsToDisk();
         }
 
-        private async Task<SerialDiskUIModel> CloseSettings()
+        private void CloseSettings()
         {
-            return null;
+            
         }
 
         private async Task OpenFolderAsync()
@@ -247,7 +242,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
             var currentFolder = Directory.Exists(SelectedFolder) ? SelectedFolder : Common.Constants.DefaultPath;
             var folderName = await ShowFolderDialog.Handle(currentFolder);
 
-            if (folderName is object)
+            if (folderName is not null)
             {
                 SelectedFolder = folderName;
             }
@@ -257,7 +252,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
         {
             var fileName = await ShowFileDialog.Handle(SelectedFile);
 
-            if (fileName is object)
+            if (fileName is not null)
             {
                 SelectedFile = fileName;
             }

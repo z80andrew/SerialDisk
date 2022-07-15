@@ -19,7 +19,6 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
     public static class Program
     {
         private static ApplicationSettings _applicationSettings;
-        private static DiskParameters _diskParameters;
 
         private static string FormatEnumParams(Type enumerationType)
         {
@@ -160,7 +159,7 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
 
             var logger = serviceProvider.GetRequiredService<ILogger>();
 
-            var cliApplication = new SerialDiskCLI(_applicationSettings, _diskParameters, logger);
+            var cliApplication = new SerialDiskCLI(_applicationSettings, logger);
 
             logger.Log($"Baud rate:{_applicationSettings.SerialSettings.BaudRate} | Data bits:{_applicationSettings.SerialSettings.DataBits}" +
                 $" | Parity:{_applicationSettings.SerialSettings.Parity} | Stop bits:{_applicationSettings.SerialSettings.StopBits} | Flow control:{_applicationSettings.SerialSettings.Handshake}", LoggingLevel.Info);

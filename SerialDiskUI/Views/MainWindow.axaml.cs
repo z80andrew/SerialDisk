@@ -14,7 +14,6 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
     {
         private readonly double _savedMinHeight;
         private const double _logMinHeight = 100;
-        private double SavedWindowHeight { get; set; }
         public PixelPoint SavedWindowPosition { get; set; }
 
         public MainWindow()
@@ -41,7 +40,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
             var logBorder = this.FindControl<Border>("LogBorder");
 
             this.WhenActivated(d =>
-                ConfigureMainWindow(xPos, yPos, width, height, logBorder));
+                ConfigureMainWindow(xPos, yPos, width, height));
 
             this.WhenActivated(d =>
                 d(ViewModel.WhenAnyValue(m => m.IsLogDisplayEnabled).Subscribe(isLogDisplayed =>
@@ -53,13 +52,13 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
             logScrollViewer.PropertyChanged += LogScrollViewer_PropertyChanged;
         }
 
-        private void ConfigureMainWindow(int xPos, int yPos, int width, int height, Border logBorder)
+        private void ConfigureMainWindow(int xPos, int yPos, int width, int height)
         {            
-            SetSize(width, height, logBorder);
+            SetSize(width, height);
             SetPosition(xPos, yPos);
         }
 
-        private void SetSize(int width, int height, Border logBorder)
+        private void SetSize(int width, int height)
         {
             this.Height = ViewModel.IsLogDisplayEnabled ? _savedMinHeight + _logMinHeight : _savedMinHeight;
 

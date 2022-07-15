@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28809.33
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SerialDisk", "SerialDisk\SerialDisk.csproj", "{CB3C3328-28E0-4245-87DC-19D066AA33ED}"
 EndProject
@@ -10,6 +10,11 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SerialDiskCLI", "SerialDiskCLI\SerialDiskCLI.csproj", "{0A8D3901-EA16-4C6A-BA90-9CAB78B18B97}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SerialDiskUI", "SerialDiskUI\SerialDiskUI.csproj", "{D9125327-8DC0-4435-AA1E-BC1D73880931}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{54DA9651-F2A0-4909-B800-1A6CCFE26026}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

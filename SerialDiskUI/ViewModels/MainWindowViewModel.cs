@@ -26,9 +26,9 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
         private const double ICON_ENABLED_OPACITY = 1.0;
         private const double ICON_DISABLED_OPACITY = 0.15;
 
-        private SerialDiskService _serialDiskService;
+        private readonly SerialDiskService _serialDiskService;
         private SerialDiskUIModel _model;
-        private IStatusService _statusService;
+        private readonly IStatusService _statusService;
 
         private readonly ObservableAsPropertyHelper<string> _comPortName;
         public string ComPortName => _comPortName.Value;
@@ -116,7 +116,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 
         public ICommand ClearLogMessagesCommand { get; }
 
-        public Interaction<SettingsWindowViewModel, SerialDiskUIModel?> ShowSettingsDialog { get; }
+        public Interaction<SettingsWindowViewModel, SerialDiskUIModel> ShowSettingsDialog { get; }
 
         public Interaction<AboutWindowViewModel, SimpleDialogModel> ShowAboutDialog { get; }
 
@@ -130,8 +130,10 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
             if(model == null)
             {
                 var defaultApplicationSettings = ConfigurationHelper.GetDefaultApplicationSettings();
-                UIApplicationSettings appSettings = new UIApplicationSettings(defaultApplicationSettings);
-                appSettings.IsLogDisplayEnabled = true;
+                UIApplicationSettings appSettings = new UIApplicationSettings(defaultApplicationSettings)
+                {
+                    IsLogDisplayEnabled = true
+                };
 
                 model = new SerialDiskUIModel(appSettings);
             }
@@ -227,7 +229,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 
             _serialDiskService = new SerialDiskService();
 
-            ShowSettingsDialog = new Interaction<SettingsWindowViewModel, SerialDiskUIModel?>();
+            ShowSettingsDialog = new Interaction<SettingsWindowViewModel, SerialDiskUIModel>();
 
             ShowSettingsCommand = ReactiveCommand.CreateFromTask(async () =>
             {
@@ -247,7 +249,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
             // Logging output
             logger.WhenAnyValue(x => x.LogMessage).
                 Subscribe(x => {
-                    if (LogItems.Count() > MaxLogLines) LogItems.RemoveAt(0);
+                    if (LogItems.Count > MaxLogLines) LogItems.RemoveAt(0);
                     LogItems.Add(x);
                 });
 
@@ -256,24 +258,24 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
                     UpdateStatus(x);
                 });
 
-            ExitCommand = ReactiveCommand.CreateFromTask(async () =>
+            ExitCommand = ReactiveCommand.Create(() =>
             {
                 (Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime).MainWindow.Close();
             });
 
-            ShowVirtualDiskFolderCommand = ReactiveCommand.CreateFromTask(async () =>
+            ShowVirtualDiskFolderCommand = ReactiveCommand.Create(() =>
             {
                 var startInfo = new ProcessStartInfo { UseShellExecute = true, FileName = VirtualDiskFolder};
                 var process = Process.Start(startInfo);
             });
 
-            RefreshVirtualDiskFolderCommand = ReactiveCommand.CreateFromTask(async () =>
+            RefreshVirtualDiskFolderCommand = ReactiveCommand.Create(() =>
             {
                 _serialDiskService.ReimportLocalDirectoryContents();
                 _statusService.SetStatus(Z80andrew.SerialDisk.Common.Status.StatusKey.OperationComplete, "refreshing disk contents");
             });
 
-            StartSerialDiskCommand = ReactiveCommand.CreateFromTask(async () =>
+            StartSerialDiskCommand = ReactiveCommand.Create(() =>
             {
                 if (_statusService.Status == Z80andrew.SerialDisk.Common.Status.StatusKey.Stopped
                         || _statusService.Status == Z80andrew.SerialDisk.Common.Status.StatusKey.Error)
@@ -287,7 +289,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
                 }
             });
 
-            ClearLogMessagesCommand = ReactiveCommand.CreateFromTask(async () =>
+            ClearLogMessagesCommand = ReactiveCommand.Create(() =>
             {
                 LogItems.Clear();
             });
