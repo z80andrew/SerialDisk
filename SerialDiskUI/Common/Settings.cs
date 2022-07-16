@@ -25,7 +25,10 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Common
                     new KeyValuePair<string, int>("4800",4800),
                     new KeyValuePair<string, int>("9600",9600),
                     new KeyValuePair<string, int>("14400",14400),
-                    new KeyValuePair<string, int>("19200",19200)
+                    new KeyValuePair<string, int>("19200",19200),
+                    new KeyValuePair<string, int>("38400",38400),
+                    new KeyValuePair<string, int>("57600",57600),
+                    new KeyValuePair<string, int>("115200",115200)
                 };
 
                 return items;
