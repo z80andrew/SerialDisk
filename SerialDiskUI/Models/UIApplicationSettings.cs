@@ -1,6 +1,6 @@
-﻿using Z80andrew.SerialDisk.Models;
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
+using Z80andrew.SerialDisk.Models;
 using Z80andrew.SerialDisk.SerialDiskUI.Common;
 
 namespace Z80andrew.SerialDisk.SerialDiskUI.Models
@@ -36,7 +36,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Models
 
         public void WriteSettingsToDisk()
         {
-            var settingsJson = JsonSerializer.Serialize(this, typeof(UIApplicationSettings), new JsonSerializerOptions { WriteIndented = true});
+            var settingsJson = JsonSerializer.Serialize(this, typeof(UIApplicationSettings), new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllTextAsync(Constants.ConfigFilePath, settingsJson);
         }
     }

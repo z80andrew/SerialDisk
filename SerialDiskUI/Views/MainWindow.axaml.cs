@@ -3,10 +3,10 @@ using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.ReactiveUI;
 using ReactiveUI;
-using Z80andrew.SerialDisk.SerialDiskUI.Models;
-using Z80andrew.SerialDisk.SerialDiskUI.ViewModels;
 using System;
 using System.Threading.Tasks;
+using Z80andrew.SerialDisk.SerialDiskUI.Models;
+using Z80andrew.SerialDisk.SerialDiskUI.ViewModels;
 
 namespace Z80andrew.SerialDisk.SerialDiskUI.Views
 {
@@ -53,7 +53,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
         }
 
         private void ConfigureMainWindow(int xPos, int yPos, int width, int height)
-        {            
+        {
             SetSize(width, height);
             SetPosition(xPos, yPos);
         }
@@ -62,7 +62,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
         {
             this.Height = ViewModel.IsLogDisplayEnabled ? _savedMinHeight + _logMinHeight : _savedMinHeight;
 
-            if (width > -1) Width = Convert.ToDouble(width);            
+            if (width > -1) Width = Convert.ToDouble(width);
             if (height > -1) Height = Convert.ToDouble(height);
 
         }
@@ -94,7 +94,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
             else if (e.Property.Name == nameof(ScrollViewer.TransformedBounds))
             {
                 if (logScrollViewer.IsEffectivelyVisible) this.MinHeight = _savedMinHeight + _logMinHeight;
-                
+
                 else
                 {
                     this.MinHeight = _savedMinHeight;

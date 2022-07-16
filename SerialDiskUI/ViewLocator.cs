@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using Z80andrew.SerialDisk.SerialDiskUI.ViewModels;
 using System;
+using Z80andrew.SerialDisk.SerialDiskUI.ViewModels;
 
 namespace Z80andrew.SerialDisk.SerialDiskUI
 {

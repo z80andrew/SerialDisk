@@ -1,10 +1,9 @@
-﻿using Z80andrew.SerialDisk.Common;
-using Z80andrew.SerialDisk.Interfaces;
-using Z80andrew.SerialDisk.Models;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using Z80andrew.SerialDisk.Interfaces;
+using Z80andrew.SerialDisk.Models;
 using static Z80andrew.SerialDisk.Common.Constants;
 
 namespace Z80andrew.SerialDisk.SerialDiskCLI.Services

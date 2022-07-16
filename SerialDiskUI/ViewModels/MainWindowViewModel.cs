@@ -1,23 +1,22 @@
 using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using ReactiveUI;
 using System;
-using System.Reactive.Linq;
-using System.Windows.Input;
-using System.Reactive;
-using System.Diagnostics;
-using Avalonia.Controls.ApplicationLifetimes;
-using Z80andrew.SerialDisk.SerialDiskUI.Services;
-using Z80andrew.SerialDisk.SerialDiskUI.Models;
-using System.IO.Ports;
-using System.Globalization;
-using System.Threading.Tasks;
-using Z80andrew.SerialDisk.Interfaces;
-using System.IO;
-using Z80andrew.SerialDisk.Common;
-using Z80andrew.SerialDisk.Utilities;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO.Ports;
 using System.Linq;
+using System.Reactive;
+using System.Reactive.Linq;
+using System.Threading.Tasks;
+using System.Windows.Input;
+using Z80andrew.SerialDisk.Common;
+using Z80andrew.SerialDisk.Interfaces;
 using Z80andrew.SerialDisk.Models;
+using Z80andrew.SerialDisk.SerialDiskUI.Models;
+using Z80andrew.SerialDisk.SerialDiskUI.Services;
+using Z80andrew.SerialDisk.Utilities;
 
 namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 {
@@ -68,7 +67,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
         public string StatusText => _statusText.Value;
 
         private readonly ObservableAsPropertyHelper<int> _totalBytes;
-        public int TotalBytes=> _totalBytes.Value;
+        public int TotalBytes => _totalBytes.Value;
 
         private readonly ObservableAsPropertyHelper<int> _transferredBytes;
         public int TransferredBytes => _transferredBytes.Value;
@@ -83,7 +82,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
         public ObservableCollection<LogMessage> LogItems { get; }
         public int MaxLogLines = 512;
 
-        
+
         private double _reloadIconOpacity;
         public double ReloadIconOpacity
         {
@@ -127,7 +126,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
             ReceiveIconOpacity = ICON_DISABLED_OPACITY;
 
             // Parameters are null at design-time
-            if(model == null)
+            if (model == null)
             {
                 var defaultApplicationSettings = ConfigurationHelper.GetDefaultApplicationSettings();
                 UIApplicationSettings appSettings = new UIApplicationSettings(defaultApplicationSettings)
@@ -138,12 +137,12 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
                 model = new SerialDiskUIModel(appSettings);
             }
 
-            if(statusService == null)
+            if (statusService == null)
             {
                 statusService = new StatusService();
             }
 
-            if(logger == null)
+            if (logger == null)
             {
                 logger = new Logger(Constants.LoggingLevel.All);
             }
@@ -176,7 +175,8 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
                 .ToProperty(this, x => x.SerialPortOpen);
 
             _statusService.WhenAnyValue(x => x.Status)
-                .Subscribe(x => {
+                .Subscribe(x =>
+                {
                     var isPortOpen = x != Z80andrew.SerialDisk.Common.Status.StatusKey.Stopped && x != Z80andrew.SerialDisk.Common.Status.StatusKey.Error;
                     ReloadIconOpacity = isPortOpen ? ICON_ENABLED_OPACITY : ICON_DISABLED_OPACITY;
                 });
@@ -197,7 +197,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
                     else logger.UnsetLogFile();
                 }
 
-                catch(Exception logException)
+                catch (Exception logException)
                 {
                     _statusService.SetStatus(Z80andrew.SerialDisk.Common.Status.StatusKey.Error, logException.Message);
                 }
@@ -248,13 +248,15 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 
             // Logging output
             logger.WhenAnyValue(x => x.LogMessage).
-                Subscribe(x => {
+                Subscribe(x =>
+                {
                     if (LogItems.Count > MaxLogLines) LogItems.RemoveAt(0);
                     LogItems.Add(x);
                 });
 
             _statusService.WhenAnyValue(x => x.Status).
-                Subscribe(x => {
+                Subscribe(x =>
+                {
                     UpdateStatus(x);
                 });
 
@@ -265,7 +267,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 
             ShowVirtualDiskFolderCommand = ReactiveCommand.Create(() =>
             {
-                var startInfo = new ProcessStartInfo { UseShellExecute = true, FileName = VirtualDiskFolder};
+                var startInfo = new ProcessStartInfo { UseShellExecute = true, FileName = VirtualDiskFolder };
                 var process = Process.Start(startInfo);
             });
 
@@ -324,7 +326,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
         {
             var percentString = string.Empty;
 
-            if(TotalBytes != 0 && TransferredBytes >= 0)
+            if (TotalBytes != 0 && TransferredBytes >= 0)
                 percentString = (Convert.ToDecimal(TransferredBytes) / TotalBytes).ToString("0.0%", CultureInfo.CurrentCulture);
 
             return percentString;

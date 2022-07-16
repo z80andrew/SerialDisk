@@ -1,6 +1,6 @@
-﻿using Z80andrew.SerialDisk.Common;
+﻿using System;
+using Z80andrew.SerialDisk.Common;
 using Z80andrew.SerialDisk.Models;
-using System;
 using static Z80andrew.SerialDisk.Common.Constants;
 
 namespace Z80andrew.SerialDisk.Interfaces

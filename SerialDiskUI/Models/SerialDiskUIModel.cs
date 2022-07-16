@@ -1,5 +1,4 @@
-﻿using Z80andrew.SerialDisk.Models;
-using ReactiveUI;
+﻿using ReactiveUI;
 using System.IO.Ports;
 using static Z80andrew.SerialDisk.Common.Constants;
 

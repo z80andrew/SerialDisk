@@ -1,6 +1,4 @@
-﻿using Z80andrew.SerialDisk.Models;
-using Z80andrew.SerialDisk.Storage;
-using System.Collections.Generic;
+﻿using Z80andrew.SerialDisk.Storage;
 
 namespace Z80andrew.SerialDisk.Interfaces
 {

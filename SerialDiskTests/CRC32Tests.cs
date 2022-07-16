@@ -1,7 +1,7 @@
-﻿using Z80andrew.SerialDisk.Utilities;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using System.Linq;
 using System.Text;
+using Z80andrew.SerialDisk.Utilities;
 
 namespace Z80andrew.SerialDisk.Tests
 {
@@ -21,7 +21,7 @@ namespace Z80andrew.SerialDisk.Tests
             Assert.AreEqual(0x7A4A44C9, crc32);
         }
 
-        [TestCase(new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00 }, (uint)0xFFFFFFFF)]
+        [TestCase(new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00 }, 0xFFFFFFFF)]
         [TestCase(new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }, (uint)0x091804D7)]
         [TestCase(new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05 }, (uint)0x5A600FE0)]
         [TestCase(new byte[] { 0x05, 0x04, 0x03, 0x02, 0x01 }, (uint)0x4CA921C5)]

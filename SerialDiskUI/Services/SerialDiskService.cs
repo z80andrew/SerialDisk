@@ -1,10 +1,10 @@
-﻿using Z80andrew.SerialDisk.Common;
+﻿using System;
+using System.Threading;
+using Z80andrew.SerialDisk.Common;
 using Z80andrew.SerialDisk.Comms;
 using Z80andrew.SerialDisk.Interfaces;
 using Z80andrew.SerialDisk.Models;
 using Z80andrew.SerialDisk.Storage;
-using System;
-using System.Threading;
 
 namespace Z80andrew.SerialDisk.SerialDiskUI.Services
 {

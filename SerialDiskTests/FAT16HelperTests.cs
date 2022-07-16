@@ -1,5 +1,5 @@
-﻿using Z80andrew.SerialDisk.Utilities;
-using NUnit.Framework;
+﻿using NUnit.Framework;
+using Z80andrew.SerialDisk.Utilities;
 using static Z80andrew.SerialDisk.Common.Constants;
 
 namespace Z80andrew.SerialDisk.Tests
@@ -27,8 +27,8 @@ namespace Z80andrew.SerialDisk.Tests
             Assert.AreEqual(expectedShortFileName, shortFileName);
         }
 
-        [TestCase(".htaccess","_HTACCES")]
-        [TestCase(".filename.jpeg","_FILENAM.JPE")]
+        [TestCase(".htaccess", "_HTACCES")]
+        [TestCase(".filename.jpeg", "_FILENAM.JPE")]
         public void CreateShortFileNameFromInvalidFileName(string invalidFileName, string expectedShortFileName)
         {
             var shortFileName = FAT16Helper.GetShortFileName(invalidFileName);

@@ -1,11 +1,11 @@
-﻿using Z80andrew.SerialDisk.Common;
-using Z80andrew.SerialDisk.Interfaces;
-using Z80andrew.SerialDisk.Models;
-using ReactiveUI;
+﻿using ReactiveUI;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using Z80andrew.SerialDisk.Common;
+using Z80andrew.SerialDisk.Interfaces;
+using Z80andrew.SerialDisk.Models;
 using static Z80andrew.SerialDisk.Common.Constants;
 
 namespace Z80andrew.SerialDisk.SerialDiskUI.Services
@@ -34,7 +34,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Services
                     SetLogFile(logFilePath);
                 }
 
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     LogException(ex, LogMessage.Message);
                 }
@@ -78,7 +78,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Services
                 _fileStream?.Dispose();
             }
 
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 LogException(ex, "Could not un-set log file");
             }

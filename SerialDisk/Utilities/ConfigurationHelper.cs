@@ -1,7 +1,7 @@
-﻿using Z80andrew.SerialDisk.Models;
-using System.Linq;
+﻿using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization.Json;
+using Z80andrew.SerialDisk.Models;
 
 namespace Z80andrew.SerialDisk.Utilities
 {
@@ -12,7 +12,7 @@ namespace Z80andrew.SerialDisk.Utilities
             ApplicationSettings defaultAppSettings;
 
             var resourceFiles = Assembly.GetExecutingAssembly().GetManifestResourceNames();
-            var defaultConfigName = $"Resources.default_config_{ OSHelper.OperatingSystemName.ToLower()}.json";
+            var defaultConfigName = $"Resources.default_config_{OSHelper.OperatingSystemName.ToLower()}.json";
             var defaultConfigResourceName = resourceFiles.Where(res => res.Contains(defaultConfigName)).Single();
 
             using (var defaultConfigStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(defaultConfigResourceName))

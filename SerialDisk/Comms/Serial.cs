@@ -1,13 +1,13 @@
-using Z80andrew.SerialDisk.Common;
-using Z80andrew.SerialDisk.Interfaces;
-using Z80andrew.SerialDisk.Models;
-using Z80andrew.SerialDisk.Utilities;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Ports;
 using System.Threading;
 using System.Threading.Tasks;
+using Z80andrew.SerialDisk.Common;
+using Z80andrew.SerialDisk.Interfaces;
+using Z80andrew.SerialDisk.Models;
+using Z80andrew.SerialDisk.Utilities;
 using static Z80andrew.SerialDisk.Common.Constants;
 
 namespace Z80andrew.SerialDisk.Comms
@@ -31,7 +31,7 @@ namespace Z80andrew.SerialDisk.Comms
         private bool _isRLERun;
 
         [Flags]
-        private enum SerialFlags { None = 0, Compression = 1};
+        private enum SerialFlags { None = 0, Compression = 1 };
 
         private readonly Stopwatch _transferStopwatch;
 
@@ -468,8 +468,8 @@ namespace Z80andrew.SerialDisk.Comms
             UInt32 crc32Checksum = CRC32.CalculateCRC32(sendDataBuffer);
 
             SerialFlags serialFlags = SerialFlags.None;
-            
-            if(_compressionIsEnabled) serialFlags |= SerialFlags.Compression;
+
+            if (_compressionIsEnabled) serialFlags |= SerialFlags.Compression;
 
             _logger.Log($"Sending serial flags: {serialFlags}...", LoggingLevel.Debug);
             _serialPort.BaseStream.WriteByte(Convert.ToByte(serialFlags));
@@ -492,7 +492,7 @@ namespace Z80andrew.SerialDisk.Comms
 
                 float percentageOfOriginalSize = (100 / (float)numUncompressedBytes) * sendDataBuffer.Length;
 
-                _logger.Log($"Compression: { percentageOfOriginalSize:00.00}% of { numUncompressedBytes} bytes", LoggingLevel.Debug);
+                _logger.Log($"Compression: {percentageOfOriginalSize:00.00}% of {numUncompressedBytes} bytes", LoggingLevel.Debug);
 
                 _serialPort.BaseStream.Write(dataLenBuffer, 0, dataLenBuffer.Length);
             }
@@ -502,9 +502,9 @@ namespace Z80andrew.SerialDisk.Comms
             for (int i = 0; i < sendDataBuffer.Length; i++)
             {
                 _serialPort.BaseStream.WriteByte(sendDataBuffer[i]);
-                _statusService.SetTransferProgress(sendDataBuffer.Length, i+1);
+                _statusService.SetTransferProgress(sendDataBuffer.Length, i + 1);
             }
-            
+
             _transferStopwatch.Stop();
 
             var transferSpeed = (sendDataBuffer.LongLength * 1000) / _transferStopwatch.Elapsed.TotalMilliseconds;

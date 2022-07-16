@@ -1,12 +1,11 @@
-﻿using Z80andrew.SerialDisk.Common;
-using ReactiveUI;
-using Z80andrew.SerialDisk.SerialDiskUI.Models;
+﻿using ReactiveUI;
 using System;
 using System.Diagnostics;
 using System.Reactive;
 using System.Reflection;
-using System.Threading.Tasks;
 using System.Windows.Input;
+using Z80andrew.SerialDisk.Common;
+using Z80andrew.SerialDisk.SerialDiskUI.Models;
 
 namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 {

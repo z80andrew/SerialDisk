@@ -1,11 +1,8 @@
-﻿using Z80andrew.SerialDisk.Common;
-using Z80andrew.SerialDisk.Interfaces;
-using Z80andrew.SerialDisk.Models;
-using DynamicData;
-using ReactiveUI;
+﻿using ReactiveUI;
 using System;
-using System.IO;
 using System.Text;
+using Z80andrew.SerialDisk.Common;
+using Z80andrew.SerialDisk.Interfaces;
 
 namespace Z80andrew.SerialDisk.SerialDiskUI.Services
 {
@@ -53,7 +50,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Services
                 .Append("Status: ")
                 .Append(Z80andrew.SerialDisk.Common.Status.Statuses.Find(x => x.Key == Status).Value)
                 .Append($" ({TransferredBytes}/{TotalBytes} bytes)");
-            
+
             StatusWithMessage = statusString.ToString();
         }
 

@@ -1,8 +1,8 @@
-﻿using Z80andrew.SerialDisk.Models;
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Z80andrew.SerialDisk.Models;
 using static Z80andrew.SerialDisk.Common.Constants;
 
 namespace Z80andrew.SerialDisk.Utilities

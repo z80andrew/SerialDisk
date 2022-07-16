@@ -1,13 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 using Z80andrew.SerialDisk.Common;
 using Z80andrew.SerialDisk.Interfaces;
 using Z80andrew.SerialDisk.Models;
 using Z80andrew.SerialDisk.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.IO;
-using System.Linq;
-using System.Text;
 
 namespace Z80andrew.SerialDisk.Storage
 {
@@ -394,7 +393,7 @@ namespace Z80andrew.SerialDisk.Storage
         {
             if (directoryData[directoryEntryIndex + 11] == FAT16Helper.DirectoryIdentifier)
             {
-                _logger.Log($"Deleting local directory \"{ directoryContentInfo.LocalPath}\"", Constants.LoggingLevel.Info);
+                _logger.Log($"Deleting local directory \"{directoryContentInfo.LocalPath}\"", Constants.LoggingLevel.Info);
 
                 Directory.Delete(GetAbsolutePath(directoryContentInfo.LocalPath), true);
             }

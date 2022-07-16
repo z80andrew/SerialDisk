@@ -5,7 +5,7 @@ namespace Z80andrew.SerialDisk.Utilities
 {
     public static class LZ4
     {
-        public static byte[] CompressAsStandardLZ4Block (byte[] data)
+        public static byte[] CompressAsStandardLZ4Block(byte[] data)
         {
             var compressedBytes = new byte[LZ4Codec.MaximumOutputSize(data.Length)];
 

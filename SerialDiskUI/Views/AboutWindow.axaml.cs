@@ -2,9 +2,8 @@ using Avalonia;
 using Avalonia.Markup.Xaml;
 using Avalonia.ReactiveUI;
 using ReactiveUI;
-using Z80andrew.SerialDisk.SerialDiskUI.ViewModels;
 using System;
-using System.Reactive;
+using Z80andrew.SerialDisk.SerialDiskUI.ViewModels;
 
 namespace Z80andrew.SerialDisk.SerialDiskUI.Views
 {

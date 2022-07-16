@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.IO.Ports;
-using System.Resources;
 
 namespace Z80andrew.SerialDisk.SerialDiskUI.Common
 {
     public static class Constants
     {
         public static string DefaultPath => AppDomain.CurrentDomain.BaseDirectory;
-        public static string ConfigFilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"serialdiskui.config");
+        public static string ConfigFilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "serialdiskui.config");
 
         public static KeyValuePair<string, int>[] BaudRates
         {

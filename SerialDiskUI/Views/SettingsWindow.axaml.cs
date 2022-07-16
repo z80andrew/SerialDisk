@@ -2,17 +2,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.ReactiveUI;
-using Z80andrew.SerialDisk.SerialDiskUI.ViewModels;
 using ReactiveUI;
 using System;
-using System.Threading.Tasks;
-using System.Reactive;
 using System.IO;
-using Avalonia.Input;
-using Avalonia.Interactivity;
-using System.Text.RegularExpressions;
-using System.Diagnostics;
-using Avalonia.Input.TextInput;
+using System.Reactive;
+using System.Threading.Tasks;
+using Z80andrew.SerialDisk.SerialDiskUI.ViewModels;
 
 namespace Z80andrew.SerialDisk.SerialDiskUI.Views
 {
@@ -56,7 +51,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
             var dialog = new SaveFileDialog();
 
             if (!string.IsNullOrEmpty(interaction?.Input))
-            { 
+            {
                 dialog.InitialFileName = Path.GetFileName(interaction.Input);
                 dialog.Directory = Path.GetFullPath(interaction.Input);
             }

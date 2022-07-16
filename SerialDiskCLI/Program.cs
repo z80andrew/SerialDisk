@@ -1,10 +1,4 @@
-﻿using Z80andrew.SerialDisk.Common;
-using Z80andrew.SerialDisk.Interfaces;
-using Z80andrew.SerialDisk.Models;
-using Z80andrew.SerialDisk.Storage;
-using Z80andrew.SerialDisk.Utilities;
-using Z80andrew.SerialDisk.SerialDiskCLI.Services;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -12,6 +6,11 @@ using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
+using Z80andrew.SerialDisk.Common;
+using Z80andrew.SerialDisk.Interfaces;
+using Z80andrew.SerialDisk.Models;
+using Z80andrew.SerialDisk.SerialDiskCLI.Services;
+using Z80andrew.SerialDisk.Utilities;
 using static Z80andrew.SerialDisk.Common.Constants;
 
 namespace Z80andrew.SerialDisk.SerialDiskCLI
@@ -165,7 +164,7 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
                 $" | Parity:{_applicationSettings.SerialSettings.Parity} | Stop bits:{_applicationSettings.SerialSettings.StopBits} | Flow control:{_applicationSettings.SerialSettings.Handshake}", LoggingLevel.Info);
             logger.Log($"Using local directory {_applicationSettings.LocalDirectoryPath} as a {_applicationSettings.DiskSettings.DiskSizeMiB}MiB virtual disk", LoggingLevel.Info);
             logger.Log($"Compression: " + (_applicationSettings.IsCompressionEnabled ? "Enabled" : "Disabled"), LoggingLevel.Info);
-            logger.Log($"Logging level: { _applicationSettings.LoggingLevel} ", LoggingLevel.Info);
+            logger.Log($"Logging level: {_applicationSettings.LoggingLevel} ", LoggingLevel.Info);
 
             Console.WriteLine("Press Ctrl-X to quit, Ctrl-R to reimport local disk content.");
 

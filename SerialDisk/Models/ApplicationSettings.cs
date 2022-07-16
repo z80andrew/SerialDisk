@@ -1,5 +1,3 @@
-using System;
-using System.IO;
 using static Z80andrew.SerialDisk.Common.Constants;
 
 namespace Z80andrew.SerialDisk.Models

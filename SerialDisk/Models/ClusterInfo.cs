@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace Z80andrew.SerialDisk.Models
+﻿namespace Z80andrew.SerialDisk.Models
 {
     public class ClusterInfo
     {

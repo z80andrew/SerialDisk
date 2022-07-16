@@ -1,15 +1,15 @@
-using Z80andrew.SerialDisk.Utilities;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.Configuration;
+using System;
+using System.IO;
 using Z80andrew.SerialDisk.SerialDiskUI.Models;
 using Z80andrew.SerialDisk.SerialDiskUI.Services;
 using Z80andrew.SerialDisk.SerialDiskUI.ViewModels;
 using Z80andrew.SerialDisk.SerialDiskUI.Views;
-using System;
-using System.IO;
+using Z80andrew.SerialDisk.Utilities;
 
 namespace Z80andrew.SerialDisk.SerialDiskUI
 {
@@ -59,7 +59,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI
 
                 desktop.MainWindow = new MainWindow(_appSettings.MainWindowWidth, _appSettings.MainWindowHeight, _appSettings.MainWindowX, _appSettings.MainWindowY)
                 {
-                    DataContext = new MainWindowViewModel(model, statusService, logger),                    
+                    DataContext = new MainWindowViewModel(model, statusService, logger),
                 };
             }
         }
@@ -67,7 +67,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI
         private UIApplicationSettings GetApplicationSettings(string[] args)
         {
             var defaultApplicationSettings = ConfigurationHelper.GetDefaultApplicationSettings();
-            
+
             UIApplicationSettings appSettings = new UIApplicationSettings(defaultApplicationSettings);
 
             try

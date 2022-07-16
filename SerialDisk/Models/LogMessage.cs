@@ -1,5 +1,5 @@
-﻿using Z80andrew.SerialDisk.Common;
-using System;
+﻿using System;
+using Z80andrew.SerialDisk.Common;
 using static Z80andrew.SerialDisk.Common.Constants;
 
 namespace Z80andrew.SerialDisk.Models
@@ -21,7 +21,7 @@ namespace Z80andrew.SerialDisk.Models
         public LogMessage(LoggingLevel level, string logMessage, DateTime timeStamp, LogMessageType messageType = LogMessageType.Message)
         {
             LogLevel = level;
-            Message= logMessage;
+            Message = logMessage;
             TimeStamp = timeStamp;
             MessageType = messageType;
         }

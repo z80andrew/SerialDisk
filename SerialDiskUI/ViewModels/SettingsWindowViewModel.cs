@@ -1,8 +1,4 @@
-﻿using Z80andrew.SerialDisk.Models;
-using Z80andrew.SerialDisk.Utilities;
-using Avalonia.Controls;
-using ReactiveUI;
-using Z80andrew.SerialDisk.SerialDiskUI.Models;
+﻿using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +7,7 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
+using Z80andrew.SerialDisk.SerialDiskUI.Models;
 using static Z80andrew.SerialDisk.Common.Constants;
 using static Z80andrew.SerialDisk.SerialDiskUI.Common.Constants;
 
@@ -47,7 +44,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
         public string SelectedFolder
         {
             get => _selectedFolder;
-            set =>  this.RaiseAndSetIfChanged(ref _selectedFolder, value);
+            set => this.RaiseAndSetIfChanged(ref _selectedFolder, value);
         }
 
         private int _virtualDiskSizeMB;
@@ -212,14 +209,14 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
         {
             var comPortName = String.Equals(SelectedCOMPort.Value, COMPORT_OTHER, StringComparison.CurrentCultureIgnoreCase) ? _otherCOMPortName : SelectedCOMPort.Value;
 
-            if(!String.IsNullOrEmpty(comPortName)) _settings.ComPortName = _settings.ApplicationSettings.SerialSettings.PortName = comPortName;
+            if (!String.IsNullOrEmpty(comPortName)) _settings.ComPortName = _settings.ApplicationSettings.SerialSettings.PortName = comPortName;
             _settings.BaudRate = _settings.ApplicationSettings.SerialSettings.BaudRate = SelectedBaud.Value;
             _settings.DataBits = _settings.ApplicationSettings.SerialSettings.DataBits = SelectedDataBits.Value;
             _settings.StopBits = _settings.ApplicationSettings.SerialSettings.StopBits = SelectedStopBits.Value;
             _settings.Handshake = _settings.ApplicationSettings.SerialSettings.Handshake = SelectedHandshake.Value;
             _settings.Parity = _settings.ApplicationSettings.SerialSettings.Parity = SelectedParity.Value;
 
-            if(!String.IsNullOrEmpty(SelectedFolder)) _settings.VirtualDiskFolder = _settings.ApplicationSettings.LocalDirectoryPath = SelectedFolder;
+            if (!String.IsNullOrEmpty(SelectedFolder)) _settings.VirtualDiskFolder = _settings.ApplicationSettings.LocalDirectoryPath = SelectedFolder;
             _settings.VirtualDiskSizeMB = _settings.ApplicationSettings.DiskSettings.DiskSizeMiB = VirtualDiskSizeMB;
 
             _settings.IsLogDisplayEnabled = _settings.ApplicationSettings.IsLogDisplayEnabled = IsLogDisplayEnabled;
@@ -234,7 +231,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 
         private void CloseSettings()
         {
-            
+
         }
 
         private async Task OpenFolderAsync()
