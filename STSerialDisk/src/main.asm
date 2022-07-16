@@ -55,7 +55,7 @@ start:
 
 	Cconws	err_prefix
 	move.w	disk_identifier,d0													| Move disk_id into d0
-	addi.w	#ascii_offset,d0													| Convert to ASCII representation
+	addi.w	#ascii_alpha_offset,d0												| Convert to ASCII representation
 	Cconout	d0
 	Cconws	err_drive_already_mounted
 	Cconws	msg_press_any_key
@@ -84,7 +84,7 @@ start:
 
 	Cconws	msg_drive_mounted
 	move.w	disk_identifier,d0													| Move disk_id into d0
-	addi.w	#ascii_offset,d0													| Convert to ASCII representation
+	addi.w	#ascii_alpha_offset,d0												| Convert to ASCII representation
 	Cconout	d0
 
 	Supexec	config_drive_rw
@@ -306,7 +306,7 @@ _rw_write:
 	jmp	_rw_write_crc32
 _rw_write_uncompressed:
 	move.b	(a4)+,d0															| Move buffer address into d0, increment to next byte in rw struct
-	Bconout	#1,d0																| Write byte to serial
+	jbsr	write_serial														| Write byte to serial
 	subq.l	#1,d3																| Decrement number of bytes remaining
 	jne		_rw_write_uncompressed
 _rw_write_crc32:
@@ -321,7 +321,7 @@ _rw_write_crc32:
 	lea		temp_long,a3														| Load address to store CRC32 checksum
 1:
 	move.b	(a3)+,d0
-	Bconout	#1,d0
+	jbsr	write_serial
 	dbf		d4,1b
 
 	jbsr	read_serial															| Receive CRC32 comparison result
@@ -591,7 +591,7 @@ read_serial:
 
 	add.l	d0, d6																| Increase to target VBL count
 1:
-    Bconstat #1           														| Read the serial buffer state
+    Bconstat serial_device														| Read the serial buffer state
 	tst     d0           														| Test for presence of data in buffer
 	jne     3f     		 														| There is data - stop checking
 
@@ -605,7 +605,7 @@ read_serial:
 	move	#-1,d0
 	jmp		99f
 3:
-	Bconin	#1																	| Read byte from serial port
+	Bconin	serial_device														| Read byte from serial port
 99:
 	movem.l	(sp)+,d1-d2															| Restore registers affected by BIOS calls
 	rts
@@ -622,7 +622,8 @@ read_serial:
 | d1, d2 corrupted by BIOS calls
 write_serial:
 	move	d0,-(sp)
-	move	#1,-(sp)
+	move.w	serial_device,d0
+	move	d0,-(sp)
 	move	#3,-(sp)
 	trap	#13
 	addq.l	#6,sp
@@ -645,16 +646,17 @@ write_serial:
 read_config_file:
 	move	#0x4d,disk_identifier												| Set default disk id as ASCII 'M'
 	move	#0x0d,sector_size_shift_value										| Set default sector size shift
+	move	#0x31,serial_device													| Set default serial device to ASCII '1'
 
 	Fopen	const_config_filename,#0											| Attempt to open config file
 	tst.w	d0																	| Check return value
 	jmi		1f																	| Return value is negative (failed), skip read attempt
-	Fread	d0,#3,temp_long														| Read first 2 bytes into temp variable
+	Fread	d0,#3,temp_long														| Read first 3 bytes into temp variable
 	Fclose	d0																	| Close the file handle
 
 	Cconws	msg_config_found													| Display the config file found message
 
-	| Read disk ID
+	| Read disk ASCII ID
 
 	move.b	temp_long,disk_identifier+1
 
@@ -679,13 +681,18 @@ read_config_file:
 
 	move	d1,sector_size_shift_value
 
+	| Read serial device ASCII ID
+
+	move.b	temp_long+2,serial_device+1
+
 1:
 	clr.l	d0																	| Success return value
 	jmp		99f																	| No problems encountered, jump to end
 2:
 	move.w	#-1,d0																| Failure return value
 99:
-	subi.w	#ascii_offset,disk_identifier										| Convert the ASCII character to its numeric value
+	subi.w	#ascii_alpha_offset,disk_identifier									| Convert the ASCII character for disk ID to its numeric value
+	subi.w	#ascii_number_offset,serial_device									| Convert the ASCII character for serial device to its numeric value
 
 	rts
 
@@ -860,6 +867,9 @@ refresh_rate:
 
 temp_long:
 	ds.l	0x01
+
+serial_device:
+	ds.w	0x01
 
 |-------------------------------------------------------------------------------
 
