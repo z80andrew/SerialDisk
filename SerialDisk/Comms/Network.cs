@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading.Tasks;
 using Z80andrew.SerialDisk.Utilities;
 
 namespace Z80andrew.SerialDisk.Comms
@@ -30,21 +31,21 @@ namespace Z80andrew.SerialDisk.Comms
             return httpClient;
         }
 
-        public static string GetReleaseTags()
+        public async static Task<string> GetReleaseTags()
         {
             NetworkClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            return Get("https://api.github.com/repos/z80andrew/serialdisk/tags");
+            return await GetHttpResponse("https://api.github.com/repos/z80andrew/serialdisk/tags");
         }
 
-        public static string GetLatestVersionInfo()
+        public async static Task<string> GetLatestVersionInfo()
         {
             NetworkClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            return Get("https://api.github.com/repos/z80andrew/serialdisk/releases/latest");
+            return await GetHttpResponse("https://api.github.com/repos/z80andrew/serialdisk/releases/latest");
         }
 
-        private static string Get(string uri)
+        private async static Task<string> GetHttpResponse(string uri)
         {
-            return NetworkClient.GetStringAsync(uri).GetAwaiter().GetResult();
+            return await NetworkClient.GetStringAsync(uri);
         }
     }
 }

@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Reactive;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Z80andrew.SerialDisk.Common;
 using Z80andrew.SerialDisk.Comms;
@@ -19,20 +20,25 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
         public String VersionNote => $"v{ConfigurationHelper.ApplicationVersion} {ConfigurationHelper.VERSION_TYPE}";
         public string WebsiteButtonText => Constants.PROJECT_URL.Replace(@"https://www.", String.Empty);
 
-        public bool IsNewVersionAvailable
+        private string _newVersionCheckLabelText;
+        public string NewVersionCheckLabelText
         {
-            get
-            {
-                return ConfigurationHelper.IsNewVersionAvailable(_latestVersionInfo);
-            }
+            get => _newVersionCheckLabelText;
+            set => this.RaiseAndSetIfChanged(ref _newVersionCheckLabelText, value);
         }
 
+        private bool _isNewVersionAvailable;
+        public bool IsNewVersionAvailable
+        {
+            get => _isNewVersionAvailable;
+            set => this.RaiseAndSetIfChanged(ref _isNewVersionAvailable, value);
+        }
+
+        private string _latestVersionUrl;
         public string LatestVersionUrl
         {
-            get
-            {
-                return ConfigurationHelper.GetLatestVersionUrl(_latestVersionInfo);
-            }
+            get => _latestVersionUrl;
+            set => this.RaiseAndSetIfChanged(ref _latestVersionUrl, value);
         }
 
         public AboutWindowViewModel()
@@ -51,7 +57,18 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
                 var process = Process.Start(startInfo);
             });
 
-            _latestVersionInfo = Network.GetLatestVersionInfo();
+            NewVersionCheckLabelText = "Checking for new version...";
+
+            Task checkLatestVersionTask = CheckForNewVersion();
+        }
+
+        private async Task CheckForNewVersion()
+        {
+            _latestVersionInfo = await Network.GetLatestVersionInfo();            
+            LatestVersionUrl = ConfigurationHelper.GetLatestVersionUrl(_latestVersionInfo);
+            IsNewVersionAvailable = ConfigurationHelper.IsNewVersionAvailable(_latestVersionInfo);
+
+            if (!IsNewVersionAvailable) NewVersionCheckLabelText = "No new version available";
         }
 
         private SimpleDialogModel CloseAbout()

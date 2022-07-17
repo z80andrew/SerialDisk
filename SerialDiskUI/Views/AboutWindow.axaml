@@ -49,10 +49,11 @@ o o o o o  \__ \/ _ \/ ___/ / __ `/ / / / / / ___/ //_/&#10;
 				<Button Classes="URL" Background="Transparent" Foreground="Blue" DockPanel.Dock="Top" 
 						HorizontalAlignment="Center" Command="{Binding ShowWebsiteCommand}" Content="{Binding WebsiteButtonText}" ></Button>
 				
-				<Button Classes="URL" Background="Transparent" Foreground="Blue" DockPanel.Dock="Top"
+				<Button IsVisible="{Binding IsNewVersionAvailable}" Classes="URL" Background="Transparent" Foreground="Blue" DockPanel.Dock="Top"
 					HorizontalAlignment="Center" Command="{Binding ShowLatestVersionWebpageCommand}" Content="New version available" ></Button>
-				
-					<TextBlock Margin="0,10,0,5" DockPanel.Dock="Top" HorizontalAlignment="Center">Thank you for using SerialDisk!</TextBlock>
+				<TextBlock IsVisible="{Binding !IsNewVersionAvailable}" DockPanel.Dock="Top" HorizontalAlignment="Center" Text="{Binding NewVersionCheckLabelText}"></TextBlock>
+					
+				<TextBlock Margin="0,10,0,5" DockPanel.Dock="Top" HorizontalAlignment="Center">Thank you for using SerialDisk!</TextBlock>
 				<Button Margin="0,0,0,10" DockPanel.Dock="Bottom" HorizontalAlignment="Center" Command="{Binding CloseAboutCommand}">Close</Button>
 			</DockPanel>
 		</Border>
