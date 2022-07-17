@@ -14,7 +14,7 @@
 .equ cmd_bpb, 		0x02
 
 | SerialDisk data flags
-.equ compression_isenabled,	0x00
+.equ compression_isenabled,	0x00												| Bit position of compression flag
 
 | Other constants
 .equ wait_secs,				0x01												| Time for pauses (secs)

@@ -122,9 +122,9 @@
 								<StackPanel Orientation="Horizontal" Spacing="5">
 									<TextBox Text="{Binding VirtualDiskSizeMB}" Focusable="False"
 											 IsReadOnly="True">
-
 									</TextBox>
 									<TextBlock VerticalAlignment="Center">MiB</TextBlock>
+									<Image ToolTip.Tip="Please ensure the disk buffer size is set correctly in SERDISK.CFG when using a virtual disk larger than 32MiB" IsVisible="{Binding ShowDiskSizeInfoMessage}" Height="14" Source="/Assets/Icons/info_128.png"/>
 								</StackPanel>
 						</StackPanel>
 					</Border>

@@ -51,7 +51,18 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
         public int VirtualDiskSizeMB
         {
             get => _virtualDiskSizeMB;
-            set => this.RaiseAndSetIfChanged(ref _virtualDiskSizeMB, value);
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _virtualDiskSizeMB, value);
+                ShowDiskSizeInfoMessage = _virtualDiskSizeMB > 32;
+            }
+        }
+
+        private bool _showDiskSizeInfoMessage;
+        public bool ShowDiskSizeInfoMessage
+        {
+            get => _showDiskSizeInfoMessage;
+            set => this.RaiseAndSetIfChanged(ref _showDiskSizeInfoMessage, value);
         }
 
         private bool _isLogFileEnabled;
