@@ -558,12 +558,12 @@ wait:
 
 1:
 	lea     _vbclock,a5
-	move.l  (a5),d6      														| Current timerC
+	move.l  (a5),d6      														| Current VLBANKs
 
-	cmp.l    d5,d6       														| Compare max timerC with current timerC
-	jgt	     2f     															| Timeout if current timerC is greater than max timerC
+	cmp.l    d5,d6       														| Compare max VLBANKs with current VLBANKs
+	jgt	     2f     															| Timeout if current VLBANKs is greater than max VLBANKs
 
-	jra      1b        															| Loop if current timerC is less than max timerC
+	jra      1b        															| Loop if current VLBANKs is less than max VLBANKs
 2:
 	rts
 
@@ -583,24 +583,24 @@ wait:
 read_serial:
 	movem.l	d1-d2,-(sp)															| Push registers to the stack which are affected by BIOS calls
     lea     _vbclock,a6
-	move.l  (a6),d6      														| Store current VBL count
+	move.l  (a6),d6      														| Store current VLBANK count
 
 	clr.l	d0
 	move.w	refresh_rate, d0
 	mulu.w	#serial_timeout_secs, d0
 
-	add.l	d0, d6																| Increase to target VBL count
+	add.l	d0, d6																| Increase to target VLBANK count
 1:
     Bconstat serial_device														| Read the serial buffer state
 	tst     d0           														| Test for presence of data in buffer
 	jne     3f     		 														| There is data - stop checking
 
-	move.l  (a6),d7      														| Current timerC
+	move.l  (a6),d7      														| Current VLBANKs
 
-	cmp.l   d6,d7       														| Compare max timerC with current timerC
-	jgt	    2f     																| Timeout if current timerC is greater than max timerC
+	cmp.l   d6,d7       														| Compare max VLBANKs with current VLBANKs
+	jgt	    2f     																| Timeout if current VLBANKs is greater than max VLBANKs
 
-	jra     1b        															| Check serial status again if current timerC is less than max timerC
+	jra     1b        															| Check serial status again if current VLBANKs is less than max VLBANKs
 2:
 	move	#-1,d0
 	jmp		99f
@@ -666,18 +666,18 @@ read_config_file:
 	cmp.w	#0x43,disk_identifier												| Compare read byte with ASCII 'C'
 	jlt		2f																	| Read character is < ASCII 'C' so it is invalid
 
-	| Read max disk size
+	| Read disk buffer size
 
 	clr		d1
 	move.b	temp_long+1,d1
 
-	cmp		#0x35,d1															| Compare read byte with ASCII '5'
-	jgt		2f																	| Read character is > ASCII 5 so it is invalid
+	cmp		#0x34,d1															| Compare read byte with ASCII '4'
+	jgt		2f																	| Read character is > ASCII 4 so it is invalid
 
-	cmp		#0x31,d1															| Compare read byte with ASCII '1'
-	jlt		2f																	| Read character is < ASCII 1 so it is invalid
+	cmp		#0x30,d1															| Compare read byte with ASCII '0'
+	jlt		2f																	| Read character is < ASCII 0 so it is invalid
 
-	sub		#0x28,d1															| Translate config value to number of required left shifts for sector size calculation
+	sub		#0x27,d1															| Translate config value to number of required left shifts for sector size calculation
 
 	move	d1,sector_size_shift_value
 

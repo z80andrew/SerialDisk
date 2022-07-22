@@ -51,7 +51,18 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
         public int VirtualDiskSizeMB
         {
             get => _virtualDiskSizeMB;
-            set => this.RaiseAndSetIfChanged(ref _virtualDiskSizeMB, value);
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _virtualDiskSizeMB, value);
+                ShowDiskSizeInfoMessage = _virtualDiskSizeMB > 32;
+            }
+        }
+
+        private bool _showDiskSizeInfoMessage;
+        public bool ShowDiskSizeInfoMessage
+        {
+            get => _showDiskSizeInfoMessage;
+            set => this.RaiseAndSetIfChanged(ref _showDiskSizeInfoMessage, value);
         }
 
         private bool _isLogFileEnabled;
@@ -112,19 +123,6 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
             set => this.RaiseAndSetIfChanged(ref _isLogDisplayEnabled, value);
         }
 
-        public SettingsWindowViewModel()
-        {
-            ShowFolderDialog = new Interaction<string, string?>();
-            ShowFileDialog = new Interaction<string, string?>();
-
-            ChooseFolderCommand = ReactiveCommand.CreateFromTask(OpenFolderAsync);
-            ChooseFileCommand = ReactiveCommand.CreateFromTask(OpenFileAsync);
-            ApplySettingsCommand = ReactiveCommand.Create(ApplySettingsFromFormValues);
-            CloseSettingsCommand = ReactiveCommand.Create(CloseSettings);
-
-            InitChoices();
-        }
-
         public SettingsWindowViewModel(SerialDiskUIModel settings)
         {
             _settings = settings;
@@ -138,7 +136,8 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
             CloseSettingsCommand = ReactiveCommand.Create(CloseSettings);
 
             InitChoices();
-            ApplyFormValuesFromSettings(_settings);
+            
+            if(_settings != null) ApplyFormValuesFromSettings(_settings);
         }
 
         private void InitChoices()

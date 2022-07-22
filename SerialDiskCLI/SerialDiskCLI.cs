@@ -9,6 +9,7 @@ using Z80andrew.SerialDisk.Interfaces;
 using Z80andrew.SerialDisk.Models;
 using Z80andrew.SerialDisk.SerialDiskCLI.Services;
 using Z80andrew.SerialDisk.Storage;
+using Z80andrew.SerialDisk.Utilities;
 using static Z80andrew.SerialDisk.Common.Constants;
 
 namespace Z80andrew.SerialDisk.SerialDiskCLI
@@ -32,7 +33,7 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
 
         private void Init(ApplicationSettings applicationSettings, CancellationTokenSource cancelTokenSource)
         {
-            var versionMessage = $"Serial Disk v{Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion} {Constants.VERSION_TYPE}";
+            var versionMessage = $"Serial Disk v{ConfigurationHelper.ApplicationVersion} {ConfigurationHelper.VERSION_TYPE}";
 
             _logger.Log(versionMessage, LoggingLevel.Info);
 
