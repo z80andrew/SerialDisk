@@ -9,30 +9,6 @@ namespace Z80andrew.SerialDisk.Common
 
         public const string PROJECT_URL = @"https://www.github.com/z80andrew/serialdisk";
 
-        public static Dictionary<string, string> ConsoleParameterMappings
-        {
-            get
-            {
-                return new Dictionary<string, string>
-                {
-                    { "--disk-size", "DiskSettings:DiskSizeMiB" },
-                    { "--tos-version", "DiskSettings:DiskTOSCompatibility" },
-                    { "--root-directory-sectors", "DiskSettings:RootDirectorySectors" },
-                    { "--compression", "IsCompressionEnabled" },
-
-                    { "--port", "SerialSettings:PortName" },
-                    { "--baud-rate", "SerialSettings:BaudRate" },
-                    { "--data-bits", "SerialSettings:DataBits" },
-                    { "--stop-bits", "SerialSettings:StopBits" },
-                    { "--parity", "SerialSettings:Parity" },
-                    { "--handshake", "SerialSettings:Handshake" },
-
-                    { "--logging-level", "LoggingLevel" },
-                    { "--log-filename", "LogFileName" },
-                };
-            }
-        }
-
         public enum TOSVersion
         {
             TOS100,

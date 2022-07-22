@@ -245,6 +245,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
             ShowAboutCommand = ReactiveCommand.CreateFromTask(async () =>
             {
                 var timeSinceLastVersionCheck = DateTime.Now - _lastVersionCheckTime;
+                _lastVersionCheckTime = DateTime.UtcNow;
                 var aboutViewModel = new AboutWindowViewModel(logger, timeSinceLastVersionCheck);
                 var result = await ShowAboutDialog.Handle(aboutViewModel);
             });

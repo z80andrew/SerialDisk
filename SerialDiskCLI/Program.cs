@@ -6,12 +6,14 @@ using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
+using Z80andrew.SerialDisk.SerialDiskCLI.Common;
 using Z80andrew.SerialDisk.Common;
 using Z80andrew.SerialDisk.Interfaces;
 using Z80andrew.SerialDisk.Models;
 using Z80andrew.SerialDisk.SerialDiskCLI.Services;
 using Z80andrew.SerialDisk.Utilities;
 using static Z80andrew.SerialDisk.Common.Constants;
+using Z80andrew.SerialDisk.Comms;
 
 namespace Z80andrew.SerialDisk.SerialDiskCLI
 {
@@ -34,35 +36,37 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
             return enumString.ToString();
         }
 
-        private static void PrintUsage(ApplicationSettings _applicationSettings)
+        private static void PrintUsage(ApplicationSettings applicationSettings)
         {
-            _applicationSettings = ConfigurationHelper.GetDefaultApplicationSettings();
-
             Console.WriteLine();
 
             Console.WriteLine("Usage:");
-            Console.WriteLine(System.AppDomain.CurrentDomain.FriendlyName + " [Options] [virtual_disk_path]");
+            Console.WriteLine(System.AppDomain.CurrentDomain.FriendlyName + " [Commands] [Options] [virtual_disk_path]");
             Console.WriteLine();
 
-            List<String> parameters = Constants.ConsoleParameterMappings.Keys.ToList();
+            List<String> parameters = Common.Constants.ConsoleParameterMappings.Keys.ToList();
 
-            Console.WriteLine("Options (default):");
-            Console.WriteLine($"{parameters[0]} <disk_size_in_MiB> ({_applicationSettings.DiskSettings.DiskSizeMiB})");
-            Console.WriteLine($"{parameters[1]} [{FormatEnumParams(typeof(TOSVersion))}] ({_applicationSettings.DiskSettings.DiskTOSCompatibility})");
-            Console.WriteLine($"{parameters[2]} <sectors> ({_applicationSettings.DiskSettings.RootDirectorySectors})");
-            Console.WriteLine($"{parameters[3]} [True|False] ({_applicationSettings.IsCompressionEnabled})");
+            Console.WriteLine("Commands");
+            Console.WriteLine("--help (Lists available command-line options)");
+            Console.WriteLine("--update-check (Checks for new version of the program)");
+            Console.WriteLine();
+            Console.WriteLine("Options (default value):");
+            Console.WriteLine($"{parameters[0]} <disk_size_in_MiB> ({applicationSettings.DiskSettings.DiskSizeMiB})");
+            Console.WriteLine($"{parameters[1]} [{FormatEnumParams(typeof(TOSVersion))}] ({applicationSettings.DiskSettings.DiskTOSCompatibility})");
+            Console.WriteLine($"{parameters[2]} <sectors> ({applicationSettings.DiskSettings.RootDirectorySectors})");
+            Console.WriteLine($"{parameters[3]} [True|False] ({applicationSettings.IsCompressionEnabled})");
 
-            Console.WriteLine($"{parameters[4]} [port_name] ({_applicationSettings.SerialSettings.PortName})");
-            Console.WriteLine($"{parameters[5]} <baud_rate> ({_applicationSettings.SerialSettings.BaudRate})");
-            Console.WriteLine($"{parameters[6]} <data_bits> ({_applicationSettings.SerialSettings.DataBits})");
-            Console.WriteLine($"{parameters[7]} [{FormatEnumParams(typeof(StopBits))}] ({_applicationSettings.SerialSettings.StopBits})");
-            Console.WriteLine($"{parameters[8]} [{FormatEnumParams(typeof(Parity))}] ({_applicationSettings.SerialSettings.Parity})");
-            Console.WriteLine($"{parameters[9]} [{FormatEnumParams(typeof(Handshake))}] ({_applicationSettings.SerialSettings.Handshake})");
+            Console.WriteLine($"{parameters[4]} [port_name] ({applicationSettings.SerialSettings.PortName})");
+            Console.WriteLine($"{parameters[5]} <baud_rate> ({applicationSettings.SerialSettings.BaudRate})");
+            Console.WriteLine($"{parameters[6]} <data_bits> ({applicationSettings.SerialSettings.DataBits})");
+            Console.WriteLine($"{parameters[7]} [{FormatEnumParams(typeof(StopBits))}] ({applicationSettings.SerialSettings.StopBits})");
+            Console.WriteLine($"{parameters[8]} [{FormatEnumParams(typeof(Parity))}] ({applicationSettings.SerialSettings.Parity})");
+            Console.WriteLine($"{parameters[9]} [{FormatEnumParams(typeof(Handshake))}] ({applicationSettings.SerialSettings.Handshake})");
 
-            Console.WriteLine($"{parameters[10]} [{FormatEnumParams(typeof(Constants.LoggingLevel))}] ({_applicationSettings.LoggingLevel})");
+            Console.WriteLine($"{parameters[10]} [{FormatEnumParams(typeof(LoggingLevel))}] ({applicationSettings.LoggingLevel})");
             Console.WriteLine($"{parameters[11]} [log_file_name]");
             Console.WriteLine();
-
+  
             Console.WriteLine("Serial ports available:");
 
             foreach (string portName in SerialPort.GetPortNames())
@@ -70,6 +74,29 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
 
             Console.WriteLine();
             Console.WriteLine();
+        }
+
+        private static void CheckIfNewVersionAvailable()
+        {
+            Console.WriteLine("Checking for new version...");
+
+            try
+            {
+                var latestVersionInfo = Network.GetLatestVersionInfo().GetAwaiter().GetResult();
+                var latestVersionUrl = ConfigurationHelper.GetLatestVersionUrl(latestVersionInfo);
+                var isNewVersionAvailable = ConfigurationHelper.IsNewVersionAvailable(latestVersionInfo);
+
+                if (isNewVersionAvailable)
+                    Console.WriteLine($"New version is available at {latestVersionUrl}");
+                else
+                    Console.WriteLine("No new version available");
+            }
+
+            catch (Exception ex)
+            {
+                Console.WriteLine("Could not check for new version");
+                Console.WriteLine(ex.Message + ": " + ex.StackTrace);
+            }
         }
 
         private static string ParseLocalDirectoryPath(string _applicationSettingsPath, string[] args)
@@ -103,29 +130,50 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
         private static void ConfigureServices(IServiceCollection serviceCollection, ApplicationSettings settings)
         {
             serviceCollection
-                .AddSingleton<ILogger>(new Logger(_applicationSettings.LoggingLevel, _applicationSettings.LogFileName));
+                .AddSingleton<ILogger>(new Logger(settings.LoggingLevel, settings.LogFileName));
         }
 
-        private static void ApplyConfiguration(string[] args)
+        private static ApplicationSettings ApplyConfigurationToApplicationSettings(string[] args, ApplicationSettings defaultApplicationSettings)
         {
+            var applicationSettings = defaultApplicationSettings;
+
+            var configBuilder = new ConfigurationBuilder();
+
+            if (File.Exists(Common.Constants.CONFIG_FILE_NAME))
+            {
+                configBuilder.AddJsonFile(Common.Constants.CONFIG_FILE_NAME, true, false)
+                    .Build()
+                    .Bind(applicationSettings);
+            }
+
+            configBuilder.AddCommandLine(args, Common.Constants.ConsoleParameterMappings)
+                .Build()
+                .Bind(applicationSettings);
+
+            applicationSettings.LocalDirectoryPath = ParseLocalDirectoryPath(applicationSettings.LocalDirectoryPath, args);
+
+            return applicationSettings;
+        }
+
+        public static void Main(string[] args)
+        {
+            var defaultApplicationSettings = ConfigurationHelper.GetDefaultApplicationSettings();
+
+            if (args.Any() && args.Where(arg => arg.ToLowerInvariant().StartsWith("--help")).Any())
+            {
+                PrintUsage(defaultApplicationSettings);
+                return;
+            }
+
+            else if (args.Any() && args.Where(arg => arg.ToLowerInvariant().StartsWith("--update-check")).Any())
+            {
+                CheckIfNewVersionAvailable();
+                return;
+            }
+
             try
             {
-                _applicationSettings = ConfigurationHelper.GetDefaultApplicationSettings();
-
-                var configBuilder = new ConfigurationBuilder();
-
-                if (File.Exists(Common.Constants.CONFIG_FILE_NAME))
-                {
-                    configBuilder.AddJsonFile(Common.Constants.CONFIG_FILE_NAME, true, false)
-                        .Build()
-                        .Bind(_applicationSettings);
-                }
-
-                configBuilder.AddCommandLine(args, Constants.ConsoleParameterMappings)
-                    .Build()
-                    .Bind(_applicationSettings);
-
-                _applicationSettings.LocalDirectoryPath = ParseLocalDirectoryPath(_applicationSettings.LocalDirectoryPath, args);
+                _applicationSettings = ApplyConfigurationToApplicationSettings(args, defaultApplicationSettings);
             }
 
             catch (Exception parameterException)
@@ -133,17 +181,11 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
                 Console.WriteLine($"Error parsing parameters: {parameterException.Message}");
                 return;
             }
-        }
 
-        public static void Main(string[] args)
-        {
-            if (args.Any() && args.Where(arg => arg.ToLowerInvariant().StartsWith("--help")).Any())
-            {
-                PrintUsage(_applicationSettings);
-                return;
-            }
-
-            ApplyConfiguration(args);
+            var serviceCollection = new ServiceCollection();
+            ConfigureServices(serviceCollection, _applicationSettings);
+            var serviceProvider = serviceCollection.BuildServiceProvider();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
 
             if (String.IsNullOrEmpty(_applicationSettings.LocalDirectoryPath)
                 || !Directory.Exists(_applicationSettings.LocalDirectoryPath))
@@ -151,12 +193,6 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
                 Console.WriteLine($"Local directory path {_applicationSettings.LocalDirectoryPath} not found.");
                 return;
             }
-
-            var serviceCollection = new ServiceCollection();
-            ConfigureServices(serviceCollection, _applicationSettings);
-            var serviceProvider = serviceCollection.BuildServiceProvider();
-
-            var logger = serviceProvider.GetRequiredService<ILogger>();
 
             var cliApplication = new SerialDiskCLI(_applicationSettings, logger);
 

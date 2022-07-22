@@ -80,11 +80,6 @@ namespace Z80andrew.SerialDisk.SerialDiskUI
                         .Build()
                         .Bind(appSettings);
                 }
-
-                configBuilder.AddCommandLine(args, Z80andrew.SerialDisk.Common.Constants.ConsoleParameterMappings)
-                    .Build()
-                    .Bind(appSettings);
-
             }
 
             catch (Exception parameterException)
