@@ -22,7 +22,11 @@
 	</Window.Styles>
 
 	<Design.DataContext>
-		<vm:SettingsWindowViewModel/>
+		<vm:SettingsWindowViewModel>
+			<x:Arguments>
+				<x:Null></x:Null>
+			</x:Arguments>
+		</vm:SettingsWindowViewModel>			
 	</Design.DataContext>
 
 	<DockPanel Classes="AppDockPanel">

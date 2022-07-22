@@ -59,6 +59,8 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
         private readonly ObservableAsPropertyHelper<bool> _isLogDisplayEnabled;
         public bool IsLogDisplayEnabled => _isLogDisplayEnabled.Value;
 
+        private DateTime _lastVersionCheckTime;
+
         // Status messages
         private readonly ObservableAsPropertyHelper<Status.StatusKey> _status;
         public Status.StatusKey Status => _status.Value;
@@ -242,7 +244,8 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 
             ShowAboutCommand = ReactiveCommand.CreateFromTask(async () =>
             {
-                var aboutViewModel = new AboutWindowViewModel();
+                var timeSinceLastVersionCheck = DateTime.Now - _lastVersionCheckTime;
+                var aboutViewModel = new AboutWindowViewModel(logger, timeSinceLastVersionCheck);
                 var result = await ShowAboutDialog.Handle(aboutViewModel);
             });
 
@@ -303,12 +306,12 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
         {
             switch (status)
             {
-                case Z80andrew.SerialDisk.Common.Status.StatusKey.Receiving:
+                case SerialDisk.Common.Status.StatusKey.Receiving:
                     SendIconOpacity = ICON_DISABLED_OPACITY;
                     ReceiveIconOpacity = ICON_ENABLED_OPACITY;
                     break;
 
-                case Z80andrew.SerialDisk.Common.Status.StatusKey.Sending:
+                case SerialDisk.Common.Status.StatusKey.Sending:
                     ReceiveIconOpacity = ICON_DISABLED_OPACITY;
                     SendIconOpacity = ICON_ENABLED_OPACITY;
                     break;
