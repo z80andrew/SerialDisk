@@ -26,25 +26,63 @@ start:
     lea       0xc(sp),sp     													| Correct stack
 
 	Cursconf #0,#0																| Hide cursor, 0 blink rate
-	Cconws	msg_welcome
+
+	movea.l	#str_welcome,a0
+	jbsr	print_string
 	jbsr	create_crc32_table
+
+	| Check resource file is present
+	Fopen	const_res_filename,#0												| Attempt to open resource file
+	tst.w	d0																	| Check return value
+	jpl		1f																	| Result positive, file found
+
+	movea.l	#str_err_res_not_found,a0											| Display the resource file not found message
+	jbsr	print_string
+	movea.l	#str_press_any_key,a0												| Display the resource file not found message
+	jbsr	print_string
+
+	Cconin
+
+	Pterm	#0
+1:
+
 
 	| Read config file
 
 	jbsr	read_config_file
 	tst.w	d0																	| Test config file valid
-	jpl		1f																	| Result positive = config file valid
+	jpl		read_config_file_done												| Result positive = config file valid
 
 	| Config file is invalid
 
-	Cconws	err_prefix
-	Cconws	err_config_invalid
-	Cconws	msg_press_any_key
+	move	d0,d3
+
+	move.w	#err_prefix,d0
+	jbsr	print_resource_string
+	move.w	#err_config_invalid,d0
+	jbsr	print_resource_string
+
+	cmp		#err_disk_id_out_of_range,d3
+	jne		1f
+	move.w	#err_disk_id,d0
+	jbsr	print_resource_string
+	jmp		2f
+1:
+	cmp		#err_sector_size_out_of_range,d3
+	jne		2f
+	move.w	#err_sector_size,d0
+	jbsr	print_resource_string
+2:
+
+err_config_file_end:
+	move.w	#msg_press_any_key,d0
+	jbsr	print_resource_string
+
 	Cconin
 
 	Pterm 	#0
 
-1:
+read_config_file_done:
 	| Mount drive
 
 	Supexec	mount_drive
@@ -53,12 +91,17 @@ start:
 
 	| Drive is already mounted
 
-	Cconws	err_prefix
+	move.w	#err_prefix,d0
+	jbsr	print_resource_string
 	move.w	disk_identifier,d0													| Move disk_id into d0
 	addi.w	#ascii_alpha_offset,d0												| Convert to ASCII representation
 	Cconout	d0
-	Cconws	err_drive_already_mounted
-	Cconws	msg_press_any_key
+
+	move.w	#err_drive_already_mounted,d0
+	jbsr	print_resource_string
+	move.w	#msg_press_any_key,d0
+	jbsr	print_resource_string
+
 	Cconin
 
 	Pterm 	#0
@@ -72,9 +115,13 @@ start:
 
 	| Buffers could not be allocated
 
-	Cconws	err_prefix
-	Cconws	err_buffer_allocation
-	Cconws	msg_press_any_key
+	move.w	#err_prefix,d0
+	jbsr	print_resource_string
+	move.w	#err_buffer_allocation,d0
+	jbsr	print_resource_string
+	move.w	#msg_press_any_key,d0
+	jbsr	print_resource_string
+
 	Cconin
 
 	Pterm 	#0
@@ -82,7 +129,9 @@ start:
 3:
 	| Drive mounted successfully
 
-	Cconws	msg_drive_mounted
+	move.w	#msg_drive_mounted,d0
+	jbsr	print_resource_string
+
 	move.w	disk_identifier,d0													| Move disk_id into d0
 	addi.w	#ascii_alpha_offset,d0												| Convert to ASCII representation
 	Cconout	d0
@@ -654,17 +703,18 @@ read_config_file:
 	Fread	d0,#3,temp_long														| Read first 3 bytes into temp variable
 	Fclose	d0																	| Close the file handle
 
-	Cconws	msg_config_found													| Display the config file found message
+	move.w	#msg_config_found,d0												| Display the config file found message
+	jbsr	print_resource_string
 
 	| Read disk ASCII ID
 
 	move.b	temp_long,disk_identifier+1
 
 	cmp.w	#0x50,disk_identifier												| Compare read byte with ASCII 'P'
-	jgt		2f																	| Read character is > ASCII 'P' so it is invalid
+	jgt		config_drive_err													| Read character is > ASCII 'P' so it is invalid
 
 	cmp.w	#0x43,disk_identifier												| Compare read byte with ASCII 'C'
-	jlt		2f																	| Read character is < ASCII 'C' so it is invalid
+	jlt		config_drive_err													| Read character is < ASCII 'C' so it is invalid
 
 	| Read disk buffer size
 
@@ -672,10 +722,10 @@ read_config_file:
 	move.b	temp_long+1,d1
 
 	cmp		#0x34,d1															| Compare read byte with ASCII '4'
-	jgt		2f																	| Read character is > ASCII 4 so it is invalid
+	jgt		sector_size_err														| Read character is > ASCII 4 so it is invalid
 
 	cmp		#0x30,d1															| Compare read byte with ASCII '0'
-	jlt		2f																	| Read character is < ASCII 0 so it is invalid
+	jlt		sector_size_err														| Read character is < ASCII 0 so it is invalid
 
 	sub		#0x27,d1															| Translate config value to number of required left shifts for sector size calculation
 
@@ -684,15 +734,20 @@ read_config_file:
 	| Read serial device ASCII ID
 
 	move.b	temp_long+2,serial_device+1
+	jmp		read_config_file_success
 
-1:
-	clr.l	d0																	| Success return value
-	jmp		99f																	| No problems encountered, jump to end
-2:
-	move.w	#-1,d0																| Failure return value
-99:
+config_drive_err:
+	move	#err_disk_id_out_of_range, d0
+	rts
+
+sector_size_err:
+	move	#err_sector_size_out_of_range, d0
+	rts
+
+read_config_file_success:
 	subi.w	#ascii_alpha_offset,disk_identifier									| Convert the ASCII character for disk ID to its numeric value
 	subi.w	#ascii_number_offset,serial_device									| Convert the ASCII character for serial device to its numeric value
+	clr.l	d0																	| Success return value
 
 	rts
 
@@ -795,6 +850,59 @@ copy_buffer:
 	sub.l	#0x201,a6															| Move back to beginning of destination buffer
 	add.l	d2,a6																| Offset destination buffer
 rts
+
+|-------------------------------------------------------------------------------
+| Prints a string from a file
+|
+| Input
+| d0 = position of string to display
+|
+| Output
+|
+| Corrupts
+| d0, d1, d2
+| temp_long+7
+
+print_resource_string:
+	move.l	d0,d1
+	Fopen	const_res_filename,#0												| Attempt to open resource file
+	tst.w	d0																	| Check return value
+	jmi		2f																	| Return value is negative (failed)
+
+	move.l	d0,d2
+	Fseek	d1,d0,#0
+
+print_next_char:
+	Fread 	d2,#1,temp_long+7
+	move.b	temp_long+7,d0
+	tst.b d0
+	jeq end_res_read
+	Cconout d0
+	jmp print_next_char
+end_res_read:
+	Fclose	d2
+	jmp		2f																	| Close the file handle
+2:
+	clr		d0
+	rts
+
+|-------------------------------------------------------------------------------
+| GEM Cconws
+| Prints a string to the console
+|
+| Input
+| a0 = address of a null-terminated string
+|
+| Output
+|
+| Corrupts
+|
+print_string:
+	pea		(a0)
+	move.w	#9,-(sp)
+	trap	#1
+	addq.l	#6,sp
+rts
 |-------------------------------------------------------------------------------
 
 .include "../src/LZ4_serial.asm"
@@ -803,36 +911,26 @@ rts
 
 |-------------------------------------------------------------------------------
 
+| Filenames
+
 const_config_filename:
 	.asciz	"SERDISK.CFG"
 
+const_res_filename:
+	.asciz	"SERDISK.MSG"
+
 | Messages
 
-msg_welcome:
+str_welcome:
 	.asciz	"SerialDisk v3.0 beta\r\n"
 
-msg_config_found:
-	.asciz	"Found config file\r\n"
-
-msg_drive_mounted:
-	.asciz	"Configured on drive "
-
-msg_press_any_key:
-	.asciz	"\r\n\r\nPress any key"
+str_press_any_key:
+	.asciz	"Press any key"
 
 | Errors
 
-err_prefix:
-	.asciz	"Error: "
-
-err_drive_already_mounted:
-	.asciz	" is already mounted"
-
-err_config_invalid:
-	.asciz	"Configuration invalid"
-
-err_buffer_allocation:
-	.asciz	"Cannot allocate disk buffer"
+str_err_res_not_found:
+	.asciz	"Resource file SERDISK.MSG missing\r\n"
 
 |-------------------------------------------------------------------------------
 
