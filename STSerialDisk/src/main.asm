@@ -36,17 +36,17 @@ start:
 	tst.w	d0																	| Check return value
 	jpl		1f																	| Result positive, file found
 
+	movea.l	#const_res_filename,a0												| Display the resource file name
+	jbsr	print_string
 	movea.l	#str_err_res_not_found,a0											| Display the resource file not found message
 	jbsr	print_string
-	movea.l	#str_press_any_key,a0												| Display the resource file not found message
+	movea.l	#str_press_any_key,a0												| Display the press any key message
 	jbsr	print_string
 
-	Cconin
+	jbsr read_char
 
 	Pterm	#0
 1:
-
-
 	| Read config file
 
 	jbsr	read_config_file
@@ -78,7 +78,7 @@ err_config_file_end:
 	move.w	#msg_press_any_key,d0
 	jbsr	print_resource_string
 
-	Cconin
+	jbsr read_char
 
 	Pterm 	#0
 
@@ -102,7 +102,7 @@ read_config_file_done:
 	move.w	#msg_press_any_key,d0
 	jbsr	print_resource_string
 
-	Cconin
+	jbsr read_char
 
 	Pterm 	#0
 2:
@@ -122,7 +122,7 @@ read_config_file_done:
 	move.w	#msg_press_any_key,d0
 	jbsr	print_resource_string
 
-	Cconin
+	jbsr read_char
 
 	Pterm 	#0
 
@@ -855,7 +855,7 @@ rts
 | Prints a string from a file
 |
 | Input
-| d0 = position of string to display
+| d0 = index of resource string to print
 |
 | Output
 |
@@ -864,12 +864,15 @@ rts
 | temp_long+7
 
 print_resource_string:
+	mulu	#0x40,d0
 	move.l	d0,d1
+
 	Fopen	const_res_filename,#0												| Attempt to open resource file
 	tst.w	d0																	| Check return value
 	jmi		2f																	| Return value is negative (failed)
 
 	move.l	d0,d2
+
 	Fseek	d1,d0,#0
 
 print_next_char:
@@ -903,6 +906,24 @@ print_string:
 	trap	#1
 	addq.l	#6,sp
 rts
+
+|-------------------------------------------------------------------------------
+| GEM Cconin
+| Reads a character from the console
+|
+| Input
+|
+| Output
+| d0 = read character
+|
+| Corrupts
+|
+read_char:
+	move	#1,-(sp)
+	trap	#1
+	addq	#2,sp
+rts
+
 |-------------------------------------------------------------------------------
 
 .include "../src/LZ4_serial.asm"
@@ -917,7 +938,7 @@ const_config_filename:
 	.asciz	"SERDISK.CFG"
 
 const_res_filename:
-	.asciz	"SERDISK.MSG"
+	.asciz	"SERDISK.RES"
 
 | Messages
 
@@ -925,12 +946,12 @@ str_welcome:
 	.asciz	"SerialDisk v3.0 beta\r\n"
 
 str_press_any_key:
-	.asciz	"Press any key"
+	.asciz	"\r\n\r\nPress any key"
 
 | Errors
 
 str_err_res_not_found:
-	.asciz	"Resource file SERDISK.MSG missing\r\n"
+	.asciz	" resource file missing"
 
 |-------------------------------------------------------------------------------
 

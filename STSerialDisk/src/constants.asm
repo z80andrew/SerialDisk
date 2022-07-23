@@ -29,17 +29,17 @@
 .equ ntsc_hz,				0x3C												| 60Hz
 .equ hires_hz,				0x48												| 72Hz (although more accurately 71.2-71.4Hz)
 
-| Resource file offsets
-.equ err_buffer_allocation,		81
-.equ err_config_invalid,		141
-.equ err_drive_already_mounted,	170
-.equ err_prefix,				71
-.equ err_disk_id,				222
-.equ err_sector_size,			192
-
+| Resource file indexes
 .equ msg_press_any_key,			0
-.equ msg_drive_mounted,			20
-.equ msg_config_found,			43
+.equ msg_drive_mounted,			1
+.equ msg_config_found,			2
+
+.equ err_buffer_allocation,		4
+.equ err_config_invalid,		5
+.equ err_drive_already_mounted,	6
+.equ err_prefix,				3
+.equ err_disk_id,				8
+.equ err_sector_size,			7
 
 | Error codes
 .equ err_disk_id_out_of_range,		-1
