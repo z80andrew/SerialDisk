@@ -23,8 +23,25 @@
 .equ ascii_alpha_offset,	0x41												| Offset from number to its ASCII equivalent (for letters)
 .equ ascii_number_offset,	0x30												| Offset from number to its ASCII equivalent (for numbers)
 .equ screenres_high,		0x02												| Value of byte at (screenres) when in hi resolution mode
+.equ res_string_length,		0x40												| Fixed length of each string in resource file
 
 | Screen refresh rates
 .equ pal_hz,				0x32												| 50Hz
 .equ ntsc_hz,				0x3C												| 60Hz
 .equ hires_hz,				0x48												| 72Hz (although more accurately 71.2-71.4Hz)
+
+| Resource file indexes
+.equ res_msg_press_any_key,			0
+.equ res_msg_drive_mounted,			1
+.equ res_msg_config_found,			2
+
+.equ res_err_prefix,				3
+.equ res_err_buffer_allocation,		4
+.equ res_err_config_invalid,		5
+.equ res_err_drive_already_mounted,	6
+.equ res_err_sector_size,			7
+.equ res_err_disk_id,				8
+
+| Error codes
+.equ err_disk_id_out_of_range,		-1
+.equ err_sector_size_out_of_range,	-2
