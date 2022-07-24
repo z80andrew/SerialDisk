@@ -23,6 +23,7 @@
 .equ ascii_alpha_offset,	0x41												| Offset from number to its ASCII equivalent (for letters)
 .equ ascii_number_offset,	0x30												| Offset from number to its ASCII equivalent (for numbers)
 .equ screenres_high,		0x02												| Value of byte at (screenres) when in hi resolution mode
+.equ res_string_length,		0x40												| Fixed length of each string in resource file
 
 | Screen refresh rates
 .equ pal_hz,				0x32												| 50Hz
@@ -44,4 +45,3 @@
 | Error codes
 .equ err_disk_id_out_of_range,		-1
 .equ err_sector_size_out_of_range,	-2
-|.equ serial_device_out_of_range,	-3

@@ -55,6 +55,8 @@ start:
 
 	Pterm	#0
 1:
+	move.l	d0, res_file_handle													| Store resource file handle
+
 	| Read config file
 
 	jbsr	read_config_file
@@ -149,6 +151,9 @@ read_config_file_done:
 4:
 	| Determine screen refresh rate
 	Supexec	set_refresh_rate													| Set the screen refresh rate variable used for timing
+
+	move.l	res_file_handle, d0
+	Fclose	d0																	| Close the resource file handle
 
 	Supexec wait																| Short delay
 
@@ -858,40 +863,24 @@ rts
 | Output
 |
 | Corrupts
-| d0, d1, d2
+| d0, d1
 | temp_long+7
 
 print_resource_string:
-	mulu	#0x40,d0															| Get absolute file position of resource string, each is 0x40 long
-	move.l	d0,d1																| Store position
+	mulu	#res_string_length,d0												| Get absolute file position of resource string
 
-	move.l	#const_res_filename,a0
-	jbsr	file_open															| Open resource file in current directory
-	tst.w	d0																	| Check return value
-	jpl		1f																	| Result positive, file found
+	move.l	res_file_handle,d1													| Get file handle
 
-	move.l	#const_res_autopath,a0
-	jbsr	file_open															| Open resource file in AUTO directory
-	tst.w	d0																	| Check return value
-	jpl		1f																	| Result positive, file found
-
-	jmp		2f																	| Return value is negative (failed)
-1:
-	move.l	d0,d2																| Store file handle
-
-	Fseek	d1,d0,#0															| Seek to position of resource string in file
+	Fseek	d0,d1,#0															| Seek to position of resource string in file
 
 print_next_char:
-	Fread 	d2,#1,temp_long+7													| Read one byte into temp memory location
+	Fread 	d1,#1,temp_long+7													| Read one byte into temp memory location
 	move.b	temp_long+7,d0														| Move byte from memory into register
 	tst.b d0																	| Is this byte a NULL character?
 	jeq end_res_read															| Yes, end of string reached
 	Cconout d0																	| Output byte to console
 	jmp print_next_char															| Continue reading string
 end_res_read:
-	Fclose	d2																	| Close the file handle
-	clr		d0																	| Success return value
-2:
 	rts
 
 |-------------------------------------------------------------------------------
@@ -959,14 +948,20 @@ crc32_table:
 refresh_rate:
 	ds.w	0x01
 
+| During startup:
+| bytes 0-2 used to read config file values
+| byte 7 used as a buffer for reading resource file bytes
+|
+| During runtime:
+| Used to receive CRC32 checksums
 temp_long:
 	ds.l	0x01
 
 serial_device:
 	ds.w	0x01
 
-currentdir:
-	ds.w	0x10
+res_file_handle:
+	ds.l	0x01
 
 |-------------------------------------------------------------------------------
 
