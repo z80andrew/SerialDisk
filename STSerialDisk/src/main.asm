@@ -699,7 +699,7 @@ read_config_file:
 
 	Fopen	const_config_filename,#0											| Attempt to open config file
 	tst.w	d0																	| Check return value
-	jmi		1f																	| Return value is negative (failed), skip read attempt
+	jmi		read_config_file_end												| Return value is negative (failed), skip read attempt
 	Fread	d0,#3,temp_long														| Read first 3 bytes into temp variable
 	Fclose	d0																	| Close the file handle
 
@@ -734,21 +734,21 @@ read_config_file:
 	| Read serial device ASCII ID
 
 	move.b	temp_long+2,serial_device+1
-	jmp		read_config_file_success
+	jmp		read_config_file_end
 
 config_drive_err:
 	move	#err_disk_id_out_of_range, d0
-	rts
+	jmp 	99f
 
 sector_size_err:
 	move	#err_sector_size_out_of_range, d0
-	rts
+	jmp		99f
 
-read_config_file_success:
+read_config_file_end:
 	subi.w	#ascii_alpha_offset,disk_identifier									| Convert the ASCII character for disk ID to its numeric value
 	subi.w	#ascii_number_offset,serial_device									| Convert the ASCII character for serial device to its numeric value
 	clr.l	d0																	| Success return value
-
+99:
 	rts
 
 |-------------------------------------------------------------------------------
@@ -989,6 +989,9 @@ temp_long:
 
 serial_device:
 	ds.w	0x01
+
+currentdir:
+	ds.w	0x10
 
 |-------------------------------------------------------------------------------
 
