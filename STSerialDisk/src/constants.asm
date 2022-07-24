@@ -35,12 +35,12 @@
 .equ res_msg_drive_mounted,			1
 .equ res_msg_config_found,			2
 
+.equ res_err_prefix,				3
 .equ res_err_buffer_allocation,		4
 .equ res_err_config_invalid,		5
 .equ res_err_drive_already_mounted,	6
-.equ res_err_prefix,				3
-.equ res_err_disk_id,				8
 .equ res_err_sector_size,			7
+.equ res_err_disk_id,				8
 
 | Error codes
 .equ err_disk_id_out_of_range,		-1
