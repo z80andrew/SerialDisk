@@ -18,18 +18,19 @@ start:
 
 	| Free unused memory
 
-	move.l    d7,-(sp)      													| Return to the stack
-    move.l    a0,-(sp)      													| Basepage address to stack
-    clr.w     -(sp)         													| Fill parameter
-    move.w    #0x4a,-(sp)    													| Set command Mshrink
-    trap      #1            													| Call GEMDOS
-    lea       0xc(sp),sp     													| Correct stack
+	move.l	d7,-(sp)      														| Return to the stack
+    move.l	a0,-(sp)      														| Basepage address to stack
+    clr.w	-(sp)         														| Fill parameter
+    move.w	#0x4a,-(sp)    														| Set command Mshrink
+    trap	#1            														| Call GEMDOS
+    lea		0xc(sp),sp     														| Correct stack
 
 	Cursconf #0,#0																| Hide cursor, 0 blink rate
 
 	movea.l	#const_str_welcome,a0
-	jbsr	print_string
-	jbsr	create_crc32_table
+	jbsr	print_string														| Show welcome message
+
+	jbsr	create_crc32_table													| Generate CRC32 checksums
 
 	| Check resource file is present
 
@@ -45,12 +46,12 @@ start:
 
 	movea.l	#const_res_filename,a0												| Display the resource file name
 	jbsr	print_string
-	movea.l	#const_str_res_err_res_not_found,a0											| Display the resource file not found message
+	movea.l	#const_str_res_err_res_not_found,a0									| Display the resource file not found message
 	jbsr	print_string
-	movea.l	#const_str_press_any_key,a0												| Display the press any key message
+	movea.l	#const_str_press_any_key,a0											| Display the press any key message
 	jbsr	print_string
 
-	jbsr read_char
+	jbsr 	read_char
 
 	Pterm	#0
 1:
@@ -65,27 +66,27 @@ start:
 	move	d0,d3
 
 	move.w	#res_err_prefix,d0
-	jbsr	print_resource_string
+	jbsr	print_resource_string												| Display error prefix resource message
 	move.w	#res_err_config_invalid,d0
-	jbsr	print_resource_string
+	jbsr	print_resource_string												| Display config invalid resource message
 
-	cmp		#err_disk_id_out_of_range,d3
+	cmp		#err_disk_id_out_of_range,d3										| Did disk ID error occur?
 	jne		1f
-	move.w	#res_err_disk_id,d0
+	move.w	#res_err_disk_id,d0													| Display disk ID error resource message
 	jbsr	print_resource_string
 	jmp		2f
 1:
-	cmp		#err_sector_size_out_of_range,d3
+	cmp		#err_sector_size_out_of_range,d3									| Did sector size error occur?
 	jne		2f
 	move.w	#res_err_sector_size,d0
-	jbsr	print_resource_string
+	jbsr	print_resource_string												| Display sector size error resource message
 2:
 
 res_err_config_file_end:
 	move.w	#res_msg_press_any_key,d0
-	jbsr	print_resource_string
+	jbsr	print_resource_string												| Display press any key resource message
 
-	jbsr read_char
+	jbsr 	read_char
 
 	Pterm 	#0
 
@@ -99,15 +100,15 @@ read_config_file_done:
 	| Drive is already mounted
 
 	move.w	#res_err_prefix,d0
-	jbsr	print_resource_string
+	jbsr	print_resource_string												| Display error prefix resource message
 	move.w	disk_identifier,d0													| Move disk_id into d0
 	addi.w	#ascii_alpha_offset,d0												| Convert to ASCII representation
-	Cconout	d0
+	Cconout	d0																	| Print disk letter to console
 
 	move.w	#res_err_drive_already_mounted,d0
-	jbsr	print_resource_string
+	jbsr	print_resource_string												| Display disk ID clash error resource message
 	move.w	#res_msg_press_any_key,d0
-	jbsr	print_resource_string
+	jbsr	print_resource_string												| Display press any key resource message
 
 	jbsr read_char
 
@@ -122,12 +123,12 @@ read_config_file_done:
 
 	| Buffers could not be allocated
 
-	move.w	#res_err_prefix,d0
+	move.w	#res_err_prefix,d0													| Display error prefix resource message
 	jbsr	print_resource_string
 	move.w	#res_err_buffer_allocation,d0
-	jbsr	print_resource_string
+	jbsr	print_resource_string												| Display buffer error resource message
 	move.w	#res_msg_press_any_key,d0
-	jbsr	print_resource_string
+	jbsr	print_resource_string												| Display press any key resource message
 
 	jbsr read_char
 
@@ -143,13 +144,13 @@ read_config_file_done:
 	addi.w	#ascii_alpha_offset,d0												| Convert to ASCII representation
 	Cconout	d0
 
-	Supexec	config_drive_rw
+	Supexec	config_drive_rw														| Replace TOS disk vectors
 
 4:
 	| Determine screen refresh rate
-	Supexec	set_refresh_rate
+	Supexec	set_refresh_rate													| Set the screen refresh rate variable used for timing
 
-	Supexec wait
+	Supexec wait																| Short delay
 
 start_end:
 	Ptermres d7,#0
@@ -167,19 +168,19 @@ start_end:
 |
 
 set_refresh_rate:
-	move.b	(screenres), d0
-	cmp.b	#screenres_high, d0
-	jne		not_hires
-	move.w	#hires_hz, refresh_rate
+	move.b	(screenres), d0														| Put value at address screenres into d0
+	cmp.b	#screenres_high, d0													| Is the screen set to hires?
+	jne		not_hires															| No, skip to other checks
+	move.w	#hires_hz, refresh_rate												| Yes, set refresh rate to HIRES
 	jmp		set_refresh_rate_end
 not_hires:
-	move.b	(palmode), d0
-	tst.b	d0																	| 0 = NTSC, otherwise PAL
-	jne		pal
-	move.w	#ntsc_hz, refresh_rate
+	move.b	(palmode), d0														| Put value at address PALmode into d0
+	tst.b	d0																	| Is the screen set to NTSC? 0 = NTSC, otherwise PAL
+	jne		pal																	| No, skip to PAL section
+	move.w	#ntsc_hz, refresh_rate												| Yes, set refresh rate to NTSC
 	jmp		set_refresh_rate_end
 pal:
-	move.w	#pal_hz, refresh_rate
+	move.w	#pal_hz, refresh_rate												| Set refresh rate to PAL
 set_refresh_rate_end:
 	rts
 
@@ -667,25 +668,6 @@ read_serial:
 	rts
 
 |-------------------------------------------------------------------------------
-| Writes a byte to the serial port
-|
-| Input
-| d0.b	byte to send
-|
-| Output
-|
-| Corrupts
-| d1, d2 corrupted by BIOS calls
-write_serial:
-	move	d0,-(sp)
-	move.w	serial_device,d0
-	move	d0,-(sp)
-	move	#3,-(sp)
-	trap	#13
-	addq.l	#6,sp
-	rts
-
-|-------------------------------------------------------------------------------
 | Reads configuration file if available and sets variables
 |
 | Input
@@ -719,7 +701,7 @@ read_config_file:
 	Fread	d0,#3,temp_long														| Read first 3 bytes into temp variable
 	Fclose	d0																	| Close the file handle
 
-	move.w	#res_msg_config_found,d0												| Display the config file found message
+	move.w	#res_msg_config_found,d0											| Display the config file found message
 	jbsr	print_resource_string
 
 	| Read disk ASCII ID
@@ -749,15 +731,15 @@ read_config_file:
 
 	| Read serial device ASCII ID
 
-	move.b	temp_long+2,serial_device+1
+	move.b	temp_long+2,serial_device+1											| Store byte from config position 2 into the low byte of word serial_device
 	jmp		read_config_file_end
 
 config_drive_err:
-	move	#err_disk_id_out_of_range, d0
+	move	#err_disk_id_out_of_range, d0										| Set error return value
 	jmp 	99f
 
 sector_size_err:
-	move	#err_sector_size_out_of_range, d0
+	move	#err_sector_size_out_of_range, d0									| Set error return value
 	jmp		99f
 
 read_config_file_end:
@@ -880,98 +862,42 @@ rts
 | temp_long+7
 
 print_resource_string:
-	mulu	#0x40,d0
-	move.l	d0,d1
+	mulu	#0x40,d0															| Get absolute file position of resource string, each is 0x40 long
+	move.l	d0,d1																| Store position
 
 	move.l	#const_res_filename,a0
-	jbsr	file_open
+	jbsr	file_open															| Open resource file in current directory
 	tst.w	d0																	| Check return value
 	jpl		1f																	| Result positive, file found
 
 	move.l	#const_res_autopath,a0
-	jbsr	file_open
+	jbsr	file_open															| Open resource file in AUTO directory
 	tst.w	d0																	| Check return value
 	jpl		1f																	| Result positive, file found
 
 	jmp		2f																	| Return value is negative (failed)
 1:
-	move.l	d0,d2
+	move.l	d0,d2																| Store file handle
 
-	Fseek	d1,d0,#0
+	Fseek	d1,d0,#0															| Seek to position of resource string in file
 
 print_next_char:
-	Fread 	d2,#1,temp_long+7
-	move.b	temp_long+7,d0
-	tst.b d0
-	jeq end_res_read
-	Cconout d0
-	jmp print_next_char
+	Fread 	d2,#1,temp_long+7													| Read one byte into temp memory location
+	move.b	temp_long+7,d0														| Move byte from memory into register
+	tst.b d0																	| Is this byte a NULL character?
+	jeq end_res_read															| Yes, end of string reached
+	Cconout d0																	| Output byte to console
+	jmp print_next_char															| Continue reading string
 end_res_read:
-	Fclose	d2
-	jmp		2f																	| Close the file handle
+	Fclose	d2																	| Close the file handle
+	clr		d0																	| Success return value
 2:
-	clr		d0
 	rts
 
 |-------------------------------------------------------------------------------
-| GEM Cconws
-| Prints a string to the console
-|
-| Input
-| a0 = address of a null-terminated string
-|
-| Output
-|
-| Corrupts
-|
-print_string:
-	pea		(a0)
-	move.w	#9,-(sp)
-	trap	#1
-	addq.l	#6,sp
-rts
 
-|-------------------------------------------------------------------------------
-| GEM Cconin
-| Reads a character from the console
-|
-| Input
-|
-| Output
-| d0 = read character
-|
-| Corrupts
-|
-read_char:
-	move	#1,-(sp)
-	trap	#1
-	addq	#2,sp
-rts
-
-
-|-------------------------------------------------------------------------------
-| GEM Fopen
-| Opens a file
-|
-| Input
-| a0 = address of a null-terminated string
-|
-| Output
-| d0 = file handle
-|
-| Corrupts
-|
-file_open:
-	move.w	#0,-(sp)				| Read-only
-	pea		(a0)					| Filename
-	move.w	#61,-(sp)
-	trap	#1
-	addq.l	#8,sp
-rts
-
-|-------------------------------------------------------------------------------
-
-.include "../src/LZ4_serial.asm"
+.include "../src/TOS.asm"														| TOS trap calls
+.include "../src/LZ4_serial.asm"												| LZ4 compression functions
 
 .data
 
@@ -980,12 +906,12 @@ rts
 | Filenames
 
 const_config_autopath:
-	.ascii	"\\AUTO\\"
+	.ascii	"\\AUTO\\"															| Note: unterminated
 const_config_filename:
 	.asciz	"SERDISK.CFG"
 
 const_res_autopath:
-	.ascii	"\\AUTO\\"
+	.ascii	"\\AUTO\\"															| Note: unterminated
 const_res_filename:
 	.asciz	"SERDISK.RES"
 
