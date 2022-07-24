@@ -30,16 +30,16 @@
 .equ hires_hz,				0x48												| 72Hz (although more accurately 71.2-71.4Hz)
 
 | Resource file indexes
-.equ msg_press_any_key,			0
-.equ msg_drive_mounted,			1
-.equ msg_config_found,			2
+.equ res_msg_press_any_key,			0
+.equ res_msg_drive_mounted,			1
+.equ res_msg_config_found,			2
 
-.equ err_buffer_allocation,		4
-.equ err_config_invalid,		5
-.equ err_drive_already_mounted,	6
-.equ err_prefix,				3
-.equ err_disk_id,				8
-.equ err_sector_size,			7
+.equ res_err_buffer_allocation,		4
+.equ res_err_config_invalid,		5
+.equ res_err_drive_already_mounted,	6
+.equ res_err_prefix,				3
+.equ res_err_disk_id,				8
+.equ res_err_sector_size,			7
 
 | Error codes
 .equ err_disk_id_out_of_range,		-1

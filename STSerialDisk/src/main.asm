@@ -27,20 +27,27 @@ start:
 
 	Cursconf #0,#0																| Hide cursor, 0 blink rate
 
-	movea.l	#str_welcome,a0
+	movea.l	#const_str_welcome,a0
 	jbsr	print_string
 	jbsr	create_crc32_table
 
 	| Check resource file is present
-	Fopen	const_res_filename,#0												| Attempt to open resource file
+
+	move.l	#const_res_filename,a0
+	jbsr	file_open
+	tst.w	d0																	| Check return value
+	jpl		1f																	| Result positive, file found
+
+	move.l	#const_res_autopath,a0
+	jbsr	file_open
 	tst.w	d0																	| Check return value
 	jpl		1f																	| Result positive, file found
 
 	movea.l	#const_res_filename,a0												| Display the resource file name
 	jbsr	print_string
-	movea.l	#str_err_res_not_found,a0											| Display the resource file not found message
+	movea.l	#const_str_res_err_res_not_found,a0											| Display the resource file not found message
 	jbsr	print_string
-	movea.l	#str_press_any_key,a0												| Display the press any key message
+	movea.l	#const_str_press_any_key,a0												| Display the press any key message
 	jbsr	print_string
 
 	jbsr read_char
@@ -57,25 +64,25 @@ start:
 
 	move	d0,d3
 
-	move.w	#err_prefix,d0
+	move.w	#res_err_prefix,d0
 	jbsr	print_resource_string
-	move.w	#err_config_invalid,d0
+	move.w	#res_err_config_invalid,d0
 	jbsr	print_resource_string
 
 	cmp		#err_disk_id_out_of_range,d3
 	jne		1f
-	move.w	#err_disk_id,d0
+	move.w	#res_err_disk_id,d0
 	jbsr	print_resource_string
 	jmp		2f
 1:
 	cmp		#err_sector_size_out_of_range,d3
 	jne		2f
-	move.w	#err_sector_size,d0
+	move.w	#res_err_sector_size,d0
 	jbsr	print_resource_string
 2:
 
-err_config_file_end:
-	move.w	#msg_press_any_key,d0
+res_err_config_file_end:
+	move.w	#res_msg_press_any_key,d0
 	jbsr	print_resource_string
 
 	jbsr read_char
@@ -91,15 +98,15 @@ read_config_file_done:
 
 	| Drive is already mounted
 
-	move.w	#err_prefix,d0
+	move.w	#res_err_prefix,d0
 	jbsr	print_resource_string
 	move.w	disk_identifier,d0													| Move disk_id into d0
 	addi.w	#ascii_alpha_offset,d0												| Convert to ASCII representation
 	Cconout	d0
 
-	move.w	#err_drive_already_mounted,d0
+	move.w	#res_err_drive_already_mounted,d0
 	jbsr	print_resource_string
-	move.w	#msg_press_any_key,d0
+	move.w	#res_msg_press_any_key,d0
 	jbsr	print_resource_string
 
 	jbsr read_char
@@ -115,11 +122,11 @@ read_config_file_done:
 
 	| Buffers could not be allocated
 
-	move.w	#err_prefix,d0
+	move.w	#res_err_prefix,d0
 	jbsr	print_resource_string
-	move.w	#err_buffer_allocation,d0
+	move.w	#res_err_buffer_allocation,d0
 	jbsr	print_resource_string
-	move.w	#msg_press_any_key,d0
+	move.w	#res_msg_press_any_key,d0
 	jbsr	print_resource_string
 
 	jbsr read_char
@@ -129,7 +136,7 @@ read_config_file_done:
 3:
 	| Drive mounted successfully
 
-	move.w	#msg_drive_mounted,d0
+	move.w	#res_msg_drive_mounted,d0
 	jbsr	print_resource_string
 
 	move.w	disk_identifier,d0													| Move disk_id into d0
@@ -697,13 +704,22 @@ read_config_file:
 	move	#0x0d,sector_size_shift_value										| Set default sector size shift
 	move	#0x31,serial_device													| Set default serial device to ASCII '1'
 
-	Fopen	const_config_filename,#0											| Attempt to open config file
+	move.l	#const_config_filename,a0
+	jbsr	file_open
 	tst.w	d0																	| Check return value
-	jmi		read_config_file_end												| Return value is negative (failed), skip read attempt
+	jpl		1f
+
+	move.l	#const_config_autopath,a0
+	jbsr	file_open
+	tst.w	d0																	| Check return value
+	jpl		1f
+
+	jmp		read_config_file_end												| Return value is negative (failed), skip read attempt
+1:
 	Fread	d0,#3,temp_long														| Read first 3 bytes into temp variable
 	Fclose	d0																	| Close the file handle
 
-	move.w	#msg_config_found,d0												| Display the config file found message
+	move.w	#res_msg_config_found,d0												| Display the config file found message
 	jbsr	print_resource_string
 
 	| Read disk ASCII ID
@@ -721,13 +737,13 @@ read_config_file:
 	clr		d1
 	move.b	temp_long+1,d1
 
-	cmp		#0x34,d1															| Compare read byte with ASCII '4'
+	cmp		#0x35,d1															| Compare read byte with ASCII '4'
 	jgt		sector_size_err														| Read character is > ASCII 4 so it is invalid
 
-	cmp		#0x30,d1															| Compare read byte with ASCII '0'
+	cmp		#0x31,d1															| Compare read byte with ASCII '0'
 	jlt		sector_size_err														| Read character is < ASCII 0 so it is invalid
 
-	sub		#0x27,d1															| Translate config value to number of required left shifts for sector size calculation
+	sub		#0x28,d1															| Translate config value to number of required left shifts for sector size calculation
 
 	move	d1,sector_size_shift_value
 
@@ -867,10 +883,18 @@ print_resource_string:
 	mulu	#0x40,d0
 	move.l	d0,d1
 
-	Fopen	const_res_filename,#0												| Attempt to open resource file
+	move.l	#const_res_filename,a0
+	jbsr	file_open
 	tst.w	d0																	| Check return value
-	jmi		2f																	| Return value is negative (failed)
+	jpl		1f																	| Result positive, file found
 
+	move.l	#const_res_autopath,a0
+	jbsr	file_open
+	tst.w	d0																	| Check return value
+	jpl		1f																	| Result positive, file found
+
+	jmp		2f																	| Return value is negative (failed)
+1:
 	move.l	d0,d2
 
 	Fseek	d1,d0,#0
@@ -924,6 +948,27 @@ read_char:
 	addq	#2,sp
 rts
 
+
+|-------------------------------------------------------------------------------
+| GEM Fopen
+| Opens a file
+|
+| Input
+| a0 = address of a null-terminated string
+|
+| Output
+| d0 = file handle
+|
+| Corrupts
+|
+file_open:
+	move.w	#0,-(sp)				| Read-only
+	pea		(a0)					| Filename
+	move.w	#61,-(sp)
+	trap	#1
+	addq.l	#8,sp
+rts
+
 |-------------------------------------------------------------------------------
 
 .include "../src/LZ4_serial.asm"
@@ -934,23 +979,27 @@ rts
 
 | Filenames
 
+const_config_autopath:
+	.ascii	"\\AUTO\\"
 const_config_filename:
 	.asciz	"SERDISK.CFG"
 
+const_res_autopath:
+	.ascii	"\\AUTO\\"
 const_res_filename:
 	.asciz	"SERDISK.RES"
 
 | Messages
 
-str_welcome:
+const_str_welcome:
 	.asciz	"SerialDisk v3.0 beta\r\n"
 
-str_press_any_key:
+const_str_press_any_key:
 	.asciz	"\r\n\r\nPress any key"
 
 | Errors
 
-str_err_res_not_found:
+const_str_res_err_res_not_found:
 	.asciz	" resource file missing"
 
 |-------------------------------------------------------------------------------
