@@ -17,7 +17,7 @@
 .equ compression_isenabled,	0x00												| Bit position of compression flag
 
 | Other constants
-.equ wait_secs,				0x01												| Time for pauses (secs)
+.equ wait_secs,				0x02												| Time for pauses (secs)
 .equ serial_timeout_secs,	0x05												| Serial read timeout (secs)
 .equ crc32_poly,			0x04c11db7											| Polynomial for CRC32 calculation
 .equ ascii_alpha_offset,	0x41												| Offset from number to its ASCII equivalent (for letters)
@@ -34,6 +34,8 @@
 .equ res_msg_press_any_key,			0
 .equ res_msg_drive_mounted,			1
 .equ res_msg_config_found,			2
+.equ res_msg_config_not_found,		9
+.equ res_msg_buffer,				10
 
 .equ res_err_prefix,				3
 .equ res_err_buffer_allocation,		4

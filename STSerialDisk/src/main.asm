@@ -95,7 +95,8 @@ res_err_config_file_end:
 read_config_file_done:
 	| Mount drive
 
-	Supexec	mount_drive
+	move.l	#mount_drive, a0
+	jbsr	super_exec
 	tst.w	d0																	| Test drive mounted successfully
 	jpl		2f																	| Result positive = drive mounted successfully
 
@@ -118,7 +119,8 @@ read_config_file_done:
 2:
 	| Allocate disk buffers
 
-	Supexec allocate_buffers
+	move.l	#allocate_buffers, a0
+	jbsr	super_exec
 
 	tst.w	d0																	| Test buffer allocated successfully
 	jpl		3f																	| Result positive = buffer allocated successfully
@@ -146,16 +148,19 @@ read_config_file_done:
 	addi.w	#ascii_alpha_offset,d0												| Convert to ASCII representation
 	Cconout	d0
 
-	Supexec	config_drive_rw														| Replace TOS disk vectors
+	move.l	#config_drive_rw, a0												| Replace TOS disk vectors
+	jbsr	super_exec
 
 4:
 	| Determine screen refresh rate
-	Supexec	set_refresh_rate													| Set the screen refresh rate variable used for timing
+	move.l	#set_refresh_rate, a0												| Set the screen refresh rate variable used for timing
+	jbsr	super_exec
 
 	move.l	res_file_handle, d0
 	Fclose	d0																	| Close the resource file handle
 
-	Supexec wait																| Short delay
+	move.l	#wait, a0															| Short delay
+	jbsr	super_exec
 
 start_end:
 	Ptermres d7,#0
@@ -396,7 +401,7 @@ _rw_write_end:
 	rts
 
 _rw_read:
-	movem.l	d3,-(sp)															| Push uncompressed data length on to stack
+	move.l	d3,-(sp)															| Push uncompressed data length on to stack
 
 	move.l	a4,a5																| Copy destination address so it can be used again later
 
@@ -455,7 +460,7 @@ _rw_read:
 	| Calculate local CRC32 checksum.
 
 	move.l	a4,a0																| Copy address of received data
-	movem.l	(sp)+,d0															| Pop uncompressed data length off the stack
+	move.l	(sp)+,d0															| Pop uncompressed data length off the stack
 
 	jbsr	calculate_crc32														| Get CRC32 from subroutine
 
@@ -688,7 +693,7 @@ read_serial:
 
 read_config_file:
 	move	#0x4d,disk_identifier												| Set default disk id as ASCII 'M'
-	move	#0x0d,sector_size_shift_value										| Set default sector size shift
+	move	#0x09,sector_size_shift_value										| Set default sector size shift to 9 i.e. 512 bytes
 	move	#0x31,serial_device													| Set default serial device to ASCII '1'
 
 	move.l	#const_config_filename,a0
@@ -701,7 +706,7 @@ read_config_file:
 	tst.w	d0																	| Check return value
 	jpl		1f
 
-	jmp		read_config_file_end												| Return value is negative (failed), skip read attempt
+	jmp		read_config_file_not_found											| Return value is negative (failed), skip read attempt
 1:
 	Fread	d0,#3,temp_long														| Read first 3 bytes into temp variable
 	Fclose	d0																	| Close the file handle
@@ -724,14 +729,15 @@ read_config_file:
 	clr		d1
 	move.b	temp_long+1,d1
 
-	cmp		#0x35,d1															| Compare read byte with ASCII '4'
-	jgt		sector_size_err														| Read character is > ASCII 4 so it is invalid
-
-	cmp		#0x31,d1															| Compare read byte with ASCII '0'
+	cmp		#0x30,d1															| Is read byte ASCII '0'?
+	jeq		read_config_file_end												| Yes use the default sector shift value
 	jlt		sector_size_err														| Read character is < ASCII 0 so it is invalid
 
-	sub		#0x28,d1															| Translate config value to number of required left shifts for sector size calculation
+	cmp		#0x31,d1															| Compare read byte with ASCII '1'
+	jgt		sector_size_err														| Read character is > ASCII 1 so it is invalid
 
+	sub		#0x24,d1															| Translate config value to number of required left shifts for sector size calculation
+																				| 0x31 - 0x24 = 0x0D for 8KiB sectors, supporting 512KiB disks
 	move	d1,sector_size_shift_value
 
 	| Read serial device ASCII ID
@@ -746,6 +752,13 @@ config_drive_err:
 sector_size_err:
 	move	#err_sector_size_out_of_range, d0									| Set error return value
 	jmp		99f
+
+read_config_file_not_found:
+	movea.l	#const_config_filename,a0											| Display the config filename
+	jbsr	print_string
+
+	move.w	#res_msg_config_not_found,d0										| Display the config file not found message
+	jbsr	print_resource_string
 
 read_config_file_end:
 	subi.w	#ascii_alpha_offset,disk_identifier									| Convert the ASCII character for disk ID to its numeric value
@@ -772,13 +785,13 @@ allocate_buffers:
 	move	sector_size_shift_value,d0											| Copy sector shift (bits)
 
 	cmp		#0x09,d0															| Check if sector shift is 0x09 (same as default buffer size)
-	jeq		99f																	| Sector size is 512KiB, so no need to allocate new buffer. Skip to end
+	jeq		99f																	| Sector size is 512 bytes, so no need to allocate new buffer. Skip to end
 
 	moveq	#1,d1																| Init d1 with sector size value of 1
 	lsl.w	d0,d1																| Shift sector size left, i.e. multiply number of sectors by bytes per sector to get total bytes
 	move.w	d1,d2																| Copy resultant size of 1 sector
 	lsl.w 	#0x02,d1															| Shift sector bytes value 2 bits left (i.e. multiply by 4) to get final buffer size
-	Malloc 	d1
+	Malloc 	d1																	| Allocate memory for the new disk buffer
 
 	tst     d0           														| Test for null buffer pointer
 	jne     1f     		 														| Buffer is allocated, continue
@@ -824,6 +837,9 @@ allocate_buffers:
 	move.l	a6,(a5)																| Set buffer address to new allocated area of RAM
 
 	jbsr copy_buffer
+
+	move.w	#res_msg_buffer,d0													| Display large disk support message
+	jbsr	print_resource_string
 
 	clr.l	d0																	| Success return value
 99:
@@ -907,7 +923,7 @@ const_res_filename:
 | Messages
 
 const_str_welcome:
-	.asciz	"SerialDisk v3.0 beta\r\n"
+	.asciz	"SerialDisk v3.0 beta 2\r\n"
 
 const_str_press_any_key:
 	.asciz	"\r\n\r\nPress any key"

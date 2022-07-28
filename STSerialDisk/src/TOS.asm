@@ -1,3 +1,27 @@
+| ---------------------------------------------------------------------------------------------------------------------------------
+| IMPORTANT NOTE:
+| TOS receives its parameters from the stack. Only registers d3-d7 and a3-a7 are saved, all others may be altered by the call.
+| ---------------------------------------------------------------------------------------------------------------------------------
+
+|-------------------------------------------------------------------------------
+| XBIOS Supexec
+| Executes instructions as the superuser
+|
+| Input
+| a0 = address of code to execute
+|
+| Output
+|
+| Corrupts
+|
+
+super_exec:
+	pea       (a0)
+	move.w    #38,-(sp)
+	trap      #14
+	addq.l    #6,sp
+rts
+
 |-------------------------------------------------------------------------------
 | BIOS Bconout
 | Writes a byte to the serial port
@@ -8,8 +32,8 @@
 | Output
 |
 | Corrupts
-| d1, d2 corrupted by BIOS calls
 |
+
 write_serial:
 	move	d0,-(sp)															| Byte to write
 	move.w	serial_device,d0													| Get output device ID
@@ -30,6 +54,7 @@ write_serial:
 |
 | Corrupts
 |
+
 print_string:
 	pea		(a0)																| String to print
 	move.w	#9,-(sp)
@@ -48,6 +73,7 @@ rts
 |
 | Corrupts
 |
+
 read_char:
 	move	#1,-(sp)
 	trap	#1
@@ -67,6 +93,7 @@ rts
 |
 | Corrupts
 |
+
 file_open:
 	move.w	#0,-(sp)															| Read-only
 	pea		(a0)																| Filename
