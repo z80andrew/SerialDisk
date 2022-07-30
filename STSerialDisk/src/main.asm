@@ -635,6 +635,48 @@ wait:
 	rts
 
 |-------------------------------------------------------------------------------
+| Writes a byte to the serial port
+|
+| Input
+| d0.b	byte to send
+|
+| Output
+|
+| Corrupts
+|
+
+write_serial:
+	movem.l	d1-d4,-(sp)															| Push registers to the stack which are affected by BIOS calls
+	move.l	d0,d4																| Store byte to send
+    lea     _vbclock,a6
+	move.l  (a6),d6      														| Store current VLBANK count
+
+	clr.l	d0
+	move.w	refresh_rate, d0
+	mulu.w	#serial_timeout_secs, d0
+
+	add.l	d0, d6																| Increase to target VLBANK count
+1:
+    Bcostat serial_device														| Read the serial output buffer state
+	tst     d0           														| Test that port is ready to send data
+	jne     3f     		 														| Data can be sent - stop checking
+
+	move.l  (a6),d7      														| Current VLBANKs
+
+	cmp.l   d6,d7       														| Compare max VLBANKs with current VLBANKs
+	jgt	    2f     																| Timeout if current VLBANKs is greater than max VLBANKs
+
+	jra     1b        															| Check serial status again if current VLBANKs is less than max VLBANKs
+2:
+	move	#-1,d0																| Data could not be sent, set error return value
+	jmp		99f
+3:
+	Bconout	serial_device,d4													| Read byte from serial port
+99:
+	movem.l	(sp)+,d1-d4															| Restore registers affected by BIOS calls
+	rts
+
+|-------------------------------------------------------------------------------
 | Checks for availability of serial data in buffer for a set period
 |
 | Input
@@ -669,7 +711,7 @@ read_serial:
 
 	jra     1b        															| Check serial status again if current VLBANKs is less than max VLBANKs
 2:
-	move	#-1,d0
+	move	#-1,d0																| Data could not be read, set error return value
 	jmp		99f
 3:
 	Bconin	serial_device														| Read byte from serial port

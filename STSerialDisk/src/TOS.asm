@@ -23,27 +23,6 @@ super_exec:
 rts
 
 |-------------------------------------------------------------------------------
-| BIOS Bconout
-| Writes a byte to the serial port
-|
-| Input
-| d0.b	byte to send
-|
-| Output
-|
-| Corrupts
-|
-
-write_serial:
-	move	d0,-(sp)															| Byte to write
-	move.w	serial_device,d0													| Get output device ID
-	move	d0,-(sp)															| Output device
-	move	#3,-(sp)
-	trap	#13
-	addq.l	#6,sp
-	rts
-
-|-------------------------------------------------------------------------------
 | GEM Cconws
 | Prints a string to the console
 |
