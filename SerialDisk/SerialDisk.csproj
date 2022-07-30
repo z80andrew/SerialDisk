@@ -35,7 +35,10 @@
     <Content Include="Atari\SERDISK.CFG">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Atari\SERDISK3.TOS">
+	<Content Include="Atari\SERDISK.RES">
+		<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	</Content>
+	<Content Include="Atari\SERDISK3.TOS">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <EmbeddedResource Include="Resources\default_config_osx.json">
