@@ -20,6 +20,12 @@
 			<Setter Property="Cursor" Value="Hand"/>
 			<Setter Property="TextBlock.Foreground" Value="Blue"/>
 		</Style>
+
+		<Style Selector="Button.URL:disabled  /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="Cursor" Value="None"/>
+			<Setter Property="TextBlock.Foreground" Value="Black"/>
+		</Style>
 	</Window.Styles>
 
 	<Design.DataContext>
@@ -33,7 +39,7 @@
 
 	<DockPanel Classes="AppDockPanel" LastChildFill="True">
 		<Border Classes="SectionContainer" DockPanel.Dock="Top">
-			<DockPanel HorizontalAlignment="Center">
+			<DockPanel HorizontalAlignment="Center" Margin="0">
 				<Border BorderBrush="White" DockPanel.Dock="Top">
 						<DockPanel DockPanel.Dock="Top" Background="White">
 							<Viewbox DockPanel.Dock="Top" StretchDirection="DownOnly" Stretch="Uniform">
@@ -50,18 +56,35 @@ o o o o o  \__ \/ _ \/ ___/ / __ `/ / / / / / ___/ //_/&#10;
 								   Margin="0,0,10,0" Text="{Binding VersionNote}"></TextBlock>
 						</DockPanel>
 				</Border>
-				<TextBlock Margin="10" DockPanel.Dock="Top" HorizontalAlignment="Center">by z80andrew</TextBlock>
-				<Button Classes="URL" Background="Transparent" Foreground="Blue" DockPanel.Dock="Top" 
-						HorizontalAlignment="Center" Command="{Binding ShowWebsiteCommand}" Content="{Binding WebsiteButtonText}" ></Button>
-				
-				<Button IsVisible="{Binding IsNewVersionAvailable}" Classes="URL" Background="Transparent" Foreground="Blue" DockPanel.Dock="Top"
-					HorizontalAlignment="Center" VerticalContentAlignment="Center" Command="{Binding ShowLatestVersionWebpageCommand}" Content="New version available" ></Button>
-				<TextBlock Padding="0,5,0,6" VerticalAlignment="Center" IsVisible="{Binding !IsNewVersionAvailable}" DockPanel.Dock="Top" HorizontalAlignment="Center" Text="{Binding NewVersionCheckLabelText}"></TextBlock>
+
+				<DockPanel LastChildFill="False" DockPanel.Dock="Top" Height="150">
+
+					<TabControl DockPanel.Dock="Top">
+						<TabItem Header="About" FontSize="15">
+							<DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+								<TextBlock Margin="10,0,10,10" DockPanel.Dock="Top" HorizontalAlignment="Center">by z80andrew</TextBlock>
+								<Button Classes="URL" Background="Transparent" Foreground="Blue" DockPanel.Dock="Top"
+										HorizontalAlignment="Center" Command="{Binding ShowWebsiteCommand}" Content="{Binding WebsiteButtonText}" ></Button>
+
+								<Button IsEnabled="{Binding IsNewVersionAvailable}" Classes="URL" Background="Transparent" Foreground="Blue" DockPanel.Dock="Top"
+									HorizontalAlignment="Center" VerticalContentAlignment="Center" Command="{Binding ShowLatestVersionWebpageCommand}" Content="{Binding NewVersionCheckLabelText}" />
+							</DockPanel>
+						</TabItem>
+						<TabItem Height="NaN" Header="Credits" FontSize="15">
+							<ScrollViewer Margin="0,0,0,10" AllowAutoHide="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+								<DataGrid Margin="10,0,10,0"  IsReadOnly="True"  HeadersVisibility="None" AutoGenerateColumns="True" AlternatingRowBackground="LightGray" Items="{Binding Credits}">
+								</DataGrid>
+							</ScrollViewer>
+						</TabItem>
+					</TabControl>
+
+				</DockPanel>
+
+				<DockPanel DockPanel.Dock="Bottom">
+					<Button Margin="0,0,0,10" DockPanel.Dock="Bottom" HorizontalAlignment="Center" Command="{Binding CloseAboutCommand}">Close</Button>
+				</DockPanel>
 					
-				<TextBlock Margin="0,10,0,5" DockPanel.Dock="Top" HorizontalAlignment="Center">Thank you for using SerialDisk!</TextBlock>
-				<Button Margin="0,0,0,10" DockPanel.Dock="Bottom" HorizontalAlignment="Center" Command="{Binding CloseAboutCommand}">Close</Button>
 			</DockPanel>
 		</Border>
-
-	</DockPanel>
+</DockPanel>
 </Window>

@@ -10,6 +10,12 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Common
         public static string DefaultPath => AppDomain.CurrentDomain.BaseDirectory;
         public static string ConfigFilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "serialdiskui.config");
 
+#if DEBUG
+        public static bool IsDebugMode => true;
+#else
+        public static bool IsDebugMode => false;
+#endif
+
         public static KeyValuePair<string, int>[] BaudRates
         {
             get

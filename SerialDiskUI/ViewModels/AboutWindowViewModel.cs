@@ -1,7 +1,11 @@
 ﻿using ReactiveUI;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Reactive;
+using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Z80andrew.SerialDisk.Common;
@@ -16,6 +20,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
     {
         private ILogger _logger;
         private string _latestVersionInfo;
+        public List<CreditsModel> Credits { get; set; }
         public ReactiveCommand<Unit, SimpleDialogModel> CloseAboutCommand { get; }
         public ICommand ShowWebsiteCommand { get; }
         public ICommand ShowLatestVersionWebpageCommand { get; }
@@ -63,22 +68,49 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 
             ShowLatestVersionWebpageCommand = ReactiveCommand.Create(() =>
             {
-                var startInfo = new ProcessStartInfo { UseShellExecute = true, FileName = LatestVersionUrl};
+                var startInfo = new ProcessStartInfo { UseShellExecute = true, FileName = LatestVersionUrl };
                 var process = Process.Start(startInfo);
             });
 
             IsNewVersionAvailable = false;
             _timeSinceLastVersionCheck = timeSinceLastVersionCheck;
 
-            if (logger != null)
+            // Parameters are null at design-time
+            if (logger != null && !Common.Constants.IsDebugMode)
             {
                 NewVersionCheckLabelText = "Checking for new version...";
                 Task checkLatestVersionTask = CheckForNewVersion(_logger);
             }
 
-            // Parameters are null at design-time
             else
-                NewVersionCheckLabelText = "Version check disabled in designer mode";
+                NewVersionCheckLabelText = "Version check disabled";
+
+            InitCredits();
+        }
+
+        private void InitCredits()
+        {
+            using (Stream? stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Z80andrew.SerialDisk.SerialDiskUI.Assets.Credits.json"))
+            {
+                if (stream != null)
+                {
+                    try
+                    {
+                        var streamReader = new StreamReader(stream);
+                        var creditsJson = streamReader.ReadToEnd();
+                        Credits = JsonSerializer.Deserialize<List<CreditsModel>>(creditsJson)!;
+                    }
+
+                    catch (Exception ex)
+                    {
+                        Credits = new List<CreditsModel>();
+                        _logger.LogException(ex, "Could not load credits");
+                    }
+                }
+
+                else
+                    _logger.LogException(new Exception("Resource stream was null"), "Could not load credits");
+            }
         }
 
         private async Task CheckForNewVersion(ILogger logger)
@@ -92,6 +124,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
                     IsNewVersionAvailable = ConfigurationHelper.IsNewVersionAvailable(_latestVersionInfo);
 
                     if (!IsNewVersionAvailable) NewVersionCheckLabelText = "No new version available";
+                    else NewVersionCheckLabelText = "New version available";
                 }
 
                 catch (Exception ex)
