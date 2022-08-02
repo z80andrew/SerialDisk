@@ -772,7 +772,7 @@ read_config_file:
 	move.b	temp_long+1,d1
 
 	cmp		#0x30,d1															| Is read byte ASCII '0'?
-	jeq		read_config_file_end												| Yes use the default sector shift value
+	jeq		2f																	| Yes use the default sector shift value
 	jlt		sector_size_err														| Read character is < ASCII 0 so it is invalid
 
 	cmp		#0x31,d1															| Compare read byte with ASCII '1'
@@ -782,6 +782,7 @@ read_config_file:
 																				| 0x31 - 0x24 = 0x0D for 8KiB sectors, supporting 512KiB disks
 	move	d1,sector_size_shift_value
 
+2:
 	| Read serial device ASCII ID
 
 	move.b	temp_long+2,serial_device+1											| Store byte from config position 2 into the low byte of word serial_device
