@@ -42,5 +42,7 @@ namespace Z80andrew.SerialDisk.Common
             public const byte CRC32Mismatch = 0x00;
             public const byte CRC32Match = 0x01;
         }
+
+        public static readonly int DirectoryClusterOffset = -1;
     }
 }
