@@ -149,6 +149,7 @@ namespace Z80andrew.SerialDisk.Storage
                 // FAT area
                 if (sector < Parameters.SectorsPerFat * 2)
                 {
+                    _logger.Log($"Reading data from FAT area", Constants.LoggingLevel.All);
                     int readSector = sector;
 
                     if (readSector >= Parameters.SectorsPerFat)
@@ -160,6 +161,7 @@ namespace Z80andrew.SerialDisk.Storage
                 // Root directory
                 else if (sector < Parameters.SectorsPerFat * 2 + Parameters.RootDirectorySectors)
                 {
+                    _logger.Log($"Reading data from root directory", Constants.LoggingLevel.All);
                     Array.Copy(_rootDirectoryBuffer, (sector - Parameters.SectorsPerFat * 2) * Parameters.BytesPerSector, dataBuffer, dataOffset, Parameters.BytesPerSector);
                 }
 
@@ -172,6 +174,7 @@ namespace Z80andrew.SerialDisk.Storage
                     // Directory clusters are not read from disk
                     if (_clusterInfos[clusterIndex].IsDirectoryCluster)
                     {
+                        _logger.Log($"Reading directory data cluster {clusterIndex}", Constants.LoggingLevel.All);
                         Array.Copy(_clusterInfos[clusterIndex].DataBuffer, (readSector - clusterIndex * Parameters.SectorsPerCluster) * Parameters.BytesPerSector, dataBuffer, dataOffset, Parameters.BytesPerSector);
                     }
 
@@ -203,6 +206,13 @@ namespace Z80andrew.SerialDisk.Storage
                         {
                             _logger.LogException(ex, "Error reading disk sectors");
                         }
+                    }
+
+                    // DATA area not yet written to disk (e.g. during incomplete file transfers)
+                    else
+                    {
+                        _logger.Log($"Reading incomplete local file / sector from data buffer at cluster {clusterIndex}, offset {_clusterInfos[clusterIndex].FileOffset}", Constants.LoggingLevel.All);
+                        Array.Copy(_clusterInfos[clusterIndex].DataBuffer, (readSector - clusterIndex * Parameters.SectorsPerCluster) * Parameters.BytesPerSector, dataBuffer, dataOffset, Parameters.BytesPerSector);
                     }
                 }
 
@@ -397,13 +407,12 @@ namespace Z80andrew.SerialDisk.Storage
                 File.Delete(GetAbsolutePath(directoryContentInfo.LocalPath));
             }
 
-            var clustersToDelete = _clusterInfos.Where(_ => _.LocalDirectoryContent.LocalPath == directoryContentInfo.LocalPath);
+            var clustersToDelete = _clusterInfos.Where(_ => _.LocalDirectoryContent?.LocalPath == directoryContentInfo.LocalPath);
 
             foreach (var cluster in clustersToDelete)
             {
                 _logger.Log($"Removing local cluster data for {cluster.LocalDirectoryContent.LocalPath} (offset {cluster.FileOffset})", Constants.LoggingLevel.All);
                 cluster.LocalDirectoryContent = null;
-                cluster.DeallocateBuffer();
             }
 
             localDirectoryContentInfos.Remove(directoryContentInfo);
@@ -634,7 +643,7 @@ namespace Z80andrew.SerialDisk.Storage
 
                             _clusterInfos[newDirectoryCluster] = new ClusterInfo(Parameters.BytesPerCluster)
                             {
-                                FileOffset = -1,
+                                FileOffset = Constants.DirectoryClusterOffset,
                                 LocalDirectoryContent = _clusterInfos[directoryClusterIndex].LocalDirectoryContent
                         };
 
