@@ -339,6 +339,7 @@ namespace Z80andrew.SerialDisk.Storage
                             // Find the matching local content and check what happened to it.
                             var localContent = FindLocalDirectoryContentInfo(localDirectoryContentInfos, clusterIndex, directoryEntryIndex, entryStartClusterIndex);
 
+                            // Entry has previously been written to disk
                             if (localContent != null)
                             {
                                 if (localContent.TOSFileName != fileName)
@@ -355,8 +356,9 @@ namespace Z80andrew.SerialDisk.Storage
                                 }
                             }
 
-                            // Entry is new
-                            else if (directoryData[directoryEntryIndex] != FAT16Helper.DeletedEntryIdentifier)
+                            // Entry has not been completely written to disk and has been assigned a local path
+                            else if (directoryData[directoryEntryIndex] != FAT16Helper.DeletedEntryIdentifier
+                                && _clusterInfos[clusterIndex].LocalDirectoryContent != null)
                             {
                                 UpdateLocalDirectoryOrFile(localDirectoryContentInfos, directoryData, clusterIndex, directoryEntryIndex, entryStartClusterIndex, fileName);
                             }
