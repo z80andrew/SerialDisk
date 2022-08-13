@@ -207,13 +207,6 @@ namespace Z80andrew.SerialDisk.Storage
                             _logger.LogException(ex, "Error reading disk sectors");
                         }
                     }
-
-                    // DATA area not yet written to disk (e.g. during incomplete file transfers)
-                    else
-                    {
-                        _logger.Log($"Reading incomplete local file / sector from data buffer at cluster {clusterIndex}, offset {_clusterInfos[clusterIndex].FileOffset}", Constants.LoggingLevel.All);
-                        Array.Copy(_clusterInfos[clusterIndex].DataBuffer, (readSector - clusterIndex * Parameters.SectorsPerCluster) * Parameters.BytesPerSector, dataBuffer, dataOffset, Parameters.BytesPerSector);
-                    }
                 }
 
                 dataOffset += Parameters.BytesPerSector;
@@ -358,7 +351,7 @@ namespace Z80andrew.SerialDisk.Storage
 
                             // Entry has not been completely written to disk and has been assigned a local path
                             else if (directoryData[directoryEntryIndex] != FAT16Helper.DeletedEntryIdentifier
-                                && _clusterInfos[clusterIndex].LocalDirectoryContent != null)
+                                && (_clusterInfos[clusterIndex].LocalDirectoryContent != null || clusterIndex == _rootDirectoryClusterIndex))
                             {
                                 UpdateLocalDirectoryOrFile(localDirectoryContentInfos, directoryData, clusterIndex, directoryEntryIndex, entryStartClusterIndex, fileName);
                             }
