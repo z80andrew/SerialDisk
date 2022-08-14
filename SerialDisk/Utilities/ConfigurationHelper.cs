@@ -13,7 +13,7 @@ namespace Z80andrew.SerialDisk.Utilities
         // used to denote non-release versions
         public const string VERSION_TYPE = "beta 2";
 
-        public const string VERSION_TAG = "3.0-beta1";
+        public const string VERSION_TAG = "3.0-beta2";
 
         public static bool IsNewVersionAvailable(string gitHubAPIResponse)
         {
