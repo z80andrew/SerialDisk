@@ -30,8 +30,6 @@ start:
 	movea.l	#const_str_welcome,a0
 	jbsr	print_string														| Show welcome message
 
-	jbsr	create_crc32_table													| Generate CRC32 checksums
-
 	| Check resource file is present
 
 	move.l	#const_res_filename,a0
@@ -55,7 +53,7 @@ start:
 
 	Pterm	#0
 1:
-	move.l	d0, res_file_handle													| Store resource file handle
+	move.l	d0, temp_long													| Store resource file handle
 
 	| Read config file
 
@@ -156,8 +154,10 @@ read_config_file_done:
 	move.l	#set_refresh_rate, a0												| Set the screen refresh rate variable used for timing
 	jbsr	super_exec
 
-	move.l	res_file_handle, d0
+	move.l	temp_long, d0
 	Fclose	d0																	| Close the resource file handle
+
+	jbsr	create_crc32_table													| Generate CRC32 checksums
 
 	move.l	#wait, a0															| Short delay
 	jbsr	super_exec
@@ -750,7 +750,7 @@ read_config_file:
 
 	jmp		read_config_file_not_found											| Return value is negative (failed), skip read attempt
 1:
-	Fread	d0,#3,temp_long														| Read first 3 bytes into temp variable
+	Fread	d0,#3,crc32_table+0x50												| Read first 3 bytes into temp memory area
 	Fclose	d0																	| Close the file handle
 
 	move.w	#res_msg_config_found,d0											| Display the config file found message
@@ -758,7 +758,7 @@ read_config_file:
 
 	| Read disk ASCII ID
 
-	move.b	temp_long,disk_identifier+1
+	move.b	crc32_table+0x50,disk_identifier+1
 
 	cmp.w	#0x50,disk_identifier												| Compare read byte with ASCII 'P'
 	jgt		config_drive_err													| Read character is > ASCII 'P' so it is invalid
@@ -769,7 +769,7 @@ read_config_file:
 	| Read disk buffer size
 
 	clr		d1
-	move.b	temp_long+1,d1
+	move.b	crc32_table+0x50+1,d1
 
 	cmp		#0x30,d1															| Is read byte ASCII '0'?
 	jeq		2f																	| Yes use the default sector shift value
@@ -785,7 +785,7 @@ read_config_file:
 2:
 	| Read serial device ASCII ID
 
-	move.b	temp_long+2,serial_device+1											| Store byte from config position 2 into the low byte of word serial_device
+	move.b	crc32_table+0x50+2,serial_device+1											| Store byte from config position 2 into the low byte of word serial_device
 	jmp		read_config_file_end
 
 config_drive_err:
@@ -923,23 +923,19 @@ rts
 |
 | Corrupts
 | d0, d1
-| temp_long+7
+| crc32_table
 
 print_resource_string:
 	mulu	#res_string_length,d0												| Get absolute file position of resource string
 
-	move.l	res_file_handle,d1													| Get file handle
+	move.l	temp_long,d1														| Get file handle
 
 	Fseek	d0,d1,#0															| Seek to position of resource string in file
 
 print_next_char:
-	Fread 	d1,#1,temp_long+7													| Read one byte into temp memory location
-	move.b	temp_long+7,d0														| Move byte from memory into register
-	tst.b d0																	| Is this byte a NULL character?
-	jeq end_res_read															| Yes, end of string reached
-	Cconout d0																	| Output byte to console
-	jmp print_next_char															| Continue reading string
-end_res_read:
+	Fread 	d1,#0x40,crc32_table													| Read 64 bytes into temp memory location
+	movea.l	#crc32_table,a0
+	jbsr	print_string
 	rts
 
 |-------------------------------------------------------------------------------
@@ -1001,6 +997,10 @@ old_hdv_rw:
 old_hdv_mediach:
 	ds.l	0x01
 
+| During startup:
+| Bytes from 0x50 used to store config file values
+| Used as a buffer for reading resource file bytes
+| Finally used to store CRC32 checksums
 crc32_table:
 	ds.l	0x100
 
@@ -1008,8 +1008,7 @@ refresh_rate:
 	ds.w	0x01
 
 | During startup:
-| bytes 0-2 used to read config file values
-| byte 7 used as a buffer for reading resource file bytes
+| Used to store file handle for string resources
 |
 | During runtime:
 | Used to receive CRC32 checksums
@@ -1018,9 +1017,6 @@ temp_long:
 
 serial_device:
 	ds.w	0x01
-
-res_file_handle:
-	ds.l	0x01
 
 |-------------------------------------------------------------------------------
 
