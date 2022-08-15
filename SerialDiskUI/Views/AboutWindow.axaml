@@ -26,6 +26,14 @@
 			<Setter Property="Cursor" Value="None"/>
 			<Setter Property="TextBlock.Foreground" Value="Black"/>
 		</Style>
+
+		<Style Selector="TabControl">
+			<Setter Property="TabControl.ItemsPanel">
+				<ItemsPanelTemplate>
+					<UniformGrid Rows="1" HorizontalAlignment="Center" Height="5" Margin="0,10,0,20"/>
+				</ItemsPanelTemplate>
+			</Setter>
+		</Style>
 	</Window.Styles>
 
 	<Design.DataContext>
@@ -60,7 +68,7 @@ o o o o o  \__ \/ _ \/ ___/ / __ `/ / / / / / ___/ //_/&#10;
 				<DockPanel LastChildFill="False" DockPanel.Dock="Top" Height="150">
 
 					<TabControl DockPanel.Dock="Top">
-						<TabItem Header="About" FontSize="15">
+						<TabItem Header="About" FontSize="15" BorderThickness="4" HorizontalContentAlignment="Center">
 							<DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
 								<TextBlock Margin="10,0,10,10" DockPanel.Dock="Top" HorizontalAlignment="Center">by z80andrew</TextBlock>
 								<Button Classes="URL" Background="Transparent" Foreground="Blue" DockPanel.Dock="Top"
@@ -70,7 +78,7 @@ o o o o o  \__ \/ _ \/ ___/ / __ `/ / / / / / ___/ //_/&#10;
 									HorizontalAlignment="Center" VerticalContentAlignment="Center" Command="{Binding ShowLatestVersionWebpageCommand}" Content="{Binding NewVersionCheckLabelText}" />
 							</DockPanel>
 						</TabItem>
-						<TabItem Height="NaN" Header="Credits" FontSize="15">
+						<TabItem Header="Credits" FontSize="15" BorderThickness="4" HorizontalContentAlignment="Center">
 							<ScrollViewer Margin="0,0,0,10" AllowAutoHide="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
 								<DataGrid Margin="10,0,10,0"  IsReadOnly="True"  HeadersVisibility="None" AutoGenerateColumns="True" AlternatingRowBackground="LightGray" Items="{Binding Credits}">
 								</DataGrid>

@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using Z80andrew.SerialDisk.Common;
 using Z80andrew.SerialDisk.Interfaces;
 using Z80andrew.SerialDisk.Models;
@@ -640,9 +639,9 @@ namespace Z80andrew.SerialDisk.Storage
                             {
                                 FileOffset = Constants.DirectoryClusterOffset,
                                 LocalDirectoryContent = _clusterInfos[directoryClusterIndex].LocalDirectoryContent
-                        };
+                            };
 
-                        entryIndex = 0;
+                            entryIndex = 0;
 
                         }
 
@@ -833,8 +832,17 @@ namespace Z80andrew.SerialDisk.Storage
                 }
             }
 
+            var TOSFileName = GetTOSFilename(directoryClusterIndex, fileInfo.Name, localDirectoryContentInfos);
+
+            FatAddDirectoryEntry(localDirectoryContentInfos, directoryClusterIndex, fileentryStartClusterIndex,
+                fileInfo.DirectoryName, fileInfo.Name, TOSFileName, 0x00, fileInfo.LastWriteTime, fileInfo.Length);
+        }
+
+        private static string GetTOSFilename(int directoryClusterIndex, string fileName, List<LocalDirectoryContentInfo> localDirectoryContentInfos)
+        {
+            var TOSFileName = FAT16Helper.GetShortFileName(fileName);
+
             // handle duplicate short filenames
-            string TOSFileName = FAT16Helper.GetShortFileName(fileInfo.Name);
             int duplicateId = 1;
 
             while (localDirectoryContentInfos.Where(ldi => ldi.TOSFileName.Equals(TOSFileName, StringComparison.InvariantCultureIgnoreCase) &&
@@ -847,8 +855,7 @@ namespace Z80andrew.SerialDisk.Storage
                 duplicateId++;
             }
 
-            FatAddDirectoryEntry(localDirectoryContentInfos, directoryClusterIndex, fileentryStartClusterIndex,
-                fileInfo.DirectoryName, fileInfo.Name, TOSFileName, 0x00, fileInfo.LastWriteTime, fileInfo.Length);
+            return TOSFileName;
         }
 
         private void ImportLocalDiskContent(List<LocalDirectoryContentInfo> localDirectoryContentInfos, string directoryPath, int directoryClusterIndex)
