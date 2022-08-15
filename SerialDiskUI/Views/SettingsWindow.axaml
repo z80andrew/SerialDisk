@@ -128,7 +128,7 @@
 											 IsReadOnly="True">
 									</TextBox>
 									<TextBlock VerticalAlignment="Center">MiB</TextBlock>
-									<Image ToolTip.Tip="Please ensure the disk buffer size is set correctly in SERDISK.CFG when using a virtual disk larger than 32MiB" IsVisible="{Binding ShowDiskSizeInfoMessage}" Height="14" Source="/Assets/Icons/info_128.png"/>
+									<Image ToolTip.Tip="Please ensure large disk support is enabled in SERDISK.CFG when using a virtual disk larger than 32MiB" IsVisible="{Binding ShowDiskSizeInfoMessage}" Height="14" Source="/Assets/Icons/info_128.png"/>
 								</StackPanel>
 						</StackPanel>
 					</Border>

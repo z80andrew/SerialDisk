@@ -368,9 +368,8 @@ _rw_write:
 
 	btst	#compression_isenabled,d0											| Check for compression flag
 	jeq		_rw_write_uncompressed
-
+_rw_write_compressed:
 	.include "../src/RLE.asm"
-	jmp	_rw_write_crc32
 _rw_write_uncompressed:
 	move.b	(a4)+,d0															| Move buffer address into d0, increment to next byte in rw struct
 	jbsr	write_serial														| Write byte to serial
@@ -643,11 +642,12 @@ wait:
 | Output
 |
 | Corrupts
-|
+| d0, d5, d6
+| a6
 
 write_serial:
-	movem.l	d1-d4,-(sp)															| Push registers to the stack which are affected by BIOS calls
-	move.l	d0,d4																| Store byte to send
+	movem.l	d7,-(sp)															| Push registers to the stack which are used by calling routines
+	move.l	d0,d7																| Store byte to send
     lea     _vbclock,a6
 	move.l  (a6),d6      														| Store current VLBANK count
 
@@ -661,9 +661,9 @@ write_serial:
 	tst     d0           														| Test that port is ready to send data
 	jne     3f     		 														| Data can be sent - stop checking
 
-	move.l  (a6),d7      														| Current VLBANKs
+	move.l  (a6),d5      														| Current VLBANKs
 
-	cmp.l   d6,d7       														| Compare max VLBANKs with current VLBANKs
+	cmp.l   d6,d5       														| Compare max VLBANKs with current VLBANKs
 	jgt	    2f     																| Timeout if current VLBANKs is greater than max VLBANKs
 
 	jra     1b        															| Check serial status again if current VLBANKs is less than max VLBANKs
@@ -671,9 +671,9 @@ write_serial:
 	move	#-1,d0																| Data could not be sent, set error return value
 	jmp		99f
 3:
-	Bconout	serial_device,d4													| Read byte from serial port
+	Bconout	serial_device,d7													| Read byte from serial port
 99:
-	movem.l	(sp)+,d1-d4															| Restore registers affected by BIOS calls
+	movem.l	(sp)+,d7															| Restore registers used by calling routines
 	rts
 
 |-------------------------------------------------------------------------------

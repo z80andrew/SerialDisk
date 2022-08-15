@@ -22,7 +22,7 @@ do_read:
     tst.l   d3																	| Any bytes left to read?
     jne     do_compare															| Yes, compare with next byte
     jbsr    do_run																| No, output what's in the run so far
-    jmp     99f																	| Go to end
+    jmp		_rw_write_crc32														| Finished sending data, output CRC32
 do_compare:
     cmp.b	(a4),d4																| Compare read byte with next byte (pre-incremented)
     jeq     do_read																| Same? Read next byte
@@ -53,4 +53,3 @@ end_run:
     moveq   #0,d7																| Reset number of repeats
     rts
 
-99:
