@@ -18,7 +18,7 @@
 
 | Other constants
 .equ wait_secs,				0x02												| Time for pauses (secs)
-.equ serial_timeout_secs,	0x05												| Serial read timeout (secs)
+.equ serial_timeout_secs,	0x0A												| Serial read timeout (secs)
 .equ crc32_poly,			0x04c11db7											| Polynomial for CRC32 calculation
 .equ ascii_alpha_offset,	0x41												| Offset from number to its ASCII equivalent (for letters)
 .equ ascii_number_offset,	0x30												| Offset from number to its ASCII equivalent (for numbers)
@@ -31,18 +31,18 @@
 .equ hires_hz,				0x48												| 72Hz (although more accurately 71.2-71.4Hz)
 
 | Resource file indexes
-.equ res_msg_press_any_key,			0
-.equ res_msg_drive_mounted,			1
-.equ res_msg_config_found,			2
-.equ res_msg_config_not_found,		9
-.equ res_msg_buffer,				10
+.equ res_msg_press_any_key,			0x00
+.equ res_msg_drive_mounted,			0x01
+.equ res_msg_config_found,			0x02
+.equ res_msg_config_not_found,		0x09
+.equ res_msg_buffer,				0x0A
 
-.equ res_err_prefix,				3
-.equ res_err_buffer_allocation,		4
-.equ res_err_config_invalid,		5
-.equ res_err_drive_already_mounted,	6
-.equ res_err_sector_size,			7
-.equ res_err_disk_id,				8
+.equ res_err_prefix,				0x03
+.equ res_err_buffer_allocation,		0x04
+.equ res_err_config_invalid,		0x05
+.equ res_err_drive_already_mounted,	0x06
+.equ res_err_sector_size,			0x07
+.equ res_err_disk_id,				0x08
 
 | Error codes
 .equ err_disk_id_out_of_range,		-1

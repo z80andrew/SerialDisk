@@ -962,7 +962,7 @@ const_res_filename:
 | Messages
 
 const_str_welcome:
-	.asciz	"SerialDisk v3.0 beta 2\r\n"
+	.asciz	"SerialDisk v3.0\r\n"
 
 const_str_press_any_key:
 	.asciz	"\r\n\r\nPress any key"
