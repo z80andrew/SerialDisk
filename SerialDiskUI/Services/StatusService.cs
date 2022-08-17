@@ -38,7 +38,8 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Services
 
         public StatusService()
         {
-            SetStatus(Z80andrew.SerialDisk.Common.Status.StatusKey.Stopped);
+            _statusWithMessage = string.Empty;
+            SetStatus(SerialDisk.Common.Status.StatusKey.Stopped);
         }
 
         public void SetTransferProgress(int totalBytes, int receivedBytes)
@@ -48,7 +49,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Services
 
             var statusString = new StringBuilder()
                 .Append("Status: ")
-                .Append(Z80andrew.SerialDisk.Common.Status.Statuses.Find(x => x.Key == Status).Value)
+                .Append(SerialDisk.Common.Status.Statuses.Find(x => x.Key == Status).Value)
                 .Append($" ({TransferredBytes}/{TotalBytes} bytes)");
 
             StatusWithMessage = statusString.ToString();
@@ -59,9 +60,9 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Services
             Status = status;
 
             // Reset progressbar values if not transferring
-            if (status != Z80andrew.SerialDisk.Common.Status.StatusKey.Sending
-                || status != Z80andrew.SerialDisk.Common.Status.StatusKey.Receiving
-                || status != Z80andrew.SerialDisk.Common.Status.StatusKey.Error)
+            if (status != SerialDisk.Common.Status.StatusKey.Sending
+                || status != SerialDisk.Common.Status.StatusKey.Receiving
+                || status != SerialDisk.Common.Status.StatusKey.Error)
             {
                 TotalBytes = Int32.MaxValue;
                 TransferredBytes = Int32.MinValue;
@@ -69,9 +70,9 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Services
 
             var statusString = new StringBuilder()
                 .Append("Status: ")
-                .Append(Z80andrew.SerialDisk.Common.Status.Statuses.Find(x => x.Key == status).Value);
+                .Append(SerialDisk.Common.Status.Statuses.Find(x => x.Key == status).Value);
 
-            if (!String.IsNullOrEmpty(message)) statusString.Append(" ").Append(message);
+            if (!String.IsNullOrEmpty(message)) statusString.Append(' ').Append(message);
 
             StatusWithMessage = statusString.ToString();
         }

@@ -24,23 +24,10 @@ namespace Z80andrew.SerialDisk.Comms
             }
         }
 
-        private static HttpClient GetHttpClient()
-        {
-            var httpClient = new HttpClient();
-            NetworkClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("z80andrew.SerialDisk", ConfigurationHelper.ApplicationVersion));
-            return httpClient;
-        }
-
-        public async static Task<string> GetReleaseTags()
+        public async static Task<string> GetReleases()
         {
             NetworkClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            return await GetHttpResponse("https://api.github.com/repos/z80andrew/serialdisk/tags");
-        }
-
-        public async static Task<string> GetLatestVersionInfo()
-        {
-            NetworkClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            return await GetHttpResponse("https://api.github.com/repos/z80andrew/serialdisk/releases/latest");
+            return await GetHttpResponse("https://api.github.com/repos/z80andrew/serialdisk/releases");
         }
 
         private async static Task<string> GetHttpResponse(string uri)

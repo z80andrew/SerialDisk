@@ -33,7 +33,7 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
 
         private void Init(ApplicationSettings applicationSettings, CancellationTokenSource cancelTokenSource)
         {
-            var versionMessage = $"Serial Disk v{ConfigurationHelper.ApplicationVersion} {ConfigurationHelper.VERSION_TYPE}";
+            var versionMessage = $"Serial Disk v{ConfigurationHelper.ApplicationVersion} {ConfigurationHelper.RELEASE_NAME}";
 
             _logger.Log(versionMessage, LoggingLevel.Info);
 

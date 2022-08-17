@@ -1,8 +1,10 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization.Json;
 using System.Text.Json;
 using Z80andrew.SerialDisk.Models;
+using static Z80andrew.SerialDisk.Common.Constants;
 
 namespace Z80andrew.SerialDisk.Utilities
 {
@@ -10,22 +12,47 @@ namespace Z80andrew.SerialDisk.Utilities
     {
         public static string ApplicationVersion => Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
 
-        // used to denote non-release versions
-        public const string VERSION_TYPE = "beta 2";
-
-        public const string VERSION_TAG = "3.0-beta2";
+        public static readonly ReleaseType RELEASE_TYPE = ReleaseType.Beta;
+        public static readonly string RELEASE_NAME = "beta 2";
+        public static readonly string RELEASE_TAG = "3.0-beta2";
 
         public static bool IsNewVersionAvailable(string gitHubAPIResponse)
         {
+            bool isNewVersionAvailable = false;
             var json = JsonDocument.Parse(gitHubAPIResponse);
-            var latestVersionTag = json.RootElement.GetProperty("tag_name").GetString();
-            return !latestVersionTag.Equals(VERSION_TAG, System.StringComparison.InvariantCultureIgnoreCase);
+            var versions = json.RootElement.EnumerateArray();
+
+            if (RELEASE_TYPE == ReleaseType.Release)
+            {
+                var releaseVersions = versions.Where(ver => ver.GetProperty("prerelease").GetBoolean() == false);
+                if (!String.Equals(releaseVersions.First().GetProperty("tag_name").GetString(), RELEASE_TAG, StringComparison.InvariantCultureIgnoreCase)) isNewVersionAvailable = true;
+            }
+
+            else
+            {
+                if (!String.Equals(versions.First().GetProperty("tag_name").GetString(), RELEASE_TAG, StringComparison.InvariantCultureIgnoreCase)) isNewVersionAvailable = true;
+            }
+
+            return isNewVersionAvailable;
         }
 
         public static string GetLatestVersionUrl(string gitHubAPIResponse)
         {
+            string latestVersionUrl = string.Empty;
             var json = JsonDocument.Parse(gitHubAPIResponse);
-            var latestVersionUrl = json.RootElement.GetProperty("html_url").GetString();
+            var versions = json.RootElement.EnumerateArray();
+
+            if (RELEASE_TYPE == ReleaseType.Release)
+            {
+                var releaseVersions = versions.Where(ver => ver.GetProperty("prerelease").GetBoolean() == false);
+                latestVersionUrl = releaseVersions.First().GetProperty("html_url").GetString();
+            }
+
+            else
+            {
+                latestVersionUrl = versions.First().GetProperty("html_url").GetString();
+            }
+            
             return latestVersionUrl;
         }
 

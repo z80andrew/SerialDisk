@@ -19,19 +19,13 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
     public class AboutWindowViewModel : ViewModelBase
     {
         private ILogger _logger;
-        private string _latestVersionInfo;
+        private string _releasesInfo;
         public List<CreditsModel> Credits { get; set; }
         public ReactiveCommand<Unit, SimpleDialogModel> CloseAboutCommand { get; }
         public ICommand ShowWebsiteCommand { get; }
         public ICommand ShowLatestVersionWebpageCommand { get; }
-        public String VersionNote => $"v{ConfigurationHelper.ApplicationVersion} {ConfigurationHelper.VERSION_TYPE}";
+        public String VersionNote => $"v{ConfigurationHelper.ApplicationVersion} {ConfigurationHelper.RELEASE_NAME}";
         public string WebsiteButtonText => Constants.PROJECT_URL.Replace(@"https://www.", String.Empty);
-
-        private TimeSpan _minimumTimeBetweenVersionChecks = TimeSpan.FromSeconds(30);
-
-        private TimeSpan _timeSinceLastVersionCheck;
-
-        private bool CanCheckForNewVersion => !IsNewVersionAvailable && (_timeSinceLastVersionCheck > _minimumTimeBetweenVersionChecks);
 
         private string _newVersionCheckLabelText;
         public string NewVersionCheckLabelText
@@ -54,7 +48,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
             set => this.RaiseAndSetIfChanged(ref _latestVersionUrl, value);
         }
 
-        public AboutWindowViewModel(ILogger logger, TimeSpan timeSinceLastVersionCheck)
+        public AboutWindowViewModel(ILogger logger)
         {
             _logger = logger;
 
@@ -73,17 +67,8 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
             });
 
             IsNewVersionAvailable = false;
-            _timeSinceLastVersionCheck = timeSinceLastVersionCheck;
-
-            // Parameters are null at design-time
-            if (logger != null && !Common.Constants.IsDebugMode)
-            {
-                NewVersionCheckLabelText = "Checking for new version...";
-                Task checkLatestVersionTask = CheckForNewVersion(_logger);
-            }
-
-            else
-                NewVersionCheckLabelText = "Version check disabled";
+            NewVersionCheckLabelText = "Checking for new version...";
+            Task checkLatestVersionTask = CheckForNewVersion(_logger);
 
             InitCredits();
         }
@@ -115,23 +100,20 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 
         private async Task CheckForNewVersion(ILogger logger)
         {
-            if (CanCheckForNewVersion)
+            try
             {
-                try
-                {
-                    _latestVersionInfo = await Network.GetLatestVersionInfo();
-                    LatestVersionUrl = ConfigurationHelper.GetLatestVersionUrl(_latestVersionInfo);
-                    IsNewVersionAvailable = ConfigurationHelper.IsNewVersionAvailable(_latestVersionInfo);
+                _releasesInfo = await Network.GetReleases();
+                LatestVersionUrl = ConfigurationHelper.GetLatestVersionUrl(_releasesInfo);
+                IsNewVersionAvailable = ConfigurationHelper.IsNewVersionAvailable(_releasesInfo);
 
-                    if (!IsNewVersionAvailable) NewVersionCheckLabelText = "No new version available";
-                    else NewVersionCheckLabelText = "New version available";
-                }
+                if (!IsNewVersionAvailable) NewVersionCheckLabelText = "No new version available";
+                else NewVersionCheckLabelText = "New version available";
+            }
 
-                catch (Exception ex)
-                {
-                    logger.LogException(ex, "Could not check for new version");
-                    NewVersionCheckLabelText = "Could not check for new version";
-                }
+            catch (Exception ex)
+            {
+                logger.LogException(ex, "Could not check for new version");
+                NewVersionCheckLabelText = "Could not check for new version";
             }
         }
 

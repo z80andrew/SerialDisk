@@ -4,6 +4,13 @@ namespace Z80andrew.SerialDisk.Common
 {
     public static class Constants
     {
+        public enum ReleaseType
+        {
+            Release,
+            ReleaseCandidate,
+            Beta
+        }
+
         public const string DATE_FORMAT = "yyyy-MM-dd";
         public const string TIME_FORMAT = "HH:mm:ss";
 

@@ -54,7 +54,7 @@
 								<TextBox DockPanel.Dock="Right" Margin="5,0,0,0" Text="{Binding OtherCOMPortName}" IsVisible="{Binding IsCOMPortTextBoxVisible}"></TextBox>
 							</DockPanel>
 
-							<!-- Teeeechnically this isn't baud rate (hence clarification in the tooltip), but label kept for consistency with C# and Atari nomenclature -->
+							<!-- Technically this isn't baud rate (hence clarification in the tooltip), but label kept for consistency with C# and Atari nomenclature -->
 							<TextBlock Classes="SettingsLabel">Baud rate</TextBlock>
 							<ComboBox ToolTip.Tip="Data transmission rate in bits per second" Items="{Binding BaudRateChoices}" SelectedItem="{Binding SelectedBaud}">
 								<ComboBox.ItemTemplate>
@@ -119,8 +119,8 @@
 										 Text="{Binding SelectedFolder}"></TextBox>
 							</DockPanel>
 							<TextBlock Classes="SettingsLabel" Margin="0,10,0,0">Virtual disk size</TextBlock>
-								<Slider Minimum="1" Maximum="512" Orientation="Horizontal"
-										Ticks="32,64,128,256,512" IsSnapToTickEnabled="True"
+								<Slider Minimum="32" Maximum="512" Orientation="Horizontal"
+										Ticks="64,128,256,512" IsSnapToTickEnabled="True"
 										Width="NaN" Value="{Binding VirtualDiskSizeMB}"
 										Margin="0,-13,0,-3"/>
 								<StackPanel Orientation="Horizontal" Spacing="5">

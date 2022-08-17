@@ -40,7 +40,6 @@
 		<vm:AboutWindowViewModel>
 			<x:Arguments>
 				<x:Null></x:Null>
-				<x:TimeSpan>0</x:TimeSpan>
 			</x:Arguments>
 		</vm:AboutWindowViewModel>			
 	</Design.DataContext>

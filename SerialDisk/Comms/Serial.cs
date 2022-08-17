@@ -331,7 +331,9 @@ namespace Z80andrew.SerialDisk.Comms
 
             catch (Exception ex)
             {
-                _logger.LogException(ex, "Serial port error");
+                var errorMessage = "Serial port error";
+                _logger.LogException(ex, errorMessage);
+                _statusService.SetStatus(Status.StatusKey.Error, $"{errorMessage}:{ex.Message}");
                 _listenTokenSource.Cancel();
             }
         }

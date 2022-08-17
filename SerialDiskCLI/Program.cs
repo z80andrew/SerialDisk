@@ -82,9 +82,9 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
 
             try
             {
-                var latestVersionInfo = Network.GetLatestVersionInfo().GetAwaiter().GetResult();
-                var latestVersionUrl = ConfigurationHelper.GetLatestVersionUrl(latestVersionInfo);
-                var isNewVersionAvailable = ConfigurationHelper.IsNewVersionAvailable(latestVersionInfo);
+                var releasesInfo = Network.GetReleases().GetAwaiter().GetResult();
+                var latestVersionUrl = ConfigurationHelper.GetLatestVersionUrl(releasesInfo);
+                var isNewVersionAvailable = ConfigurationHelper.IsNewVersionAvailable(releasesInfo);
 
                 if (isNewVersionAvailable)
                     Console.WriteLine($"New version is available at {latestVersionUrl}");

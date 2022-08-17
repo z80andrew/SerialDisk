@@ -59,8 +59,6 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
         private readonly ObservableAsPropertyHelper<bool> _isLogDisplayEnabled;
         public bool IsLogDisplayEnabled => _isLogDisplayEnabled.Value;
 
-        private DateTime _lastVersionCheckTime;
-
         // Status messages
         private readonly ObservableAsPropertyHelper<Status.StatusKey> _status;
         public Status.StatusKey Status => _status.Value;
@@ -131,7 +129,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
             if (model == null)
             {
                 var defaultApplicationSettings = ConfigurationHelper.GetDefaultApplicationSettings();
-                UIApplicationSettings appSettings = new UIApplicationSettings(defaultApplicationSettings)
+                var appSettings = new UIApplicationSettings(defaultApplicationSettings)
                 {
                     IsLogDisplayEnabled = true
                 };
@@ -139,15 +137,11 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
                 model = new SerialDiskUIModel(appSettings);
             }
 
-            if (statusService == null)
-            {
+            if (statusService == null) 
                 statusService = new StatusService();
-            }
 
-            if (logger == null)
-            {
+            if (logger == null) 
                 logger = new Logger(Constants.LoggingLevel.All);
-            }
 
             _model = model;
             _statusService = statusService;
@@ -244,9 +238,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 
             ShowAboutCommand = ReactiveCommand.CreateFromTask(async () =>
             {
-                var timeSinceLastVersionCheck = DateTime.Now - _lastVersionCheckTime;
-                _lastVersionCheckTime = DateTime.UtcNow;
-                var aboutViewModel = new AboutWindowViewModel(logger, timeSinceLastVersionCheck);
+                var aboutViewModel = new AboutWindowViewModel(logger);
                 var result = await ShowAboutDialog.Handle(aboutViewModel);
             });
 
