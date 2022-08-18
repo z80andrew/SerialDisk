@@ -40,8 +40,9 @@
 		<vm:AboutWindowViewModel>
 			<x:Arguments>
 				<x:Null></x:Null>
+				<x:Null></x:Null>
 			</x:Arguments>
-		</vm:AboutWindowViewModel>			
+		</vm:AboutWindowViewModel>
 	</Design.DataContext>
 
 	<DockPanel Classes="AppDockPanel" LastChildFill="True">

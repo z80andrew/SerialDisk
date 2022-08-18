@@ -114,14 +114,14 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
             interaction.SetOutput(result);
         }
 
-        private async Task DoShowAboutDialogAsync(InteractionContext<AboutWindowViewModel, SimpleDialogModel> interaction)
+        private async Task DoShowAboutDialogAsync(InteractionContext<AboutWindowViewModel, string> interaction)
         {
             var dialog = new AboutWindow
             {
                 DataContext = interaction.Input
             };
 
-            var result = await dialog.ShowDialog<SimpleDialogModel>(this);
+            var result = await dialog.ShowDialog<string>(this);
             interaction.SetOutput(result);
         }
 

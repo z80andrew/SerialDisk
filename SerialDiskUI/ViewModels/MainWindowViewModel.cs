@@ -29,6 +29,8 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
         private SerialDiskUIModel _model;
         private readonly IStatusService _statusService;
 
+        private string _releasesJson;
+
         private readonly ObservableAsPropertyHelper<string> _comPortName;
         public string ComPortName => _comPortName.Value;
 
@@ -117,13 +119,15 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
 
         public Interaction<SettingsWindowViewModel, SerialDiskUIModel> ShowSettingsDialog { get; }
 
-        public Interaction<AboutWindowViewModel, SimpleDialogModel> ShowAboutDialog { get; }
+        public Interaction<AboutWindowViewModel, string> ShowAboutDialog { get; }
 
         public MainWindowViewModel(SerialDiskUIModel model, IStatusService statusService, ILogger logger)
         {
             LogItems = new ObservableCollection<LogMessage>();
             SendIconOpacity = ICON_DISABLED_OPACITY;
             ReceiveIconOpacity = ICON_DISABLED_OPACITY;
+
+            _releasesJson = string.Empty;
 
             // Parameters are null at design-time
             if (model == null)
@@ -234,12 +238,12 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
                 if (result != null) _model = result;
             });
 
-            ShowAboutDialog = new Interaction<AboutWindowViewModel, SimpleDialogModel>();
+            ShowAboutDialog = new Interaction<AboutWindowViewModel, string>();
 
             ShowAboutCommand = ReactiveCommand.CreateFromTask(async () =>
             {
-                var aboutViewModel = new AboutWindowViewModel(logger);
-                var result = await ShowAboutDialog.Handle(aboutViewModel);
+                var aboutViewModel = new AboutWindowViewModel(logger, _releasesJson);
+                _releasesJson = await ShowAboutDialog.Handle(aboutViewModel);
             });
 
             // Logging output

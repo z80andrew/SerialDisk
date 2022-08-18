@@ -19,9 +19,9 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
     public class AboutWindowViewModel : ViewModelBase
     {
         private ILogger _logger;
-        private string _releasesInfo;
+        private string _releasesJson;
         public List<CreditsModel> Credits { get; set; }
-        public ReactiveCommand<Unit, SimpleDialogModel> CloseAboutCommand { get; }
+        public ReactiveCommand<Unit, string> CloseAboutCommand { get; }
         public ICommand ShowWebsiteCommand { get; }
         public ICommand ShowLatestVersionWebpageCommand { get; }
         public String VersionNote => ConfigurationHelper.VERSION_LABEL;
@@ -48,7 +48,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
             set => this.RaiseAndSetIfChanged(ref _latestVersionUrl, value);
         }
 
-        public AboutWindowViewModel(ILogger logger)
+        public AboutWindowViewModel(ILogger logger, string releasesJson)
         {
             _logger = logger;
 
@@ -67,8 +67,8 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
             });
 
             IsNewVersionAvailable = false;
-            NewVersionCheckLabelText = "Checking for new version...";
-            Task checkLatestVersionTask = CheckForNewVersion(_logger);
+
+            Task checkLatestVersionTask = CheckForNewVersion(_logger, releasesJson);
 
             InitCredits();
         }
@@ -98,28 +98,49 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
             }
         }
 
-        private async Task CheckForNewVersion(ILogger logger)
+        private async Task<string> GetReleasesJson()
         {
-            try
-            {
-                _releasesInfo = await Network.GetReleases();
-                LatestVersionUrl = ConfigurationHelper.GetLatestVersionUrl(_releasesInfo);
-                IsNewVersionAvailable = ConfigurationHelper.IsNewVersionAvailable(_releasesInfo);
+            return await Network.GetReleases();
+        }
 
-                if (!IsNewVersionAvailable) NewVersionCheckLabelText = "No new version available";
-                else NewVersionCheckLabelText = "New version available";
+        private async Task CheckForNewVersion(ILogger logger, string releasesJson)
+        {
+            if (releasesJson != null)
+            {
+                NewVersionCheckLabelText = "Checking for new version...";
+
+                try
+                {
+                    if (releasesJson.Length == 0)
+                    {
+                        releasesJson = await Network.GetReleases();
+                    }
+
+                    _releasesJson = releasesJson;
+
+                    LatestVersionUrl = ConfigurationHelper.GetLatestVersionUrl(_releasesJson);
+                    IsNewVersionAvailable = ConfigurationHelper.IsNewVersionAvailable(_releasesJson);
+
+                    if (!IsNewVersionAvailable) NewVersionCheckLabelText = "No new version available";
+                    else NewVersionCheckLabelText = "New version available";
+                }
+
+                catch (Exception ex)
+                {
+                    logger.LogException(ex, "Could not check for new version");
+                    NewVersionCheckLabelText = "Could not check for new version";
+                }
             }
 
-            catch (Exception ex)
+            else
             {
-                logger.LogException(ex, "Could not check for new version");
-                NewVersionCheckLabelText = "Could not check for new version";
+                NewVersionCheckLabelText = "New version check disabled";
             }
         }
 
-        private SimpleDialogModel CloseAbout()
+        private string CloseAbout()
         {
-            return new SimpleDialogModel(SimpleDialogModel.ReturnType.OK);
+            return _releasesJson;
         }
     }
 }
