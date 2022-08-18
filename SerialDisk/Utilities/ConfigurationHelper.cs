@@ -16,6 +16,8 @@ namespace Z80andrew.SerialDisk.Utilities
         public static readonly string RELEASE_NAME = "beta 2";
         public static readonly string RELEASE_TAG = "3.0-beta2";
 
+        public static string VERSION_LABEL = $"v{ConfigurationHelper.ApplicationVersion} {ConfigurationHelper.RELEASE_NAME}";
+
         public static bool IsNewVersionAvailable(string gitHubAPIResponse)
         {
             bool isNewVersionAvailable = false;

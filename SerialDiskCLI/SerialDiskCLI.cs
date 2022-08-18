@@ -33,7 +33,7 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
 
         private void Init(ApplicationSettings applicationSettings, CancellationTokenSource cancelTokenSource)
         {
-            var versionMessage = $"Serial Disk v{ConfigurationHelper.ApplicationVersion} {ConfigurationHelper.RELEASE_NAME}";
+            var versionMessage = $"Serial Disk {ConfigurationHelper.VERSION_LABEL}";
 
             _logger.Log(versionMessage, LoggingLevel.Info);
 
@@ -51,8 +51,6 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
             _statusService = new StatusService();
 
             _disk = new Disk(diskParameters, _logger);
-
-            //if (applicationSettings.LoggingLevel > LoggingLevel.Info) _statusService.ShowDateTime = true;
 
             _serial = new Serial(applicationSettings.SerialSettings, _disk, _logger, _statusService, _cancelTokenSource, applicationSettings.IsCompressionEnabled);
         }

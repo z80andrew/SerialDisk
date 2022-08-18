@@ -74,14 +74,19 @@ start:
 	jne		1f
 	move.w	#res_err_disk_id,d0													| Display disk ID error resource message
 	jbsr	print_resource_string
-	jmp		2f
+	jmp		3f
 1:
 	cmp		#err_sector_size_out_of_range,d3									| Did sector size error occur?
 	jne		2f
 	move.w	#res_err_sector_size,d0
 	jbsr	print_resource_string												| Display sector size error resource message
+	jmp		3f
 2:
-
+	cmp		#err_serial_device_out_of_range,d3									| Did serial device error occur?
+	jne		3f
+	move.w	#res_err_serial_dev,d0
+	jbsr	print_resource_string												| Display serial device error resource message
+3:
 res_err_config_file_end:
 	move.w	#res_msg_press_any_key,d0
 	jbsr	print_resource_string												| Display press any key resource message
@@ -137,6 +142,9 @@ read_config_file_done:
 	Pterm 	#0
 
 3:
+	move.l	#config_drive_rw, a0												| Replace TOS disk vectors
+	jbsr	super_exec
+
 	| Drive mounted successfully
 
 	move.w	#res_msg_drive_mounted,d0
@@ -146,8 +154,26 @@ read_config_file_done:
 	addi.w	#ascii_alpha_offset,d0												| Convert to ASCII representation
 	Cconout	d0
 
-	move.l	#config_drive_rw, a0												| Replace TOS disk vectors
-	jbsr	super_exec
+	| Show serial device message
+	move.w	#res_msg_modem,d0
+	cmp.w	#0x01,serial_device
+	jeq		serial_device_configured_msg
+
+	move.w	#res_msg_modem1,d0
+	cmp.w	#0x06,serial_device
+	jeq		serial_device_configured_msg
+
+	move.w	#res_msg_modem2,d0
+	cmp.w	#0x07,serial_device
+	jeq		serial_device_configured_msg
+
+	move.w	#res_msg_serial1,d0
+	cmp.w	#0x08,serial_device
+	jeq		serial_device_configured_msg
+
+	move.w	#res_msg_serial2,d0
+serial_device_configured_msg:
+	jbsr	print_resource_string
 
 4:
 	| Determine screen refresh rate
@@ -773,10 +799,10 @@ read_config_file:
 
 	cmp		#0x30,d1															| Is read byte ASCII '0'?
 	jeq		2f																	| Yes use the default sector shift value
-	jlt		sector_size_err														| Read character is < ASCII 0 so it is invalid
+	jlt		sector_size_err														| Read character is < ASCII '0' so it is invalid
 
 	cmp		#0x31,d1															| Compare read byte with ASCII '1'
-	jgt		sector_size_err														| Read character is > ASCII 1 so it is invalid
+	jgt		sector_size_err														| Read character is > ASCII '1' so it is invalid
 
 	sub		#0x24,d1															| Translate config value to number of required left shifts for sector size calculation
 																				| 0x31 - 0x24 = 0x0D for 8KiB sectors, supporting 512KiB disks
@@ -785,7 +811,17 @@ read_config_file:
 2:
 	| Read serial device ASCII ID
 
-	move.b	crc32_table+0x50+2,serial_device+1											| Store byte from config position 2 into the low byte of word serial_device
+	move.b	crc32_table+0x50+2,d1												| Store byte from config position 2 into a register
+
+	cmp		#0x31,d1															| Is read byte ASCII '1'?
+	jeq		config_file_serial_valid											| Read character is ASCII '1' so it is valid
+	cmp		#0x39,d1															| Compare read byte with ASCII '9'
+	jgt		serial_dev_error													| Read character is > ASCII '9' so it is invalid
+	cmp		#0x36,d1															| Compare read byte with ASCII '6'
+	jlt		serial_dev_error													| Read character is < ASCII '6' so it is invalid
+
+config_file_serial_valid:
+	move.b	d1,serial_device+1													| Store byte from config position 2 into the low byte of word serial_device
 	jmp		read_config_file_end
 
 config_drive_err:
@@ -794,6 +830,10 @@ config_drive_err:
 
 sector_size_err:
 	move	#err_sector_size_out_of_range, d0									| Set error return value
+	jmp		99f
+
+serial_dev_error:
+	move	#err_serial_device_out_of_range, d0									| Set error return value
 	jmp		99f
 
 read_config_file_not_found:

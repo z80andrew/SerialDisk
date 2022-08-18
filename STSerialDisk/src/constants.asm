@@ -37,13 +37,21 @@
 .equ res_msg_config_not_found,		0x09
 .equ res_msg_buffer,				0x0A
 
+.equ res_msg_modem,					0x0C
+.equ res_msg_modem1,				0x0D
+.equ res_msg_modem2,				0x0E
+.equ res_msg_serial1,				0x0F
+.equ res_msg_serial2,				0x10
+
 .equ res_err_prefix,				0x03
 .equ res_err_buffer_allocation,		0x04
 .equ res_err_config_invalid,		0x05
 .equ res_err_drive_already_mounted,	0x06
 .equ res_err_sector_size,			0x07
 .equ res_err_disk_id,				0x08
+.equ res_err_serial_dev,			0x0B
 
 | Error codes
 .equ err_disk_id_out_of_range,		-1
 .equ err_sector_size_out_of_range,	-2
+.equ err_serial_device_out_of_range,-3

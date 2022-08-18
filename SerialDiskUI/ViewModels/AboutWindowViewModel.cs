@@ -24,7 +24,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
         public ReactiveCommand<Unit, SimpleDialogModel> CloseAboutCommand { get; }
         public ICommand ShowWebsiteCommand { get; }
         public ICommand ShowLatestVersionWebpageCommand { get; }
-        public String VersionNote => $"v{ConfigurationHelper.ApplicationVersion} {ConfigurationHelper.RELEASE_NAME}";
+        public String VersionNote => ConfigurationHelper.VERSION_LABEL;
         public string WebsiteButtonText => Constants.PROJECT_URL.Replace(@"https://www.", String.Empty);
 
         private string _newVersionCheckLabelText;

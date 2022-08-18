@@ -28,11 +28,11 @@
 	  <EmbeddedResource Include="Assets\Credits.json" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Avalonia" Version="0.10.17" />
-		<PackageReference Include="Avalonia.Controls.DataGrid" Version="0.10.17" />
-		<PackageReference Include="Avalonia.Desktop" Version="0.10.17" />
-		<PackageReference Include="Avalonia.Diagnostics" Version="0.10.17" />
-		<PackageReference Include="Avalonia.ReactiveUI" Version="0.10.17" />
+		<PackageReference Include="Avalonia" Version="0.10.18" />
+		<PackageReference Include="Avalonia.Controls.DataGrid" Version="0.10.18" />
+		<PackageReference Include="Avalonia.Desktop" Version="0.10.18" />
+		<PackageReference Include="Avalonia.Diagnostics" Version="0.10.18" />
+		<PackageReference Include="Avalonia.ReactiveUI" Version="0.10.18" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\SerialDisk\SerialDisk.csproj" />
