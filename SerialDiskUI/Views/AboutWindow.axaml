@@ -47,7 +47,7 @@
 
 	<DockPanel Classes="AppDockPanel" LastChildFill="True">
 		<Border Classes="SectionContainer" DockPanel.Dock="Top">
-			<DockPanel HorizontalAlignment="Center" Margin="0">
+			<DockPanel HorizontalAlignment="Center">
 				<Border BorderBrush="White" DockPanel.Dock="Top">
 						<DockPanel DockPanel.Dock="Top" Background="White">
 							<Viewbox DockPanel.Dock="Top" StretchDirection="DownOnly" Stretch="Uniform">

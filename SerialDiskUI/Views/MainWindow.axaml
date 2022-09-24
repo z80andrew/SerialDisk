@@ -86,7 +86,7 @@
 
 		<!-- Center area -->
 		<Border Classes="SectionContainer" DockPanel.Dock="Top">
-			<StackPanel Margin="0">
+			<StackPanel>
 				<TextBlock Padding="10" Background="White">Virtual disk</TextBlock>
 				<DockPanel Margin="10">
 					<Button ToolTip.Tip="Open virtual disk folder in system explorer" Command="{Binding ShowVirtualDiskFolderCommand}" VerticalContentAlignment="Center" >
@@ -123,7 +123,7 @@
 
 				<StackPanel Grid.Row="0" Orientation="Horizontal" Background="White">
 					<TextBlock Padding="10">Log</TextBlock>
-					<Button Margin="0,0,0,0" ToolTip.Tip="Clear all log messages"  Height="NaN" Command="{Binding ClearLogMessagesCommand}">
+					<Button ToolTip.Tip="Clear all log messages"  Height="NaN" Command="{Binding ClearLogMessagesCommand}">
 						<Image Height="18" Source="/Assets/Icons/Buttons/broom_128.png"/>
 					</Button>
 				</StackPanel>

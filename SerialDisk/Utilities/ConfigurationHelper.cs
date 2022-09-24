@@ -12,9 +12,9 @@ namespace Z80andrew.SerialDisk.Utilities
     {
         public static string ApplicationVersion => Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
 
-        public static readonly ReleaseType RELEASE_TYPE = ReleaseType.Beta;
-        public static readonly string RELEASE_NAME = "beta 2";
-        public static readonly string RELEASE_TAG = "3.0-beta2";
+        public static readonly ReleaseType RELEASE_TYPE = ReleaseType.Release;
+        public static readonly string RELEASE_NAME = "";
+        public static readonly string RELEASE_TAG = "3.0";
 
         public static string VERSION_LABEL = $"v{ConfigurationHelper.ApplicationVersion} {ConfigurationHelper.RELEASE_NAME}";
 

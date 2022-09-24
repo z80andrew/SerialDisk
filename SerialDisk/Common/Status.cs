@@ -21,16 +21,18 @@ namespace Z80andrew.SerialDisk.Common
         {
             get
             {
-                var statusList = new List<KeyValuePair<StatusKey, string>>();
-                statusList.Add(new KeyValuePair<StatusKey, string>(StatusKey.Idle, "Idle"));
-                statusList.Add(new KeyValuePair<StatusKey, string>(StatusKey.Stopped, "Stopped"));
-                statusList.Add(new KeyValuePair<StatusKey, string>(StatusKey.Listening, "Listening"));
-                statusList.Add(new KeyValuePair<StatusKey, string>(StatusKey.Sending, "Sending"));
-                statusList.Add(new KeyValuePair<StatusKey, string>(StatusKey.Receiving, "Receiving"));
-                statusList.Add(new KeyValuePair<StatusKey, string>(StatusKey.Writing, "Writing"));
-                statusList.Add(new KeyValuePair<StatusKey, string>(StatusKey.Reading, "Reading"));
-                statusList.Add(new KeyValuePair<StatusKey, string>(StatusKey.OperationComplete, "Completed"));
-                statusList.Add(new KeyValuePair<StatusKey, string>(StatusKey.Error, "Error"));
+                var statusList = new List<KeyValuePair<StatusKey, string>>
+                {
+                    new KeyValuePair<StatusKey, string>(StatusKey.Idle, "Idle"),
+                    new KeyValuePair<StatusKey, string>(StatusKey.Stopped, "Stopped"),
+                    new KeyValuePair<StatusKey, string>(StatusKey.Listening, "Listening"),
+                    new KeyValuePair<StatusKey, string>(StatusKey.Sending, "Sending"),
+                    new KeyValuePair<StatusKey, string>(StatusKey.Receiving, "Receiving"),
+                    new KeyValuePair<StatusKey, string>(StatusKey.Writing, "Writing"),
+                    new KeyValuePair<StatusKey, string>(StatusKey.Reading, "Reading"),
+                    new KeyValuePair<StatusKey, string>(StatusKey.OperationComplete, "Completed"),
+                    new KeyValuePair<StatusKey, string>(StatusKey.Error, "Error")
+                };
 
                 return statusList;
             }

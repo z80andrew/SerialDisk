@@ -482,7 +482,7 @@ namespace Z80andrew.SerialDisk.Comms
 
             if (serialFlags.HasFlag(SerialFlags.Compression))
             {
-                sendDataBuffer = Utilities.LZ4.CompressAsStandardLZ4Block(sendDataBuffer);
+                sendDataBuffer = LZ4.CompressAsStandardLZ4Block(sendDataBuffer);
 
                 sendingMessage = $"Sending {sendDataBuffer.Length} bytes";
 

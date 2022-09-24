@@ -21,7 +21,7 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
         private ISerial _serial;
         private IStatusService _statusService;
 
-        private CancellationTokenSource _cancelTokenSource;
+        private readonly CancellationTokenSource _cancelTokenSource;
 
         public SerialDiskCLI(ApplicationSettings applicationSettings, ILogger logger)
         {

@@ -64,7 +64,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI
             }
         }
 
-        private UIApplicationSettings GetApplicationSettings(string[] args)
+        private static UIApplicationSettings GetApplicationSettings(string[] args)
         {
             var defaultApplicationSettings = ConfigurationHelper.GetDefaultApplicationSettings();
 
