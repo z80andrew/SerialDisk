@@ -3,7 +3,7 @@
 
 A virtual Atari ST disk over serial link for Windows, Linux, Linux ARM and macOS.
 
-SerialDisk is freeware, but if you find it useful please consider donating towards my coffee fund to aid additional development - any amount is appreciated. [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/z80andrew)
+SerialDisk is freeware, but if you find it useful please consider donating towards my coffee fund to aid additional development [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/z80andrew)
 
 ## Download 
 
