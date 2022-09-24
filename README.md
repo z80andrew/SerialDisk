@@ -14,7 +14,3 @@ Download the latest stable version at https://github.com/z80andrew/SerialDisk/re
 ## Wiki
 For more project information, please see the [SerialDisk wiki](https://github.com/z80andrew/SerialDisk/wiki)  
 
-
-Based on MonoSerialDisk and StSerialDisk by Sascha  
-https://bitbucket.org/AnimaInCorpore/monoserialdisk  
-https://bitbucket.org/AnimaInCorpore/stserialdisk  
