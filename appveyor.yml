@@ -1,8 +1,6 @@
 version: 3.0.{build}
 
 image: 
-- Visual Studio 2022 
-- Ubuntu2004 
 - macos-monterey
 
 dotnet_csproj:
@@ -122,7 +120,13 @@ on_success:
         Copy-Item -Path "$PUBLISH_OUTPUT_DIRECTORY/*" -Destination "$BUNDLE_DIRECTORY/$APP_NAME/Contents/MacOS" -Recurse  
         
         tar -czf serialdisk_$($versionNo)_ui_sce_macos-x64.tar.gz -C $BUNDLE_DIRECTORY $APP_NAME
-        appveyor PushArtifact serialdisk_$($versionNo)_ui_sce_macos-x64.tar.gz
+        # appveyor PushArtifact serialdisk_$($versionNo)_ui_sce_macos-x64.tar.gz
+        
+        hdiutil create SerialDiskUncompressed.dmg -ov -volname "SerialDiskInstall" -fs HFS+ -srcfolder $BUNDLE_DIRECTORY 
+        Finally call hdutil to convert the writable, to a compressed (and such not writable) DMG
+        hdiutil convert SerialDiskUncompressed.dmg -format UDZO -o SerialDiskInstall.dmg  
+
+        appveyor PushArtifact SerialDiskInstall.dmg        
     }
 
 test_script: 
