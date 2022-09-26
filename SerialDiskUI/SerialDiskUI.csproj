@@ -13,8 +13,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<AvaloniaResource Remove="Assets\Credits.json" />
-		<AvaloniaResource Remove="Assets\macOS-build\Info.plist.template" />
-		<AvaloniaResource Remove="Assets\macOS-build\SerialDisk.icns" />
+		<AvaloniaResource Remove="Assets\macOS-build\*" />
 	</ItemGroup>
 	<ItemGroup>
 	  <None Remove="Assets\Credits.json" />

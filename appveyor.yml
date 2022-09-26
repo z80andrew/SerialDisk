@@ -123,7 +123,7 @@ on_success:
         
         # UI dmg
         hdiutil create SerialDiskUncompressed.dmg -ov -volname "SerialDisk $versionNo" -fs HFS+ -srcfolder $BUNDLE_DIRECTORY 
-        hdiutil convert SerialDiskUncompressed.dmg -format UDZO -o serialdisk_$($versionNo)_ui_macos-x64.dmg  
+        hdiutil convert SerialDiskUncompressed.dmg -format ULMO -o serialdisk_$($versionNo)_ui_macos-x64.dmg  
 
         appveyor PushArtifact serialdisk_$($versionNo)_ui_macos-x64.dmg
     }
