@@ -121,8 +121,11 @@ on_success:
         Copy-Item -Path "$ICON_FILE" -Destination "$BUNDLE_DIRECTORY/$APP_NAME/Contents/Resources"
         Copy-Item -Path "$PUBLISH_OUTPUT_DIRECTORY/*" -Destination "$BUNDLE_DIRECTORY/$APP_NAME/Contents/MacOS" -Recurse  
         
+        # Symlink to Applications folder
+        ln -s "/Applications" "$BUNDLE_DIRECTORY/Applications"
+        
         # UI dmg
-        hdiutil create SerialDiskUncompressed.dmg -ov -volname "SerialDisk $versionNo" -fs HFS+ -srcfolder $BUNDLE_DIRECTORY 
+        hdiutil create SerialDiskUncompressed.dmg -volname "SerialDisk $versionNo" -fs HFS+ -srcfolder $BUNDLE_DIRECTORY 
         hdiutil convert SerialDiskUncompressed.dmg -format ULMO -o serialdisk_$($versionNo)_ui_macos-x64.dmg  
 
         appveyor PushArtifact serialdisk_$($versionNo)_ui_macos-x64.dmg
