@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-		xmlns:vm="using:Z80andrew.SerialDisk.SerialDiskUI.ViewModels"		
+		xmlns:vm="using:Z80andrew.SerialDisk.SerialDiskUI.ViewModels"
 		x:Class="Z80andrew.SerialDisk.SerialDiskUI.Views.AboutWindow"
         mc:Ignorable="d"
 		Width="370"
@@ -11,7 +11,7 @@
 		CanResize="False"
 		Icon="/Assets/Icons/info.ico"
 		WindowStartupLocation="CenterOwner">
-	
+
 	<Window.Styles>
 		<StyleInclude Source="/Assets/Styles/DefaultStyle.axaml" />
 
@@ -27,12 +27,22 @@
 			<Setter Property="TextBlock.Foreground" Value="Black"/>
 		</Style>
 
-		<Style Selector="TabControl">
+		<Style Selector="TabControl.AboutTabs">
 			<Setter Property="TabControl.ItemsPanel">
 				<ItemsPanelTemplate>
 					<UniformGrid Rows="1" HorizontalAlignment="Center" Height="5" Margin="0,13,0,20"/>
 				</ItemsPanelTemplate>
 			</Setter>
+		</Style>
+
+		<Style Selector="TabItem.AboutTab">
+			<Setter Property="FontSize" Value="16"/>
+			<Setter Property="HorizontalAlignment" Value="Center"/>
+			<Setter Property="Padding" Value="12,5,12,5"/>
+		</Style>
+
+		<Style Selector="TabItem.AboutTab.Panel">
+			<Setter Property="Background" Value="Green"/>
 		</Style>
 	</Window.Styles>
 
@@ -49,27 +59,28 @@
 		<Border Classes="SectionContainer" DockPanel.Dock="Top">
 			<DockPanel HorizontalAlignment="Center">
 				<Border BorderBrush="White" DockPanel.Dock="Top">
-						<DockPanel DockPanel.Dock="Top" Background="White">
-							<Viewbox DockPanel.Dock="Top" StretchDirection="DownOnly" Stretch="Uniform">
-								<TextBlock FontFamily="/Assets/Fonts/AtariST8x16SystemFont.ttf#"
-									   Text="
+					<DockPanel DockPanel.Dock="Top" Background="White">
+						<Viewbox DockPanel.Dock="Top" StretchDirection="DownOnly" Stretch="Uniform">
+							<TextBlock FontFamily="/Assets/Fonts/AtariST8x16SystemFont.ttf#"
+								   Text="
             _____           _       ______  _      __&#10;
            / ___/___  _____(_)___  / / __ \(_)____/ /__&#10;
 o o o o o  \__ \/ _ \/ ___/ / __ `/ / / / / / ___/ //_/&#10;
  o o o o  ___/ /  __/ /  / / /_/ / / /_/ / (__  ) ,&lt;&#10;
-         /____/\___/_/  /_/\____/_/_____/_/____/_/|_|">&#10;
+         /____/\___/_/  /_/\____/_/_____/_/____/_/|_|">
+								&#10;
 							</TextBlock>
 						</Viewbox>
-							<TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Bottom"
-								   Margin="0,0,10,0" Text="{Binding VersionNote}"></TextBlock>
-						</DockPanel>
+						<TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+							   Margin="0,0,10,0" Text="{Binding VersionNote}"></TextBlock>
+					</DockPanel>
 				</Border>
 
 				<DockPanel LastChildFill="False" DockPanel.Dock="Top" Height="150">
 
-					<TabControl DockPanel.Dock="Top">
-						<TabItem Header="About" FontSize="15" BorderThickness="4" HorizontalContentAlignment="Center">
-							<DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+					<TabControl Classes="AboutTabs" DockPanel.Dock="Top">
+						<TabItem Header="About" Classes="AboutTab">
+							<DockPanel DockPanel.Dock="Top">
 								<TextBlock Margin="10,0,10,10" DockPanel.Dock="Top" HorizontalAlignment="Center">by z80andrew</TextBlock>
 								<Button Classes="URL" Background="Transparent" Foreground="Blue" DockPanel.Dock="Top"
 										HorizontalAlignment="Center" Command="{Binding ShowWebsiteCommand}" Content="{Binding WebsiteButtonText}" ></Button>
@@ -78,7 +89,7 @@ o o o o o  \__ \/ _ \/ ___/ / __ `/ / / / / / ___/ //_/&#10;
 									HorizontalAlignment="Center" VerticalContentAlignment="Center" Command="{Binding ShowLatestVersionWebpageCommand}" Content="{Binding NewVersionCheckLabelText}" />
 							</DockPanel>
 						</TabItem>
-						<TabItem Header="Credits" FontSize="15" BorderThickness="4" HorizontalContentAlignment="Center">
+						<TabItem Header="Credits" Classes="AboutTab">
 							<ScrollViewer Margin="0,0,0,10" AllowAutoHide="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
 								<DataGrid Margin="10,0,10,0"  IsReadOnly="True"  HeadersVisibility="None" AutoGenerateColumns="True" AlternatingRowBackground="LightGray" Items="{Binding Credits}">
 								</DataGrid>
@@ -91,8 +102,8 @@ o o o o o  \__ \/ _ \/ ___/ / __ `/ / / / / / ___/ //_/&#10;
 				<DockPanel DockPanel.Dock="Bottom">
 					<Button Margin="0,0,0,10" DockPanel.Dock="Bottom" HorizontalAlignment="Center" Command="{Binding CloseAboutCommand}">Close</Button>
 				</DockPanel>
-					
+
 			</DockPanel>
 		</Border>
-</DockPanel>
+	</DockPanel>
 </Window>
