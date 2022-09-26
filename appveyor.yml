@@ -1,9 +1,9 @@
 version: 3.0.{build}
 
-image: 
-- Visual Studio 2022 
-- Ubuntu2004 
-- macos-monterey
+image:
+- Visual Studio 2022  
+- Ubuntu2004  
+- macos
 
 dotnet_csproj:
   patch: true
@@ -59,53 +59,53 @@ build_script:
 
 on_success:
 - ps: >-
-    $versionNo = "3.0b2"
+    $versionNo = "3.0"
     
     if($isWindows)
     {
         # CLI version        
-        7z a -mx=9 serialdisk_$($versionNo)_cli_sce_win-x64.zip ./bin/Release/CLI/SCE/win-x64/*
-        appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_win-x64.zip
+        7z a -mx=9 serialdisk_$($versionNo)_cli_win-x64.zip ./bin/Release/CLI/SCE/win-x64/*
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_win-x64.zip
 
-        7z a -mx=9 serialdisk_$($versionNo)_cli_sce_win-x86.zip ./bin/Release/CLI/SCE/win-x86/*
-        appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_win-x86.zip
+        7z a -mx=9 serialdisk_$($versionNo)_cli_win-x86.zip ./bin/Release/CLI/SCE/win-x86/*
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_win-x86.zip
         
         # UI Version
-        7z a -mx=9 serialdisk_$($versionNo)_ui_sce_win-x64.zip ./bin/Release/UI/SCE/win-x64/*
-        appveyor PushArtifact serialdisk_$($versionNo)_ui_sce_win-x64.zip
+        7z a -mx=9 serialdisk_$($versionNo)_ui_win-x64.zip ./bin/Release/UI/SCE/win-x64/*
+        appveyor PushArtifact serialdisk_$($versionNo)_ui_win-x64.zip
 
-        7z a -mx=9 serialdisk_$($versionNo)_ui_sce_win-x86.zip ./bin/Release/UI/SCE/win-x86/*
-        appveyor PushArtifact serialdisk_$($versionNo)_ui_sce_win-x86.zip
+        7z a -mx=9 serialdisk_$($versionNo)_ui_win-x86.zip ./bin/Release/UI/SCE/win-x86/*
+        appveyor PushArtifact serialdisk_$($versionNo)_ui_win-x86.zip
     }
     
     elseif($isLinux)
     {
         # CLI version        
-        tar -czf serialdisk_$($versionNo)_cli_sce_linux-x64.tar.gz -C ./bin/Release/CLI/SCE serialdisk-linux-x64
-        appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_linux-x64.tar.gz
+        tar -czf serialdisk_$($versionNo)_cli_linux-x64.tar.gz -C ./bin/Release/CLI/SCE serialdisk-linux-x64
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_linux-x64.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_cli_sce_linux-arm64.tar.gz -C ./bin/Release/CLI/SCE serialdisk-linux-arm64
-        appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_linux-arm64.tar.gz
+        tar -czf serialdisk_$($versionNo)_cli_linux-arm64.tar.gz -C ./bin/Release/CLI/SCE serialdisk-linux-arm64
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_linux-arm64.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_cli_sce_linux-arm32.tar.gz -C ./bin/Release/CLI/SCE serialdisk-linux-arm32
-        appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_linux-arm32.tar.gz
+        tar -czf serialdisk_$($versionNo)_cli_linux-arm32.tar.gz -C ./bin/Release/CLI/SCE serialdisk-linux-arm32
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_linux-arm32.tar.gz
         
         # UI Version        
-        tar -czf serialdisk_$($versionNo)_ui_sce_linux-x64.tar.gz -C ./bin/Release/UI/SCE serialdisk-linux-x64
-        appveyor PushArtifact serialdisk_$($versionNo)_ui_sce_linux-x64.tar.gz
+        tar -czf serialdisk_$($versionNo)_ui_linux-x64.tar.gz -C ./bin/Release/UI/SCE serialdisk-linux-x64
+        appveyor PushArtifact serialdisk_$($versionNo)_ui_linux-x64.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_ui_sce_linux-arm64.tar.gz -C ./bin/Release/UI/SCE serialdisk-linux-arm64
-        appveyor PushArtifact serialdisk_$($versionNo)_ui_sce_linux-arm64.tar.gz
+        tar -czf serialdisk_$($versionNo)_ui_linux-arm64.tar.gz -C ./bin/Release/UI/SCE serialdisk-linux-arm64
+        appveyor PushArtifact serialdisk_$($versionNo)_ui_linux-arm64.tar.gz
 
-        tar -czf serialdisk_$($versionNo)_ui_sce_linux-arm32.tar.gz -C ./bin/Release/UI/SCE serialdisk-linux-arm32
-        appveyor PushArtifact serialdisk_$($versionNo)_ui_sce_linux-arm32.tar.gz
+        tar -czf serialdisk_$($versionNo)_ui_linux-arm32.tar.gz -C ./bin/Release/UI/SCE serialdisk-linux-arm32
+        appveyor PushArtifact serialdisk_$($versionNo)_ui_linux-arm32.tar.gz
     }
     
     else
     {
         # CLI version 
-        tar -czf serialdisk_$($versionNo)_cli_sce_macos-x64.tar.gz -C ./bin/Release/CLI/SCE serialdisk-macos-x64 
-        appveyor PushArtifact serialdisk_$($versionNo)_cli_sce_macos-x64.tar.gz 
+        tar -czf serialdisk_$($versionNo)_cli_macos-x64.tar.gz -C ./bin/Release/CLI/SCE serialdisk-macos-x64 
+        appveyor PushArtifact serialdisk_$($versionNo)_cli_macos-x64.tar.gz 
 
         # UI app bundle
         $APP_NAME="SerialDisk.app"
@@ -121,8 +121,14 @@ on_success:
         Copy-Item -Path "$ICON_FILE" -Destination "$BUNDLE_DIRECTORY/$APP_NAME/Contents/Resources"
         Copy-Item -Path "$PUBLISH_OUTPUT_DIRECTORY/*" -Destination "$BUNDLE_DIRECTORY/$APP_NAME/Contents/MacOS" -Recurse  
         
-        tar -czf serialdisk_$($versionNo)_ui_sce_macos-x64.tar.gz -C $BUNDLE_DIRECTORY $APP_NAME
-        appveyor PushArtifact serialdisk_$($versionNo)_ui_sce_macos-x64.tar.gz
+        # Symlink to Applications folder
+        ln -s "/Applications" "$BUNDLE_DIRECTORY/Applications"
+        
+        # UI dmg
+        hdiutil create SerialDiskUncompressed.dmg -volname "SerialDisk $versionNo" -fs HFS+ -srcfolder $BUNDLE_DIRECTORY 
+        hdiutil convert SerialDiskUncompressed.dmg -format ULMO -o serialdisk_$($versionNo)_ui_macos-x64.dmg  
+
+        appveyor PushArtifact serialdisk_$($versionNo)_ui_macos-x64.dmg
     }
 
 test_script: 
