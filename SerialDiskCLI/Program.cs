@@ -39,7 +39,7 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
             Console.WriteLine();
 
             Console.WriteLine("Usage:");
-            Console.WriteLine(System.AppDomain.CurrentDomain.FriendlyName + " [Commands] [Options] [virtual_disk_path]");
+            Console.WriteLine(System.AppDomain.CurrentDomain.FriendlyName + " [Command] [Options] [virtual_disk_path]");
             Console.WriteLine();
 
             List<String> parameters = Common.Constants.ConsoleParameterMappings.Keys.ToList();
