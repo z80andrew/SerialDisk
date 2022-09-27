@@ -40,10 +40,6 @@
 			<Setter Property="HorizontalAlignment" Value="Center"/>
 			<Setter Property="Padding" Value="12,5,12,5"/>
 		</Style>
-
-		<Style Selector="TabItem.AboutTab.Panel">
-			<Setter Property="Background" Value="Green"/>
-		</Style>
 	</Window.Styles>
 
 	<Design.DataContext>
