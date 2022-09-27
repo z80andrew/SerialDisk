@@ -54,7 +54,7 @@ namespace Z80andrew.SerialDisk.Utilities
             {
                 latestVersionUrl = versions.First().GetProperty("html_url").GetString();
             }
-            
+
             return latestVersionUrl;
         }
 

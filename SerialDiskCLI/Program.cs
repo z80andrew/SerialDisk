@@ -6,14 +6,12 @@ using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
-using Z80andrew.SerialDisk.SerialDiskCLI.Common;
-using Z80andrew.SerialDisk.Common;
+using Z80andrew.SerialDisk.Comms;
 using Z80andrew.SerialDisk.Interfaces;
 using Z80andrew.SerialDisk.Models;
 using Z80andrew.SerialDisk.SerialDiskCLI.Services;
 using Z80andrew.SerialDisk.Utilities;
 using static Z80andrew.SerialDisk.Common.Constants;
-using Z80andrew.SerialDisk.Comms;
 
 namespace Z80andrew.SerialDisk.SerialDiskCLI
 {
@@ -66,7 +64,7 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
             Console.WriteLine($"{parameters[10]} [{FormatEnumParams(typeof(LoggingLevel))}] ({applicationSettings.LoggingLevel})");
             Console.WriteLine($"{parameters[11]} [log_file_name]");
             Console.WriteLine();
-  
+
             Console.WriteLine("Serial ports available:");
 
             foreach (string portName in SerialPort.GetPortNames())

@@ -141,10 +141,10 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
                 model = new SerialDiskUIModel(appSettings);
             }
 
-            if (statusService == null) 
+            if (statusService == null)
                 statusService = new StatusService();
 
-            if (logger == null) 
+            if (logger == null)
                 logger = new Logger(Constants.LoggingLevel.All);
 
             _model = model;

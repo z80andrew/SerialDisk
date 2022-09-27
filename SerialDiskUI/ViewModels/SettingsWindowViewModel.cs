@@ -136,8 +136,8 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
             CloseSettingsCommand = ReactiveCommand.Create(CloseSettings);
 
             InitChoices();
-            
-            if(_settings != null) ApplyFormValuesFromSettings(_settings);
+
+            if (_settings != null) ApplyFormValuesFromSettings(_settings);
         }
 
         private void InitChoices()

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Z80andrew.SerialDisk.Common
+﻿namespace Z80andrew.SerialDisk.Common
 {
     public static class Constants
     {

@@ -11,7 +11,7 @@ namespace Z80andrew.SerialDisk.Models
         private byte[] _dataBuffer;
 
         public bool IsDirectoryCluster => FileOffset == Constants.DirectoryClusterOffset;
-        
+
         public ClusterInfo(int bytesPerCluster)
         {
             _bytesPerCluster = bytesPerCluster;
