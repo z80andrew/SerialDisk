@@ -39,16 +39,16 @@ namespace Z80andrew.SerialDisk.Comms
 
         private readonly CancellationTokenSource _listenTokenSource;
 
-        private readonly bool _compressionIsEnabled;
+        private readonly bool _isCompressionEnabled;
 
         public Serial(SerialPortSettings serialPortSettings, IDisk disk, ILogger logger, IStatusService statusService,
-            CancellationTokenSource cancelTokenSource, bool compressionIsEnabled)
+            CancellationTokenSource cancelTokenSource, bool isCompressionEnabled)
         {
             _localDisk = disk;
             _logger = logger;
             _statusService = statusService;
             _listenTokenSource = cancelTokenSource;
-            _compressionIsEnabled = compressionIsEnabled;
+            _isCompressionEnabled = isCompressionEnabled;
             _isRLERun = false;
             _transferStopwatch = new Stopwatch();
 
@@ -382,7 +382,7 @@ namespace Z80andrew.SerialDisk.Comms
         {
             SerialFlags serialFlags = SerialFlags.None;
 
-            if (_compressionIsEnabled) serialFlags |= SerialFlags.Compression;
+            if (_isCompressionEnabled) serialFlags |= SerialFlags.Compression;
 
             _logger.Log($"Sending serial flags: {serialFlags} ({Convert.ToByte(serialFlags)})...", LoggingLevel.Debug);
             _serialPort.BaseStream.WriteByte(Convert.ToByte(serialFlags));
@@ -408,7 +408,7 @@ namespace Z80andrew.SerialDisk.Comms
                 _previousByte = null;
             }
 
-            if (_compressionIsEnabled)
+            if (_isCompressionEnabled)
             {
                 //decompress RLE data
                 if (_isRLERun)
@@ -471,7 +471,7 @@ namespace Z80andrew.SerialDisk.Comms
 
             SerialFlags serialFlags = SerialFlags.None;
 
-            if (_compressionIsEnabled) serialFlags |= SerialFlags.Compression;
+            if (_isCompressionEnabled) serialFlags |= SerialFlags.Compression;
 
             _logger.Log($"Sending serial flags: {serialFlags}...", LoggingLevel.Debug);
             _serialPort.BaseStream.WriteByte(Convert.ToByte(serialFlags));
