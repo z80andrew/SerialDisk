@@ -1,4 +1,4 @@
-﻿namespace AtariST.SerialDisk.Utilities
+﻿namespace Z80andrew.SerialDisk.Utilities
 {
     public static class CRC32
     {

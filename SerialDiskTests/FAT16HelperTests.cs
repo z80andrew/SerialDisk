@@ -1,8 +1,8 @@
-﻿using AtariST.SerialDisk.Utilities;
-using NUnit.Framework;
-using static AtariST.SerialDisk.Common.Constants;
+﻿using NUnit.Framework;
+using Z80andrew.SerialDisk.Utilities;
+using static Z80andrew.SerialDisk.Common.Constants;
 
-namespace Tests
+namespace Z80andrew.SerialDisk.Tests
 {
     [TestFixture]
     public class FAT16HelperTests
@@ -27,8 +27,8 @@ namespace Tests
             Assert.AreEqual(expectedShortFileName, shortFileName);
         }
 
-        [TestCase(".htaccess","_HTACCES")]
-        [TestCase(".filename.jpeg","_FILENAM.JPE")]
+        [TestCase(".htaccess", "_HTACCES")]
+        [TestCase(".filename.jpeg", "_FILENAM.JPE")]
         public void CreateShortFileNameFromInvalidFileName(string invalidFileName, string expectedShortFileName)
         {
             var shortFileName = FAT16Helper.GetShortFileName(invalidFileName);

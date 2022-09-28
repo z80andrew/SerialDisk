@@ -1,11 +1,11 @@
-﻿using AtariST.SerialDisk.Models;
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using static AtariST.SerialDisk.Common.Constants;
+using Z80andrew.SerialDisk.Models;
+using static Z80andrew.SerialDisk.Common.Constants;
 
-namespace AtariST.SerialDisk.Utilities
+namespace Z80andrew.SerialDisk.Utilities
 {
     public static class FAT16Helper
     {
@@ -43,7 +43,7 @@ namespace AtariST.SerialDisk.Utilities
             int dotIndex = fileName.LastIndexOf(".");
 
             // Replace all except the final .
-            if (dotIndex != -1) fileName = fileName.Substring(0, dotIndex).Replace('.', '_') + fileName[dotIndex..];
+            if (dotIndex != -1) fileName = fileName.Substring(0, dotIndex).Replace('.', '_') + fileName.Substring(dotIndex, fileName.Length - dotIndex);
 
             string shortFileName;
 
@@ -101,7 +101,7 @@ namespace AtariST.SerialDisk.Utilities
         public static void ValidateLocalDirectory(string localDirectoryPath, int diskSizeBytes, int maxRootDirectoryEntries, int sectorsPerCluster, TOSVersion tosVersion)
         {
             DirectoryInfo directoryInfo = new DirectoryInfo(localDirectoryPath);
-            uint localDirectorySizeBytes = (uint)Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length));
+            var localDirectorySizeBytes = GetLocalDirectorySizeInBytes(directoryInfo);
 
             if (localDirectorySizeBytes > MaxDiskSizeBytes(tosVersion, sectorsPerCluster))
                 throw new InsufficientMemoryException($"Local directory size is {localDirectorySizeBytes / BytesPerMiB} MiB, which is larger than the maximum allowable virtual disk size ({MaxDiskSizeBytes(tosVersion, sectorsPerCluster) / BytesPerMiB} MiB)");
@@ -116,11 +116,22 @@ namespace AtariST.SerialDisk.Utilities
                 throw new InsufficientMemoryException($"The root directory has {rootDirectoryEntries} files/directories, which is more than the maximum ({maxRootDirectoryEntries} allowed");
         }
 
+        public static uint GetLocalDirectorySizeInBytes(string directoryPath)
+        {
+            var directoryInfo = new DirectoryInfo(directoryPath);
+            return GetLocalDirectorySizeInBytes(directoryInfo);
+        }
+
+        public static uint GetLocalDirectorySizeInBytes(DirectoryInfo directoryInfo)
+        {
+            return (uint)Directory.GetFiles(directoryInfo.FullName, "*", SearchOption.AllDirectories).Sum(file => (new FileInfo(file).Length));
+        }
+
         public static void WriteClusterToFile(ClusterInfo cluster)
         {
             using (FileStream fileStream = new FileStream($"cluster {cluster.LocalDirectoryContent.TOSFileName} offset {cluster.FileOffset}.bin", FileMode.Create))
             {
-                fileStream.Write(cluster.DataBuffer);
+                fileStream.Write(cluster.DataBuffer, 0, cluster.DataBuffer.Length);
             }
         }
     }

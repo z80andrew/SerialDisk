@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SerialDiskUI": {
+      "commandName": "Project",
+      "commandLineArgs": ""
+    }
+  }
+}

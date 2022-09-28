@@ -1,0 +1,69 @@
+﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="Current">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net6.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<AssemblyName>SerialDiskUI</AssemblyName>
+		<RootNamespace>Z80andrew.SerialDisk.SerialDiskUI</RootNamespace>
+		<ApplicationIcon>Assets\Icons\SerialDisk.ico</ApplicationIcon>
+		<Version>3.0</Version>
+	</PropertyGroup>
+	<ItemGroup>
+		<AvaloniaResource Include="Assets\**" />
+	</ItemGroup>
+	<ItemGroup>
+		<AvaloniaResource Remove="Assets\Credits.json" />
+		<AvaloniaResource Remove="Assets\macOS-build\*" />
+	</ItemGroup>
+	<ItemGroup>
+	  <None Remove="Assets\Credits.json" />
+	</ItemGroup>
+	<ItemGroup>
+		<Content Include="serialdiskui.config">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+	<ItemGroup>
+	  <EmbeddedResource Include="Assets\Credits.json" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Avalonia" Version="0.10.18" />
+		<PackageReference Include="Avalonia.Controls.DataGrid" Version="0.10.18" />
+		<PackageReference Include="Avalonia.Desktop" Version="0.10.18" />
+		<PackageReference Include="Avalonia.Diagnostics" Version="0.10.18" />
+		<PackageReference Include="Avalonia.ReactiveUI" Version="0.10.18" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\SerialDisk\SerialDisk.csproj" />
+	</ItemGroup>
+	<PropertyGroup>
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+	</PropertyGroup>
+
+	<!-- Task required to update macOS bundle plist version numbers -->
+	<UsingTask TaskName="ReplaceFileText" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+		<ParameterGroup>
+			<InputFilename ParameterType="System.String" Required="true" />
+			<OutputFilename ParameterType="System.String" Required="true" />
+			<MatchExpression ParameterType="System.String" Required="true" />
+			<ReplacementText ParameterType="System.String" Required="true" />
+		</ParameterGroup>
+		<Task>
+			<Using Namespace="System" />
+			<Using Namespace="System.IO" />
+			<Using Namespace="System.Text.RegularExpressions" />
+			<Code Type="Fragment" Language="cs">
+				<![CDATA[
+				File.WriteAllText(
+					OutputFilename,
+					Regex.Replace(File.ReadAllText(InputFilename), MatchExpression, ReplacementText)
+					);
+			  ]]>
+			</Code>
+		</Task>
+	</UsingTask>
+
+	<Target Name="PlistVersionText" AfterTargets="AfterBuild">
+		<ReplaceFileText InputFilename="Assets\macOS-build\Info.plist.template" OutputFilename="Assets\macOS-build\Info.plist" MatchExpression="\#version\#" ReplacementText="$(InformationalVersion)" />
+	</Target>
+</Project>

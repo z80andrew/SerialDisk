@@ -1,35 +1,18 @@
-﻿using System.Collections.Generic;
-
-namespace AtariST.SerialDisk.Common
+﻿namespace Z80andrew.SerialDisk.Common
 {
     public static class Constants
     {
+        public enum ReleaseType
+        {
+            Release,
+            ReleaseCandidate,
+            Beta
+        }
+
         public const string DATE_FORMAT = "yyyy-MM-dd";
         public const string TIME_FORMAT = "HH:mm:ss";
 
-        public static Dictionary<string, string> ConsoleParameterMappings
-        {
-            get
-            {
-                return new Dictionary<string, string>
-                {
-                    { "--disk-size", "DiskSettings:DiskSizeMiB" },
-                    { "--tos-version", "DiskSettings:DiskTOSCompatibility" },
-                    { "--root-directory-sectors", "DiskSettings:RootDirectorySectors" },
-                    { "--compression", "IsCompressionEnabled" },
-
-                    { "--port", "SerialSettings:PortName" },
-                    { "--baud-rate", "SerialSettings:BaudRate" },
-                    { "--data-bits", "SerialSettings:DataBits" },
-                    { "--stop-bits", "SerialSettings:StopBits" },
-                    { "--parity", "SerialSettings:Parity" },
-                    { "--handshake", "SerialSettings:Handshake" },
-
-                    { "--logging-level", "LoggingLevel" },
-                    { "--log-filename", "LogFileName" },
-                };
-            }
-        }
+        public const string PROJECT_URL = @"https://www.github.com/z80andrew/serialdisk";
 
         public enum TOSVersion
         {
@@ -64,5 +47,7 @@ namespace AtariST.SerialDisk.Common
             public const byte CRC32Mismatch = 0x00;
             public const byte CRC32Match = 0x01;
         }
+
+        public static readonly long DirectoryClusterOffset = -1;
     }
 }

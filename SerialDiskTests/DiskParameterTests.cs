@@ -1,12 +1,12 @@
-using AtariST.SerialDisk.Interfaces;
-using AtariST.SerialDisk.Models;
-using AtariST.SerialDisk.Storage;
 using Moq;
 using NUnit.Framework;
 using System;
-using static AtariST.SerialDisk.Common.Constants;
+using Z80andrew.SerialDisk.Interfaces;
+using Z80andrew.SerialDisk.Models;
+using Z80andrew.SerialDisk.Storage;
+using static Z80andrew.SerialDisk.Common.Constants;
 
-namespace Tests
+namespace Z80andrew.SerialDisk.Tests
 {
     [TestFixture]
     public class DiskParameterTests
