@@ -14,7 +14,7 @@ namespace Z80andrew.SerialDisk.Utilities
 
         public static readonly ReleaseType RELEASE_TYPE = ReleaseType.Release;
         public static readonly string RELEASE_NAME = "";
-        public static readonly string RELEASE_TAG = "3.0";
+        public static readonly string RELEASE_TAG = "3.1";
 
         public static string VERSION_LABEL = $"v{ConfigurationHelper.ApplicationVersion} {ConfigurationHelper.RELEASE_NAME}";
 

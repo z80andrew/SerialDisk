@@ -4,9 +4,9 @@
     <OutputType>Library</OutputType>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>Z80andrew.SerialDisk</RootNamespace>
-    <AssemblyVersion>3.0.0.0</AssemblyVersion>
-    <FileVersion>3.0.0.0</FileVersion>
-    <Version>3.0</Version>
+    <AssemblyVersion>3.1.0.0</AssemblyVersion>
+    <FileVersion>3.1.0.0</FileVersion>
+    <Version>3.1</Version>
     <ApplicationIcon />
     <StartupObject></StartupObject>
     <Authors>z80andrew</Authors>
