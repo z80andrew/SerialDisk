@@ -1,8 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using Avalonia.ReactiveUI;
 using ReactiveUI;
+using ReactiveUI.Avalonia;
 using System;
 using System.Threading.Tasks;
 using Z80andrew.SerialDisk.SerialDiskUI.Models;
@@ -91,7 +91,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
                 logScrollViewer.LineDown();
             }
 
-            else if (e.Property.Name == nameof(ScrollViewer.TransformedBounds))
+            else if (e.Property.Name == nameof(ScrollViewer.Bounds))
             {
                 if (logScrollViewer.IsEffectivelyVisible) this.MinHeight = _savedMinHeight + _logMinHeight;
 
@@ -103,7 +103,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
             }
         }
 
-        private async Task DoShowSettingsDialogAsync(InteractionContext<SettingsWindowViewModel, SerialDiskUIModel> interaction)
+        private async Task DoShowSettingsDialogAsync(IInteractionContext<SettingsWindowViewModel, SerialDiskUIModel> interaction)
         {
             var dialog = new SettingsWindow
             {
@@ -114,7 +114,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
             interaction.SetOutput(result);
         }
 
-        private async Task DoShowAboutDialogAsync(InteractionContext<AboutWindowViewModel, string> interaction)
+        private async Task DoShowAboutDialogAsync(IInteractionContext<AboutWindowViewModel, string> interaction)
         {
             var dialog = new AboutWindow
             {

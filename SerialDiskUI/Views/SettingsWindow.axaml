@@ -43,7 +43,7 @@
 
 							<DockPanel>
 								<StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-									<ComboBox ToolTip.Tip="Serial port to use for communication" Items="{Binding COMPortChoices}" SelectedItem="{Binding SelectedCOMPort}">
+									<ComboBox ToolTip.Tip="Serial port to use for communication" ItemsSource="{Binding COMPortChoices}" SelectedItem="{Binding SelectedCOMPort}">
 										<ComboBox.ItemTemplate>
 											<DataTemplate>
 												<TextBlock Text="{Binding Key}"/>
@@ -56,7 +56,7 @@
 
 							<!-- Technically this isn't baud rate (hence clarification in the tooltip), but label kept for consistency with C# and Atari nomenclature -->
 							<TextBlock Classes="SettingsLabel">Baud rate</TextBlock>
-							<ComboBox ToolTip.Tip="Data transmission rate in bits per second" Items="{Binding BaudRateChoices}" SelectedItem="{Binding SelectedBaud}">
+							<ComboBox ToolTip.Tip="Data transmission rate in bits per second" ItemsSource="{Binding BaudRateChoices}" SelectedItem="{Binding SelectedBaud}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
 										<TextBlock Text="{Binding Key}"/>
@@ -65,7 +65,7 @@
 							</ComboBox>
 
 							<TextBlock Classes="SettingsLabel">Parity</TextBlock>
-							<ComboBox ToolTip.Tip="Parity to use for simple error-checking" Items="{Binding ParityChoices}" SelectedItem="{Binding SelectedParity}">
+							<ComboBox ToolTip.Tip="Parity to use for simple error-checking" ItemsSource="{Binding ParityChoices}" SelectedItem="{Binding SelectedParity}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
 										<TextBlock Text="{Binding Key}"/>
@@ -74,7 +74,7 @@
 							</ComboBox>
 
 							<TextBlock Classes="SettingsLabel">Data bits</TextBlock>
-							<ComboBox ToolTip.Tip="Number of data bits to send per transmission unit" Items="{Binding DataBitsChoices}" SelectedItem="{Binding SelectedDataBits}">
+							<ComboBox ToolTip.Tip="Number of data bits to send per transmission unit" ItemsSource="{Binding DataBitsChoices}" SelectedItem="{Binding SelectedDataBits}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
 										<TextBlock Text="{Binding Key}"/>
@@ -83,7 +83,7 @@
 							</ComboBox>
 
 							<TextBlock Classes="SettingsLabel">Stop bits</TextBlock>
-							<ComboBox ToolTip.Tip="Number of bits to use to signal end of data transmission" Items="{Binding StopBitsChoices}" SelectedItem="{Binding SelectedStopBits}">
+							<ComboBox ToolTip.Tip="Number of bits to use to signal end of data transmission" ItemsSource="{Binding StopBitsChoices}" SelectedItem="{Binding SelectedStopBits}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
 										<TextBlock Text="{Binding Key}"/>
@@ -92,7 +92,7 @@
 							</ComboBox>
 
 							<TextBlock Classes="SettingsLabel">Flow control</TextBlock>
-							<ComboBox ToolTip.Tip="Data flow control method" Items="{Binding HandshakeChoices}" SelectedItem="{Binding SelectedHandshake}">
+							<ComboBox ToolTip.Tip="Data flow control method" ItemsSource="{Binding HandshakeChoices}" SelectedItem="{Binding SelectedHandshake}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
 										<TextBlock Text="{Binding Key}"/>
@@ -153,7 +153,7 @@
 							</DockPanel>
 
 							<TextBlock Classes="SettingsLabel">Logging level</TextBlock>
-							<ComboBox ToolTip.Tip="Log message detail level, from Info (lowest) to All (highest)" Items="{Binding LogLevelChoices}" SelectedItem="{Binding SelectedLogLevel}">
+							<ComboBox ToolTip.Tip="Log message detail level, from Info (lowest) to All (highest)" ItemsSource="{Binding LogLevelChoices}" SelectedItem="{Binding SelectedLogLevel}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
 										<TextBlock Text="{Binding Key}"/>

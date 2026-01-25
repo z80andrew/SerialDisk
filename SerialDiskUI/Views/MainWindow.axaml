@@ -133,7 +133,7 @@
 							  HorizontalScrollBarVisibility="Auto"
 							  AllowAutoHide="False"
 							  Padding="5">
-					<ItemsControl Items="{Binding LogItems}" Margin="5,5,12,12">
+					<ItemsControl ItemsSource="{Binding LogItems}" Margin="5,5,12,12">
 						<ItemsControl.ItemTemplate>
 							<DataTemplate>
 								<StackPanel Orientation="Horizontal">

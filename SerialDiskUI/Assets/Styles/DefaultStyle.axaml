@@ -41,7 +41,7 @@
     </Design.PreviewWith>
 
     <Style Selector="TextBlock">
-      <Setter Property="FontFamily" Value="/Assets/Fonts/NotoSans.ttf#Noto Sans"/>
+      <Setter Property="FontFamily" Value="{StaticResource NotoSans}"/>
     </Style>
 
 	<Style Selector="TextBlock.SettingsLabel">

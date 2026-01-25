@@ -1,14 +1,20 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="using:Z80andrew.SerialDisk.SerialDiskUI"
-             x:Class="Z80andrew.SerialDisk.SerialDiskUI.App">
-    <Application.DataTemplates>
+             x:Class="Z80andrew.SerialDisk.SerialDiskUI.App"
+			 RequestedThemeVariant="Light">
+	
+	<Application.Resources>
+		<FontFamily x:Key="AtariFont">avares://SerialDiskUI/Assets/Fonts#Atari ST 8x16 System Font</FontFamily>
+		<FontFamily x:Key="NotoSans">avares://SerialDiskUI/Assets/Fonts#Noto Sans</FontFamily>
+	</Application.Resources>
+	
+	<Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
 
     <Application.Styles>
-        <FluentTheme Mode="Light"/>
-		<StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Default.xaml"/>
+        <FluentTheme />
     </Application.Styles>
 
 </Application>

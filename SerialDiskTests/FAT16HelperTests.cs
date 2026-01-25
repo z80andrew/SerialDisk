@@ -24,7 +24,7 @@ namespace Z80andrew.SerialDisk.Tests
         {
             var shortFileName = FAT16Helper.GetShortFileName(longFileName);
 
-            Assert.AreEqual(expectedShortFileName, shortFileName);
+            Assert.That(expectedShortFileName, Is.EqualTo(shortFileName));
         }
 
         [TestCase(".htaccess", "_HTACCES")]
@@ -33,7 +33,7 @@ namespace Z80andrew.SerialDisk.Tests
         {
             var shortFileName = FAT16Helper.GetShortFileName(invalidFileName);
 
-            Assert.AreEqual(expectedShortFileName, shortFileName);
+            Assert.That(expectedShortFileName, Is.EqualTo(shortFileName));
         }
 
         [TestCase(TOSVersion.TOS100, 0x3FFF * 8192 * 2)]
@@ -42,7 +42,7 @@ namespace Z80andrew.SerialDisk.Tests
         {
             var maxDiskSizeBytes = FAT16Helper.MaxDiskSizeBytes(tosVersion, _sectorsPerCluster);
 
-            Assert.AreEqual(expectedMaxDiskSizeBytes, maxDiskSizeBytes);
+            Assert.That(expectedMaxDiskSizeBytes, Is.EqualTo(maxDiskSizeBytes));
         }
 
         public void InvalidDiskSizes()

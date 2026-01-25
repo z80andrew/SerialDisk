@@ -57,7 +57,7 @@
 				<Border BorderBrush="White" DockPanel.Dock="Top">
 					<DockPanel DockPanel.Dock="Top" Background="White">
 						<Viewbox DockPanel.Dock="Top" StretchDirection="DownOnly" Stretch="Uniform">
-							<TextBlock FontFamily="/Assets/Fonts/AtariST8x16SystemFont.ttf#"
+							<TextBlock FontFamily="{StaticResource AtariFont}"
 								   Text="
             _____           _       ______  _      __&#10;
            / ___/___  _____(_)___  / / __ \(_)____/ /__&#10;
@@ -87,7 +87,7 @@ o o o o o  \__ \/ _ \/ ___/ / __ `/ / / / / / ___/ //_/&#10;
 						</TabItem>
 						<TabItem Header="Credits" Classes="AboutTab">
 							<ScrollViewer Margin="0,0,0,10" AllowAutoHide="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-								<DataGrid Margin="10,0,10,0"  IsReadOnly="True"  HeadersVisibility="None" AutoGenerateColumns="True" AlternatingRowBackground="LightGray" Items="{Binding Credits}">
+								<DataGrid Margin="10,0,10,0"  IsReadOnly="True"  HeadersVisibility="None" AutoGenerateColumns="True" ItemsSource="{Binding Credits}">
 								</DataGrid>
 							</ScrollViewer>
 						</TabItem>

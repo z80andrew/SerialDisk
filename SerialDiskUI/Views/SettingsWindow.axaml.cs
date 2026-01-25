@@ -1,17 +1,20 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using Avalonia.ReactiveUI;
+using Avalonia.Platform.Storage;
 using ReactiveUI;
+using ReactiveUI.Avalonia;
+using Splat;
 using System;
 using System.IO;
+using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
 using Z80andrew.SerialDisk.SerialDiskUI.ViewModels;
 
 namespace Z80andrew.SerialDisk.SerialDiskUI.Views
 {
-    public class SettingsWindow : ReactiveWindow<SettingsWindowViewModel>
+    public partial class SettingsWindow : ReactiveWindow<SettingsWindowViewModel>
     {
         public SettingsWindow()
         {
@@ -25,7 +28,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
             this.WhenActivated(d => d(ViewModel.ShowFileDialog.RegisterHandler(WindowShowFileDialog)));
         }
 
-        private void CloseSettingsWindow(Unit commandOutput)
+		private void CloseSettingsWindow(Unit commandOutput)
         {
             this.Close();
         }
@@ -35,35 +38,43 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
             AvaloniaXamlLoader.Load(this);
         }
 
-        private async Task WindowShowFolderDialog(InteractionContext<string, string?> interaction)
+        private async Task WindowShowFolderDialog(IInteractionContext<string, string?> interaction)
         {
-            var dialog = new OpenFolderDialog
-            {
-                Directory = !string.IsNullOrEmpty(interaction?.Input) ? interaction.Input : AppDomain.CurrentDomain.BaseDirectory
-            };
+			// Get top level from the current control. Alternatively, you can use Window reference instead.
+			var topLevel = TopLevel.GetTopLevel(this);
 
-            var folderPath = await dialog.ShowAsync(this);
-            interaction?.SetOutput(folderPath);
-        }
+			// Start async operation to open the dialog.
+			var folder = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+			{
+				Title = "Select Folder",
+				AllowMultiple = false,
+                SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(!string.IsNullOrEmpty(interaction?.Input) ? interaction.Input : AppDomain.CurrentDomain.BaseDirectory)
+			});
 
-        private async Task WindowShowFileDialog(InteractionContext<string, string?> interaction)
+			if (folder.Count > 0)
+			{
+                interaction?.SetOutput(folder.First().Path.AbsolutePath);
+            }
+		}
+
+        private async Task WindowShowFileDialog(IInteractionContext<string, string?> interaction)
         {
-            var dialog = new SaveFileDialog();
+			// Get top level from the current control. Alternatively, you can use Window reference instead.
+			var topLevel = TopLevel.GetTopLevel(this);
 
-            if (!string.IsNullOrEmpty(interaction?.Input))
-            {
-                dialog.InitialFileName = Path.GetFileName(interaction.Input);
-                dialog.Directory = Path.GetFullPath(interaction.Input);
-            }
+			// Start async operation to open the dialog.
+			var file = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+			{
+				Title = "Select File",
+				AllowMultiple = false,
+				SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(!string.IsNullOrEmpty(interaction?.Input) ? Path.GetFullPath(interaction.Input) : AppDomain.CurrentDomain.BaseDirectory),
+				SuggestedFileName =!string.IsNullOrEmpty(interaction?.Input) ? Path.GetFileName(interaction?.Input) : "serialdisk.log"
+			});
 
-            else
-            {
-                dialog.InitialFileName = "serialdisk.log";
-                dialog.Directory = AppDomain.CurrentDomain.BaseDirectory;
-            }
-
-            var filePath = await dialog.ShowAsync(this);
-            interaction?.SetOutput(filePath);
-        }
+			if (file.Count > 0)
+			{
+				interaction?.SetOutput(file.First().Path.AbsolutePath);
+			}
+		}
     }
 }

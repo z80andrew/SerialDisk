@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.Markup.Xaml;
-using Avalonia.ReactiveUI;
 using ReactiveUI;
+using ReactiveUI.Avalonia;
 using System;
 using Z80andrew.SerialDisk.SerialDiskUI.ViewModels;
 

@@ -41,7 +41,7 @@ namespace Z80andrew.SerialDisk.Tests
 
             int bytesPerSector = diskParams.BytesPerSector;
 
-            Assert.AreEqual(expectedBytesPerSector, bytesPerSector);
+            Assert.That(expectedBytesPerSector, Is.EqualTo(bytesPerSector));
         }
 
         [TestCase(16, 1024, TOSVersion.TOS104)]
@@ -63,7 +63,7 @@ namespace Z80andrew.SerialDisk.Tests
 
             int bytesPerCluster = diskParams.BytesPerCluster;
 
-            Assert.AreEqual(expectedBytesPerCluster, bytesPerCluster);
+            Assert.That(expectedBytesPerCluster, Is.EqualTo(bytesPerCluster));
         }
 
         [TestCase(16, 0x3FFF, TOSVersion.TOS100)]
@@ -89,7 +89,7 @@ namespace Z80andrew.SerialDisk.Tests
 
             int diskClusters = diskParams.DiskClusters;
 
-            Assert.AreEqual(expectedClusters, diskClusters);
+            Assert.That(expectedClusters, Is.EqualTo(diskClusters));
         }
 
         [TestCase(512, TOSVersion.TOS100)]
@@ -127,7 +127,7 @@ namespace Z80andrew.SerialDisk.Tests
 
             int fatEntriesPerSector = diskParams.FatEntriesPerSector;
 
-            Assert.AreEqual(expectedClusters, fatEntriesPerSector);
+            Assert.That(expectedClusters, Is.EqualTo(fatEntriesPerSector));
         }
 
         [TestCase(16, 64, TOSVersion.TOS104)]
@@ -149,7 +149,7 @@ namespace Z80andrew.SerialDisk.Tests
 
             int sectorsPerFat = diskParams.SectorsPerFat;
 
-            Assert.AreEqual(expectedSectorsPerFat, sectorsPerFat);
+            Assert.That(expectedSectorsPerFat, Is.EqualTo(sectorsPerFat));
         }
 
     }
