@@ -4,7 +4,6 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
 using ReactiveUI;
 using ReactiveUI.Avalonia;
-using Splat;
 using System;
 using System.IO;
 using System.Linq;
@@ -40,41 +39,35 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
 
         private async Task WindowShowFolderDialog(IInteractionContext<string, string?> interaction)
         {
-			// Get top level from the current control. Alternatively, you can use Window reference instead.
 			var topLevel = TopLevel.GetTopLevel(this);
 
-			// Start async operation to open the dialog.
-			var folder = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+			var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
 			{
 				Title = "Select Folder",
 				AllowMultiple = false,
-                SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(!string.IsNullOrEmpty(interaction?.Input) ? interaction.Input : AppDomain.CurrentDomain.BaseDirectory)
+                SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(!string.IsNullOrEmpty(interaction.Input) ? interaction.Input : AppDomain.CurrentDomain.BaseDirectory)
 			});
 
-			if (folder.Count > 0)
-			{
-                interaction?.SetOutput(folder.First().Path.AbsolutePath);
-            }
+            string? selectedFolderPath = folders.Count > 0 ? folders[0].Path.AbsolutePath : null;
+
+            interaction.SetOutput(selectedFolderPath);
 		}
 
         private async Task WindowShowFileDialog(IInteractionContext<string, string?> interaction)
         {
-			// Get top level from the current control. Alternatively, you can use Window reference instead.
 			var topLevel = TopLevel.GetTopLevel(this);
 
-			// Start async operation to open the dialog.
-			var file = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+			var files = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
 			{
 				Title = "Select File",
 				AllowMultiple = false,
-				SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(!string.IsNullOrEmpty(interaction?.Input) ? Path.GetFullPath(interaction.Input) : AppDomain.CurrentDomain.BaseDirectory),
-				SuggestedFileName =!string.IsNullOrEmpty(interaction?.Input) ? Path.GetFileName(interaction?.Input) : "serialdisk.log"
+				SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(!string.IsNullOrEmpty(interaction.Input) ? Path.GetFullPath(interaction.Input) : AppDomain.CurrentDomain.BaseDirectory),
+				SuggestedFileName =!string.IsNullOrEmpty(interaction.Input) ? Path.GetFileName(interaction.Input) : "serialdisk.log"
 			});
 
-			if (file.Count > 0)
-			{
-				interaction?.SetOutput(file.First().Path.AbsolutePath);
-			}
+			string? selectedFilePath = files.Count > 0 ? files[0].Path.AbsolutePath : null;
+
+            interaction.SetOutput(selectedFilePath);
 		}
     }
 }

@@ -44,15 +44,23 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
 
             this.WhenActivated(d =>
                 d(ViewModel.WhenAnyValue(m => m.IsLogDisplayEnabled).Subscribe(isLogDisplayed =>
-                {
-                    logBorder.IsVisible = isLogDisplayed;
-                })));
+				{
+					logBorder.IsVisible = isLogDisplayed;
+					AdjustWindowSizeOnLogDisplayPropertyChange(isLogDisplayed);
+				})));
 
             var logScrollViewer = this.FindControl<ScrollViewer>("LogScrollViewer");
             logScrollViewer.PropertyChanged += LogScrollViewer_PropertyChanged;
         }
 
-        private void ConfigureMainWindow(int xPos, int yPos, int width, int height)
+		private void AdjustWindowSizeOnLogDisplayPropertyChange(bool isLogDisplayed)
+		{
+			if (isLogDisplayed) this.MinHeight = _savedMinHeight + _logMinHeight;
+
+			else this.Height = this.MinHeight = _savedMinHeight;
+		}
+
+		private void ConfigureMainWindow(int xPos, int yPos, int width, int height)
         {
             SetSize(width, height);
             SetPosition(xPos, yPos);
@@ -93,14 +101,8 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
 
             else if (e.Property.Name == nameof(ScrollViewer.Bounds))
             {
-                if (logScrollViewer.IsEffectivelyVisible) this.MinHeight = _savedMinHeight + _logMinHeight;
-
-                else
-                {
-                    this.MinHeight = _savedMinHeight;
-                    this.Height = MinHeight;
-                }
-            }
+                AdjustWindowSizeOnLogDisplayPropertyChange(ViewModel.IsLogDisplayEnabled);
+			}
         }
 
         private async Task DoShowSettingsDialogAsync(IInteractionContext<SettingsWindowViewModel, SerialDiskUIModel> interaction)
@@ -112,7 +114,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
 
             var result = await dialog.ShowDialog<SerialDiskUIModel>(this);
             interaction.SetOutput(result);
-        }
+		}
 
         private async Task DoShowAboutDialogAsync(IInteractionContext<AboutWindowViewModel, string> interaction)
         {
