@@ -1,7 +1,7 @@
-.include "../macro/gemdos.asm"
-.include "../macro/bios.asm"
-.include "../macro/xbios.asm"
-.include "../src/constants.asm"
+.include "macro/gemdos.asm"
+.include "macro/bios.asm"
+.include "macro/xbios.asm"
+.include "src/constants.asm"
 
 |-------------------------------------------------------------------------------
 
@@ -395,7 +395,7 @@ _rw_write:
 	btst	#compression_isenabled,d0											| Check for compression flag
 	jeq		_rw_write_uncompressed
 _rw_write_compressed:
-	.include "../src/RLE.asm"
+	.include "src/RLE.asm"
 _rw_write_uncompressed:
 	move.b	(a4)+,d0															| Move buffer address into d0, increment to next byte in rw struct
 	jbsr	write_serial														| Write byte to serial
@@ -980,8 +980,8 @@ print_next_char:
 
 |-------------------------------------------------------------------------------
 
-.include "../src/TOS.asm"														| TOS trap calls
-.include "../src/LZ4_serial.asm"												| LZ4 compression functions
+.include "src/TOS.asm"														| TOS trap calls
+.include "src/LZ4_serial.asm"												| LZ4 compression functions
 
 .data
 

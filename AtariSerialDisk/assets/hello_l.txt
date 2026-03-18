@@ -1,0 +1,16 @@
+             _____           _       __
+            / ___/___  _____(_)___  / / 
+ o o o o o  \__ \/ _ \/ ___/ / __ `/ /
+  o o o o  ___/ /  __/ /  / / /_/ / /
+          /____/\___/_/  /_/\__,_/_/
+                ____  _      __
+               / __ \(_)____/ /__
+              / / / / / ___/ //_/
+             / /_/ / (__  ) ,<  
+            /_____/_/____/_/|_|
+
+Thank you for using SerialDisk!
+For more information and to download 
+the latest release, visit the project 
+homepage:
+https://github.com/z80andrew/SerialDisk
