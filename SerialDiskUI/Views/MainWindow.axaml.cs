@@ -24,9 +24,6 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
         public MainWindow(int width, int height, int xPos, int yPos)
         {
             InitializeComponent();
-#if DEBUG
-            this.AttachDevTools();
-#endif
 
             _savedMinHeight = this.MinHeight;
 
@@ -125,11 +122,6 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
 
             var result = await dialog.ShowDialog<string>(this);
             interaction.SetOutput(result);
-        }
-
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
         }
     }
 }

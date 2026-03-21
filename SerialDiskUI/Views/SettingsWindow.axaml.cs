@@ -18,9 +18,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
         public SettingsWindow()
         {
             InitializeComponent();
-#if DEBUG
-            this.AttachDevTools();
-#endif
+
             this.WhenActivated(d => d(ViewModel.ApplySettingsCommand.Subscribe(CloseSettingsWindow)));
             this.WhenActivated(d => d(ViewModel.CloseSettingsCommand.Subscribe(CloseSettingsWindow)));
             this.WhenActivated(d => d(ViewModel.ShowFolderDialog.RegisterHandler(WindowShowFolderDialog)));
@@ -30,11 +28,6 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Views
 		private void CloseSettingsWindow(Unit commandOutput)
         {
             this.Close();
-        }
-
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
         }
 
         private async Task WindowShowFolderDialog(IInteractionContext<string, string?> interaction)
