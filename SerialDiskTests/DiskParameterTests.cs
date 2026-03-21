@@ -4,7 +4,7 @@ using System;
 using Z80andrew.SerialDisk.Interfaces;
 using Z80andrew.SerialDisk.Models;
 using Z80andrew.SerialDisk.Storage;
-using static Z80andrew.SerialDisk.Common.Constants;
+using Z80andrew.SerialDisk.Common;
 
 namespace Z80andrew.SerialDisk.Tests
 {

@@ -22,7 +22,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.Services
         public void BeginSerialDisk(ApplicationSettings appSettings, IStatusService statusService, ILogger logger)
         {
             _diskParameters = new DiskParameters(appSettings.LocalDirectoryPath, appSettings.DiskSettings, logger);
-            logger.Log($"Importing local directory contents from {appSettings.LocalDirectoryPath}", Constants.LoggingLevel.Debug);
+            logger.Log($"Importing local directory contents from {appSettings.LocalDirectoryPath}", LoggingLevel.Debug);
 
             try
             {

@@ -1,6 +1,6 @@
 ﻿using ReactiveUI;
 using System.IO.Ports;
-using static Z80andrew.SerialDisk.Common.Constants;
+using Z80andrew.SerialDisk.Common;
 
 namespace Z80andrew.SerialDisk.SerialDiskUI.Models
 {

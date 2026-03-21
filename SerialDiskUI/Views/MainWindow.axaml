@@ -10,6 +10,7 @@
         MinWidth="420" MinHeight="250"
         SizeToContent="Manual"
         x:Class="Z80andrew.SerialDisk.SerialDiskUI.Views.MainWindow"
+		x:DataType="vm:MainWindowViewModel"
         Title="SerialDisk"
 		Icon="/Assets/Icons/SerialDisk.ico"
 		SystemDecorations="Full"

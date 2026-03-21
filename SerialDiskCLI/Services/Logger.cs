@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using Z80andrew.SerialDisk.Common;
 using Z80andrew.SerialDisk.Interfaces;
 using Z80andrew.SerialDisk.Models;
 using static Z80andrew.SerialDisk.Common.Constants;

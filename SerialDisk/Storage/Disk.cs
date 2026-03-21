@@ -148,7 +148,7 @@ namespace Z80andrew.SerialDisk.Storage
                 // FAT area
                 if (sector < Parameters.SectorsPerFat * 2)
                 {
-                    _logger.Log($"Reading data from FAT area", Constants.LoggingLevel.All);
+                    _logger.Log($"Reading data from FAT area", LoggingLevel.All);
                     int readSector = sector;
 
                     if (readSector >= Parameters.SectorsPerFat)
@@ -160,7 +160,7 @@ namespace Z80andrew.SerialDisk.Storage
                 // Root directory
                 else if (sector < Parameters.SectorsPerFat * 2 + Parameters.RootDirectorySectors)
                 {
-                    _logger.Log($"Reading data from root directory", Constants.LoggingLevel.All);
+                    _logger.Log($"Reading data from root directory", LoggingLevel.All);
                     Array.Copy(_rootDirectoryBuffer, (sector - Parameters.SectorsPerFat * 2) * Parameters.BytesPerSector, dataBuffer, dataOffset, Parameters.BytesPerSector);
                 }
 
@@ -173,7 +173,7 @@ namespace Z80andrew.SerialDisk.Storage
                     // Directory clusters are not read from disk
                     if (_clusterInfos[clusterIndex].IsDirectoryCluster)
                     {
-                        _logger.Log($"Reading directory data cluster {clusterIndex}", Constants.LoggingLevel.All);
+                        _logger.Log($"Reading directory data cluster {clusterIndex}", LoggingLevel.All);
                         Array.Copy(_clusterInfos[clusterIndex].DataBuffer, (readSector - clusterIndex * Parameters.SectorsPerCluster) * Parameters.BytesPerSector, dataBuffer, dataOffset, Parameters.BytesPerSector);
                     }
 
@@ -181,7 +181,7 @@ namespace Z80andrew.SerialDisk.Storage
                     {
                         if (firstSector == sector)
                         {
-                            _logger.Log($"Reading local file {_clusterInfos[clusterIndex].LocalDirectoryContent.LocalPath}", Constants.LoggingLevel.Info);
+                            _logger.Log($"Reading local file {_clusterInfos[clusterIndex].LocalDirectoryContent.LocalPath}", LoggingLevel.Info);
                         }
 
                         byte[] fileClusterDataBuffer = new byte[Parameters.BytesPerCluster];
@@ -233,14 +233,14 @@ namespace Z80andrew.SerialDisk.Storage
                     // Force all writes to the first FAT
                     if (WriteSector >= Parameters.SectorsPerFat) WriteSector -= Parameters.SectorsPerFat;
 
-                    _logger.Log($"Updating FAT sector {WriteSector}", Constants.LoggingLevel.All);
+                    _logger.Log($"Updating FAT sector {WriteSector}", LoggingLevel.All);
 
                     Array.Copy(dataBuffer, dataOffset, _fatBuffer, WriteSector * Parameters.BytesPerSector, Parameters.BytesPerSector);
 
                     var lowerFATClusterBound = (WriteSector * Parameters.BytesPerSector) / 2;
                     var upperFATClusterBound = ((WriteSector * Parameters.BytesPerSector) + Parameters.BytesPerSector) / 2;
 
-                    _logger.Log($"FAT entries for clusters {lowerFATClusterBound}-{upperFATClusterBound} updated", Constants.LoggingLevel.All);
+                    _logger.Log($"FAT entries for clusters {lowerFATClusterBound}-{upperFATClusterBound} updated", LoggingLevel.All);
 
                     var localDirectoryContentToUpdate = new List<int>();
 
@@ -257,7 +257,7 @@ namespace Z80andrew.SerialDisk.Storage
 
                     foreach (var directoryClusterIndex in localDirectoryContentToUpdate)
                     {
-                        _logger.Log($"Syncing directory cluster {directoryClusterIndex} via FAT update", Constants.LoggingLevel.All);
+                        _logger.Log($"Syncing directory cluster {directoryClusterIndex} via FAT update", LoggingLevel.All);
                         SyncDirectoryClusterToLocalDisk(_localDirectoryContentInfos, directoryClusterIndex);
                     }
                 }
@@ -265,7 +265,7 @@ namespace Z80andrew.SerialDisk.Storage
                 // Root directory area?
                 else if (sector < Parameters.SectorsPerFat * 2 + Parameters.RootDirectorySectors)
                 {
-                    _logger.Log($"Updating ROOT directory sector {sector}", Constants.LoggingLevel.All);
+                    _logger.Log($"Updating ROOT directory sector {sector}", LoggingLevel.All);
 
                     Array.Copy(dataBuffer, dataOffset, _rootDirectoryBuffer, (sector - Parameters.SectorsPerFat * 2) * Parameters.BytesPerSector, Parameters.BytesPerSector);
 
@@ -280,7 +280,7 @@ namespace Z80andrew.SerialDisk.Storage
 
                     clusterIndex = WriteSector / Parameters.SectorsPerCluster;
 
-                    _logger.Log($"Updating DATA sector {WriteSector}, cluster {clusterIndex}", Constants.LoggingLevel.All);
+                    _logger.Log($"Updating DATA sector {WriteSector}, cluster {clusterIndex}", LoggingLevel.All);
 
                     Array.Copy(dataBuffer, dataOffset, _clusterInfos[clusterIndex].DataBuffer, (WriteSector - clusterIndex * Parameters.SectorsPerCluster) * Parameters.BytesPerSector, Parameters.BytesPerSector);
 
@@ -312,7 +312,7 @@ namespace Z80andrew.SerialDisk.Storage
 
                 do
                 {
-                    _logger.Log($"Updating directory cluster {clusterIndex}", Constants.LoggingLevel.All);
+                    _logger.Log($"Updating directory cluster {clusterIndex}", LoggingLevel.All);
                     int directoryEntryIndex = 0;
 
                     while (directoryEntryIndex < directoryData.Length && directoryData[directoryEntryIndex] != 0)
@@ -367,14 +367,14 @@ namespace Z80andrew.SerialDisk.Storage
                     else
                     {
                         var nextClusterIndex = FatGetClusterValue(clusterIndex);
-                        _logger.Log($"Directory cluster {clusterIndex} continues in cluster {nextClusterIndex}", Constants.LoggingLevel.All);
+                        _logger.Log($"Directory cluster {clusterIndex} continues in cluster {nextClusterIndex}", LoggingLevel.All);
 
                         // If the next directory cluster is new, ensure it has a LocalDirectoryContentInfo assigned
                         if (_clusterInfos[nextClusterIndex].LocalDirectoryContent == null)
                         {
                             _clusterInfos[nextClusterIndex].LocalDirectoryContent = _clusterInfos[clusterIndex].LocalDirectoryContent;
                             _clusterInfos[nextClusterIndex].FileOffset = FAT16Helper.DirectoryFileOffset;
-                            _logger.Log($"Directory cluster {clusterIndex} extended to cluster {nextClusterIndex}", Constants.LoggingLevel.All);
+                            _logger.Log($"Directory cluster {clusterIndex} extended to cluster {nextClusterIndex}", LoggingLevel.All);
                         }
 
                         clusterIndex = nextClusterIndex;
@@ -390,14 +390,14 @@ namespace Z80andrew.SerialDisk.Storage
         {
             if (directoryData[directoryEntryIndex + 11] == FAT16Helper.DirectoryIdentifier)
             {
-                _logger.Log($"Deleting local directory \"{directoryContentInfo.LocalPath}\"", Constants.LoggingLevel.Info);
+                _logger.Log($"Deleting local directory \"{directoryContentInfo.LocalPath}\"", LoggingLevel.Info);
                 Directory.Delete(GetAbsolutePath(directoryContentInfo.LocalPath), true);
             }
 
             // It's a file
             else
             {
-                _logger.Log($"Deleting local file \"{directoryContentInfo.LocalPath}\"", Constants.LoggingLevel.Info);
+                _logger.Log($"Deleting local file \"{directoryContentInfo.LocalPath}\"", LoggingLevel.Info);
                 File.Delete(GetAbsolutePath(directoryContentInfo.LocalPath));
             }
 
@@ -405,7 +405,7 @@ namespace Z80andrew.SerialDisk.Storage
 
             foreach (var cluster in clustersToDelete)
             {
-                _logger.Log($"Removing local cluster data for {cluster.LocalDirectoryContent.LocalPath} (offset {cluster.FileOffset})", Constants.LoggingLevel.All);
+                _logger.Log($"Removing local cluster data for {cluster.LocalDirectoryContent.LocalPath} (offset {cluster.FileOffset})", LoggingLevel.All);
                 cluster.LocalDirectoryContent = null;
             }
 
@@ -421,14 +421,14 @@ namespace Z80andrew.SerialDisk.Storage
 
             if (directoryData[directoryEntryIndex + 11] == FAT16Helper.DirectoryIdentifier)
             {
-                _logger.Log($"Renaming local directory \"{oldContentPath}\" to \"{directoryContentInfo.LocalPath}\"", Constants.LoggingLevel.Info);
+                _logger.Log($"Renaming local directory \"{oldContentPath}\" to \"{directoryContentInfo.LocalPath}\"", LoggingLevel.Info);
                 Directory.Move(GetAbsolutePath(oldContentPath), GetAbsolutePath(directoryContentInfo.LocalPath));
             }
 
             // It's a file
             else
             {
-                _logger.Log($"Renaming local file \"{oldContentPath}\" to \"{directoryContentInfo.LocalPath}\"", Constants.LoggingLevel.Info);
+                _logger.Log($"Renaming local file \"{oldContentPath}\" to \"{directoryContentInfo.LocalPath}\"", LoggingLevel.Info);
                 File.Move(GetAbsolutePath(oldContentPath), GetAbsolutePath(directoryContentInfo.LocalPath));
             }
         }
@@ -453,7 +453,7 @@ namespace Z80andrew.SerialDisk.Storage
                     // Is it a directory with a valid start cluster?
                     if (entryStartClusterIndex != 0)
                     {
-                        _logger.Log("Creating local directory \"" + newContentPath + "\"", Constants.LoggingLevel.Info);
+                        _logger.Log("Creating local directory \"" + newContentPath + "\"", LoggingLevel.Info);
 
                         var CreatedLocalDirectory = Directory.CreateDirectory(GetAbsolutePath(newContentPath));
 
@@ -479,15 +479,15 @@ namespace Z80andrew.SerialDisk.Storage
                 // it's a file
                 else
                 {
-                    _logger.Log($"Checking if local file {newContentPath} should be updated", Constants.LoggingLevel.Debug);
+                    _logger.Log($"Checking if local file {newContentPath} should be updated", LoggingLevel.Debug);
 
                     int fileSize = directoryData[directoryEntryIndex + 28] | (directoryData[directoryEntryIndex + 29] << 8) | (directoryData[directoryEntryIndex + 30] << 16) | (directoryData[directoryEntryIndex + 31] << 24);
 
-                    _logger.Log("File size to write:" + fileSize, Constants.LoggingLevel.All);
+                    _logger.Log("File size to write:" + fileSize, LoggingLevel.All);
 
                     int fileClusterIndex = entryStartClusterIndex;
 
-                    _logger.Log("Finding existing content info for local file \"" + newContentPath + "\".", Constants.LoggingLevel.All);
+                    _logger.Log("Finding existing content info for local file \"" + newContentPath + "\".", LoggingLevel.All);
 
                     var localDirectoryContent = localDirectoryContentInfos.Where(ldci => ldci.LocalPath == newContentPath).FirstOrDefault();
 
@@ -497,7 +497,7 @@ namespace Z80andrew.SerialDisk.Storage
 
                     if (localDirectoryContent == null)
                     {
-                        _logger.Log($"Creating local file: {newContentPath}", Constants.LoggingLevel.Info);
+                        _logger.Log($"Creating local file: {newContentPath}", LoggingLevel.Info);
 
                         File.Create(GetAbsolutePath(newContentPath)).Dispose();
 
@@ -518,13 +518,13 @@ namespace Z80andrew.SerialDisk.Storage
                     }
 
                     localDirectoryContent.StartCluster = entryStartClusterIndex;
-                    _logger.Log("File start cluster: " + localDirectoryContent.StartCluster + " (" + FatGetClusterValue(localDirectoryContent.StartCluster) + ")", Constants.LoggingLevel.All);
+                    _logger.Log("File start cluster: " + localDirectoryContent.StartCluster + " (" + FatGetClusterValue(localDirectoryContent.StartCluster) + ")", LoggingLevel.All);
 
                     // Entry cluster will be assigned if this is a non-empty file
                     if (entryStartClusterIndex != 0)
                     {
                         localDirectoryContent.WriteInProgress = true;
-                        _logger.Log("Content marked for write: " + localDirectoryContent.WriteInProgress, Constants.LoggingLevel.All);
+                        _logger.Log("Content marked for write: " + localDirectoryContent.WriteInProgress, LoggingLevel.All);
 
                         int remainingBytes = fileSize;
 
@@ -541,7 +541,7 @@ namespace Z80andrew.SerialDisk.Storage
 
                         bool allBytesAvailable = remainingBytes <= 0 && FAT16Helper.IsEndOfFile(fileClusterIndex);
 
-                        _logger.Log("All bytes available?: " + allBytesAvailable, Constants.LoggingLevel.All);
+                        _logger.Log("All bytes available?: " + allBytesAvailable, LoggingLevel.All);
 
                         // Final FAT cluster value in chain matches a fully written file
                         if (allBytesAvailable)
@@ -550,14 +550,14 @@ namespace Z80andrew.SerialDisk.Storage
 
                             try
                             {
-                                _logger.Log("Finding existing content info for local file \"" + newContentPath + "\".", Constants.LoggingLevel.All);
+                                _logger.Log("Finding existing content info for local file \"" + newContentPath + "\".", LoggingLevel.All);
 
                                 localDirectoryContent = localDirectoryContentInfos.Where(ldci => ldci.LocalPath == newContentPath).Single();
 
                                 localDirectoryContent.StartCluster = entryStartClusterIndex;
 
 
-                                _logger.Log("Writing to local file \"" + newContentPath + "\".", Constants.LoggingLevel.Info);
+                                _logger.Log("Writing to local file \"" + newContentPath + "\".", LoggingLevel.Info);
 
                                 using (BinaryWriter FileBinaryWriter = new BinaryWriter(File.OpenWrite(GetAbsolutePath(newContentPath))))
                                 {
@@ -582,7 +582,7 @@ namespace Z80andrew.SerialDisk.Storage
                                         fileClusterIndex = FatGetClusterValue(fileClusterIndex);
                                     }
 
-                                    _logger.Log("Bytes remaining after write:" + remainingBytes, Constants.LoggingLevel.All);
+                                    _logger.Log("Bytes remaining after write:" + remainingBytes, LoggingLevel.All);
                                 }
                             }
 
@@ -871,12 +871,12 @@ namespace Z80andrew.SerialDisk.Storage
 
         public void ReimportLocalDirectoryContents()
         {
-            _logger.Log($"Reimporting local directory contents from {Parameters.LocalDirectoryPath}", Constants.LoggingLevel.Info);
+            _logger.Log($"Reimporting local directory contents from {Parameters.LocalDirectoryPath}", LoggingLevel.Info);
 
             InitDiskContentVariables();
             ImportLocalDiskContent(_localDirectoryContentInfos, Parameters.LocalDirectoryPath, _rootDirectoryClusterIndex);
 
-            _logger.Log($"Import complete", Constants.LoggingLevel.Info);
+            _logger.Log($"Import complete", LoggingLevel.Info);
         }
 
         #endregion

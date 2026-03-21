@@ -21,7 +21,8 @@ namespace Z80andrew.SerialDisk.SerialDiskUI
             => AppBuilder.Configure<App>()
                 .UsePlatformDetect()
                 .LogToTrace()
-                .UseReactiveUI()
+		        .UseReactiveUI(rxui => { /* Optional: add custom registration here via rxui.WithRegistration(...) */ })
+		        .RegisterReactiveUIViewsFromEntryAssembly()
                 .UseSkia();
     }
 }

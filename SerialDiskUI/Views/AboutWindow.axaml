@@ -5,6 +5,7 @@
 		xmlns:vm="using:Z80andrew.SerialDisk.SerialDiskUI.ViewModels"
 		x:Class="Z80andrew.SerialDisk.SerialDiskUI.Views.AboutWindow"
         mc:Ignorable="d"
+		x:DataType="vm:AboutWindowViewModel"
 		Width="370"
 		SizeToContent="Height"
 		Title="About"

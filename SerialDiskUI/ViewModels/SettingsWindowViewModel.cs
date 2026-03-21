@@ -7,8 +7,8 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
+using Z80andrew.SerialDisk.Common;
 using Z80andrew.SerialDisk.SerialDiskUI.Models;
-using static Z80andrew.SerialDisk.Common.Constants;
 using static Z80andrew.SerialDisk.SerialDiskUI.Common.Constants;
 
 namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels

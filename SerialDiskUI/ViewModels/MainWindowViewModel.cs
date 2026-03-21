@@ -145,7 +145,7 @@ namespace Z80andrew.SerialDisk.SerialDiskUI.ViewModels
                 statusService = new StatusService();
 
             if (logger == null)
-                logger = new Logger(Constants.LoggingLevel.All);
+                logger = new Logger(LoggingLevel.All);
 
             _model = model;
             _statusService = statusService;

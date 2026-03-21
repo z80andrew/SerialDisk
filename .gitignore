@@ -262,3 +262,6 @@ __pycache__/
 
 # Build task artifacts
 SerialDiskUI/Assets/macOS-build/Info.plist
+
+# CMake output
+out/

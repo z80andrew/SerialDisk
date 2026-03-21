@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 using Z80andrew.SerialDisk.Utilities;
-using static Z80andrew.SerialDisk.Common.Constants;
+using Z80andrew.SerialDisk.Common;
 
 namespace Z80andrew.SerialDisk.Tests
 {

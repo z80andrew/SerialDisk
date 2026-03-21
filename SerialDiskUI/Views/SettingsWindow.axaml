@@ -2,9 +2,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:syscollectionsgeneric="using:System.Collections.Generic"
+		xmlns:ports="using:System.IO.Ports"
         xmlns:vm="using:Z80andrew.SerialDisk.SerialDiskUI.ViewModels"
+		xmlns:common="using:Z80andrew.SerialDisk.Common"
 		x:Class="Z80andrew.SerialDisk.SerialDiskUI.Views.SettingsWindow"
-        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="550"
+		x:DataType="vm:SettingsWindowViewModel"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="400"
         Width="400" Height="400"
         WindowStartupLocation="CenterOwner"
         Title="Configuration"
@@ -46,6 +50,9 @@
 									<ComboBox ToolTip.Tip="Serial port to use for communication" ItemsSource="{Binding COMPortChoices}" SelectedItem="{Binding SelectedCOMPort}">
 										<ComboBox.ItemTemplate>
 											<DataTemplate>
+												<DataTemplate.DataType>
+													<x:Type TypeName="syscollectionsgeneric:KeyValuePair" x:TypeArguments="x:String, x:String" />
+												</DataTemplate.DataType>
 												<TextBlock Text="{Binding Key}"/>
 											</DataTemplate>
 										</ComboBox.ItemTemplate>
@@ -59,6 +66,9 @@
 							<ComboBox ToolTip.Tip="Data transmission rate in bits per second" ItemsSource="{Binding BaudRateChoices}" SelectedItem="{Binding SelectedBaud}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
+										<DataTemplate.DataType>
+											<x:Type TypeName="syscollectionsgeneric:KeyValuePair" x:TypeArguments="x:String, x:Int32" />
+										</DataTemplate.DataType>
 										<TextBlock Text="{Binding Key}"/>
 									</DataTemplate>
 								</ComboBox.ItemTemplate>
@@ -68,6 +78,9 @@
 							<ComboBox ToolTip.Tip="Parity to use for simple error-checking" ItemsSource="{Binding ParityChoices}" SelectedItem="{Binding SelectedParity}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
+										<DataTemplate.DataType>
+											<x:Type TypeName="syscollectionsgeneric:KeyValuePair" x:TypeArguments="x:String, ports:Parity" />
+										</DataTemplate.DataType>
 										<TextBlock Text="{Binding Key}"/>
 									</DataTemplate>
 								</ComboBox.ItemTemplate>
@@ -77,6 +90,9 @@
 							<ComboBox ToolTip.Tip="Number of data bits to send per transmission unit" ItemsSource="{Binding DataBitsChoices}" SelectedItem="{Binding SelectedDataBits}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
+										<DataTemplate.DataType>
+											<x:Type TypeName="syscollectionsgeneric:KeyValuePair" x:TypeArguments="x:String, x:Int32" />
+										</DataTemplate.DataType>
 										<TextBlock Text="{Binding Key}"/>
 									</DataTemplate>
 								</ComboBox.ItemTemplate>
@@ -86,6 +102,9 @@
 							<ComboBox ToolTip.Tip="Number of bits to use to signal end of data transmission" ItemsSource="{Binding StopBitsChoices}" SelectedItem="{Binding SelectedStopBits}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
+										<DataTemplate.DataType>
+											<x:Type TypeName="syscollectionsgeneric:KeyValuePair" x:TypeArguments="x:String, ports:StopBits" />
+										</DataTemplate.DataType>
 										<TextBlock Text="{Binding Key}"/>
 									</DataTemplate>
 								</ComboBox.ItemTemplate>
@@ -95,6 +114,9 @@
 							<ComboBox ToolTip.Tip="Data flow control method" ItemsSource="{Binding HandshakeChoices}" SelectedItem="{Binding SelectedHandshake}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
+										<DataTemplate.DataType>
+											<x:Type TypeName="syscollectionsgeneric:KeyValuePair" x:TypeArguments="x:String, ports:Handshake" />
+										</DataTemplate.DataType>
 										<TextBlock Text="{Binding Key}"/>
 									</DataTemplate>
 								</ComboBox.ItemTemplate>
@@ -156,6 +178,9 @@
 							<ComboBox ToolTip.Tip="Log message detail level, from Info (lowest) to All (highest)" ItemsSource="{Binding LogLevelChoices}" SelectedItem="{Binding SelectedLogLevel}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate>
+										<DataTemplate.DataType>
+										<x:Type TypeName="syscollectionsgeneric:KeyValuePair" x:TypeArguments="x:String, common:LoggingLevel" />
+										</DataTemplate.DataType>
 										<TextBlock Text="{Binding Key}"/>
 									</DataTemplate>
 								</ComboBox.ItemTemplate>

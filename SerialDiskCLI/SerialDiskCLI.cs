@@ -45,7 +45,7 @@ namespace Z80andrew.SerialDisk.SerialDiskCLI
 
             var diskParameters = new DiskParameters(applicationSettings.LocalDirectoryPath, applicationSettings.DiskSettings, _logger);
 
-            _logger.Log($"Importing local directory contents from {applicationSettings.LocalDirectoryPath}", Constants.LoggingLevel.Debug);
+            _logger.Log($"Importing local directory contents from {applicationSettings.LocalDirectoryPath}", LoggingLevel.Debug);
 
             _statusService = new StatusService();
 
